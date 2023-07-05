@@ -2,10 +2,6 @@
     naive implementation of Lloyd's algorithm for k-means clustering
  */
 
-
-//print out a ton of debug info if true
-bool DEBUG_VD = false;
-
 #include "../parlay/random.h"
 #include "../parlay/parallel.h"
 #include "../parlay/primitives.h"
@@ -29,61 +25,41 @@ bool DEBUG_VD = false;
 #include <mutex>
 
 template <typename T>
-struct point {
+struct NaiveKmeans {
 
-    parlay::slice<T*, T*> coordinates; // the coordinates of the point
-    size_t best; // the index of the best center for the point
+    //print out a ton of debug info if true
+    private: bool DEBUG_VD = false;
 
-    //comment out if needed
-    float lb;
-    float ub;
+    private: struct point {
 
-   
-    point() : best(-1), coordinates(nullptr, nullptr) {
-    }
+        parlay::slice<T*, T*> coordinates; // the coordinates of the point
+        size_t best; // the index of the best center for the point
 
+    
+        point() : best(-1), coordinates(nullptr, nullptr) {
+        }
+    };
 
-};
+    private: struct center {
+        size_t id; // a unique (hopefully) identifier for the center
+        parlay::sequence<T> coordinates; // the pointer to coordinates of the center
+    
+        center(size_t id, parlay::sequence<T> coordinates) : id(id) {
+        
+            this->coordinates = coordinates;
+        }
 
-template <typename T>
-struct center {
-    size_t id; // a unique (hopefully) identifier for the center
-    parlay::sequence<T> coordinates; // the pointer to coordinates of the center
-   
-    center(size_t id, parlay::sequence<T> coordinates) : id(id) {
-      
-        this->coordinates = coordinates;
-    }
+        center() : id(-1) {
+        
+        }
 
-    center() : id(-1) {
-       
-    }
+    };
 
-    float change;
-
-};
-
-#include "types.h"
-#include "center_creation.h"
-#include "NSGDist.h"
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <limits>
-#include <set>
-#include <atomic>
-#include <mutex>
-
-using namespace parlay;
-
-
-//MUST PASS DISTANCE BY REFERENCE NOT COPY
-//put the coordinates of p onto the stack (in buf) for the calculation
-template<typename T> size_t closest_point_vd(const point<T>& p, sequence<center<float>>& centers, Distance& D) {
+    //MUST PASS DISTANCE BY REFERENCE NOT COPY
+    //put the coordinates of p onto the stack (in buf) for the calculation
+    private: size_t closest_point_vd(const point<T>& p, sequence<center<float>>& centers, Distance& D) {
     if constexpr(std::is_same<T,float>() == true) {
-      assert(centers.size() > 0);
-        assert(p.coordinates.size() == centers[0].coordinates.size());
+     
 
           int d = p.coordinates.size();
 
@@ -97,8 +73,7 @@ template<typename T> size_t closest_point_vd(const point<T>& p, sequence<center<
         
     }
     else {
-        assert(centers.size() > 0);
-        assert(p.coordinates.size() == centers[0].coordinates.size());
+       
         int d = p.coordinates.size();
         float buf[d];
         T* it = p.coordinates.begin();
@@ -118,6 +93,7 @@ template<typename T> size_t closest_point_vd(const point<T>& p, sequence<center<
           }
           std::cout << std::endl;
         }
+
         return min_element(distances) - distances.begin();
 
     }
@@ -446,3 +422,7 @@ template <typename T> double kmeans_vd(parlay::sequence<point<T>>& pts, parlay::
     //return std::make_pair(centers,timer.total_time());
 
 }
+
+
+}
+
