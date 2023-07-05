@@ -2,10 +2,6 @@
     naive implementation of Lloyd's algorithm for k-means clustering
  */
 
-
-//print out a ton of debug info if true
-bool DEBUG_VD = false;
-
 #include "../parlay/random.h"
 #include "../parlay/parallel.h"
 #include "../parlay/primitives.h"
@@ -29,51 +25,42 @@ bool DEBUG_VD = false;
 #include <mutex>
 
 template <typename T>
-struct point {
+struct NaiveKmeans {
 
-    parlay::slice<T*, T*> coordinates; // the coordinates of the point
-    size_t best; // the index of the best center for the point
+    //print out a ton of debug info if true
+    bool DEBUG_VD = false;
 
-    //comment out if needed
-    float lb;
-    float ub;
+    struct point {
 
-   
-    point() : best(-1), coordinates(nullptr, nullptr) {
-    }
+        parlay::slice<T*, T*> coordinates; // the coordinates of the point
+        size_t best; // the index of the best center for the point
+
+    
+        point() : best(-1), coordinates(nullptr, nullptr) {
+        }
+    };
+
+    struct center {
+        size_t id; // a unique (hopefully) identifier for the center
+        parlay::sequence<T> coordinates; // the pointer to coordinates of the center
+    
+        center(size_t id, parlay::sequence<T> coordinates) : id(id) {
+        
+            this->coordinates = coordinates;
+        }
+
+        center() : id(-1) {
+        
+        }
 
 
-};
+    };
 
-template <typename T>
-struct center {
-    size_t id; // a unique (hopefully) identifier for the center
-    parlay::sequence<T> coordinates; // the pointer to coordinates of the center
-   
-    center(size_t id, parlay::sequence<T> coordinates) : id(id) {
-      
-        this->coordinates = coordinates;
-    }
 
-    center() : id(-1) {
-       
-    }
+}
 
-    float change;
 
-};
 
-#include "types.h"
-#include "center_creation.h"
-#include "NSGDist.h"
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <limits>
-#include <set>
-#include <atomic>
-#include <mutex>
 
 using namespace parlay;
 

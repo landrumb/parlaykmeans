@@ -13,7 +13,7 @@
 //epsilon: threshold for comparing the new centers to the old centers; if the sum of the distance between the new and old centers is less than epsilon, we stop early
 //returns: a double, the cost of the final center choice
 template<typename T, typename initializer<T>, typename runner<T>>         
-void Kmeans(T* v, size_t n, size_t k, size_t d, float* centers, size_t* asg, double& cost, std::string dist_choice, size_t max_iter = 1000, double epsilon=0.01) {
+void Kmeans(T* v, size_t n, size_t d, size_t k, float* centers, size_t* asg, std::string dist_choice, size_t max_iter = 1000, double epsilon=0.01) {
 
     Distance D;
     if (dist_choice=="euclidean") {
@@ -32,5 +32,5 @@ void Kmeans(T* v, size_t n, size_t k, size_t d, float* centers, size_t* asg, dou
 
     initializer.assign(v,n,k,d,centers,asg,D);
     runner.cluster(v,n,k,d,centers,asg,cost,D,max_iter,epsilon);
-    
+
 }
