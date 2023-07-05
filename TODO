@@ -1,0 +1,19 @@
+7.5.23
+- refactor to use more bare-bones IO spec for knn implementations
+  - Input: points as flat array (n x d), n, d, max_iters, epsilon, (optional mutable k x d array of initial centers)
+  - build accessor struct for said flat array w/ pointer and d
+  - returns (centers, assignments, cost) as (k x d flat array, length n array of center indices, float cost (MSSE))
+
+- reorganize in new repo
+  - building with bazel
+  - include with implementations and headers
+    - IO subdirectory
+  - kmeans.cpp which runs and compares for cli algorithm and dataset
+
+
+Next steps:
+  - Faithful Yinyang
+
+
+Longer-term:
+  - ANN on centers
