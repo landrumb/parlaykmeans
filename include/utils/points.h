@@ -15,5 +15,6 @@ struct Points {
     T* operator[](size_t i) {
         return points + (i * dim) * width;
     }
-}
+};
 
+// TODO add points struct that handles mmapped fvec or bvec files
