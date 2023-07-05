@@ -1,4 +1,5 @@
 7.5.23
+Transition:
 - refactor to use more bare-bones IO spec for knn implementations
   - Input: points as flat array (n x d), n, d, max_iters, epsilon, (optional mutable k x d array of initial centers)
   - build accessor struct for said flat array w/ pointer and d
@@ -9,7 +10,6 @@
   - include with implementations and headers
     - IO subdirectory
   - kmeans.cpp which runs and compares for cli algorithm and dataset
-
 
 Next steps:
   - Faithful Yinyang

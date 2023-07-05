@@ -1,16 +1,17 @@
 #include <iostream>
 #include <algorithm>
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
-#include "parlay/sequence.h"
-#include "parlay/slice.h"
-#include "parse_command_line.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
+#include "../parlay/sequence.h"
+#include "../parlay/slice.h"
+#include "../parse_command_line.h"
 #include "types.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <utility>
 #include <unistd.h>
 
 // returns a pointer and a length
@@ -56,17 +57,19 @@ auto parse_uint8bin(const char* filename){
     int d = *((int*) (fileptr+4));
 
     std::cout << "Detected " << num_vectors << " points with dimension " << d << std::endl;
-    parlay::sequence<point<uint8_t>> points(num_vectors);
 
-    parlay::parallel_for(0, num_vectors, [&] (size_t i) {
-        points[i].id = i; 
+    // parlay::sequence<point<uint8_t>> points(num_vectors);
+    
+    // parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    //     points[i].id = i; 
 
-        uint8_t* start = (uint8_t*)(fileptr + 8 + i*d); //8 bytes at the start for size + dimension
-        uint8_t* end = start + d;
-        points[i].coordinates = parlay::make_slice(start, end);
-    });
+    //     uint8_t* start = (uint8_t*)(fileptr + 8 + i*d); //8 bytes at the start for size + dimension
+    //     uint8_t* end = start + d;
+    //     points[i].coordinates = parlay::make_slice(start, end);
+    // });
 
-    return points;
+    // is passing this pointer without copying safe? I think yes but not sure
+    return std::make_tuple(fileptr + 8, num_vectors, d);
 }
 
 auto parse_int8bin(const char* filename){
@@ -76,17 +79,17 @@ auto parse_int8bin(const char* filename){
     int d = *((int*) (fileptr+4));
  
     std::cout << "Detected " << num_vectors << " points with dimension " << d << std::endl;
-    parlay::sequence<point<int8_t>> points(num_vectors);
+    // parlay::sequence<point<int8_t>> points(num_vectors);
 
-    parlay::parallel_for(0, num_vectors, [&] (size_t i) {
-        points[i].id = i; 
+    // parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    //     points[i].id = i; 
 
-        int8_t* start = (int8_t*)(fileptr + 8 + i*d); //8 bytes at the start for size + dimension
-        int8_t* end = start + d;
-        points[i].coordinates = parlay::make_slice(start, end);
-    });
+    //     int8_t* start = (int8_t*)(fileptr + 8 + i*d); //8 bytes at the start for size + dimension
+    //     int8_t* end = start + d;
+    //     points[i].coordinates = parlay::make_slice(start, end);
+    // });
 
-    return points;
+    return std::make_tuple(fileptr + 8, num_vectors, d);
 }
 
 auto parse_fbin(const char* filename){
@@ -97,20 +100,22 @@ auto parse_fbin(const char* filename){
 
     std::cout << "Detected " << num_vectors << " points with dimension " << d << std::endl;
 
-    parlay::sequence<point<float>> points(num_vectors);
+    // parlay::sequence<point<float>> points(num_vectors);
 
-    parlay::parallel_for(0, num_vectors, [&] (size_t i) {
-        points[i].id = i; 
+    // parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    //     points[i].id = i; 
 
-        float* start = (float*)(fileptr + 8 + 4*i*d); //8 bytes at the start for size + dimension
-        float* end = start + d;
-        points[i].coordinates = parlay::make_slice(start, end);
-    });
+    //     float* start = (float*)(fileptr + 8 + 4*i*d); //8 bytes at the start for size + dimension
+    //     float* end = start + d;
+    //     points[i].coordinates = parlay::make_slice(start, end);
+    // });
 
-    return points;
+    return std::make_tuple(fileptr + 8, num_vectors, d);
 }
 
-auto parse_fvecs(const char* filename) {
+// the below filetypes are not trivially mmap-able to a flat array
+
+/* auto parse_fvecs(const char* filename) {
   auto [fileptr, length] = mmapStringFromFile(filename);
 
   // Each vector is 4 + 4*d bytes.
@@ -159,4 +164,4 @@ auto parse_bvecs(const char* filename) {
   });
 
   return points;
-}
+} */
