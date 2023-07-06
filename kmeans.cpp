@@ -2,6 +2,7 @@
 #include "lazy.h"
 #include "initialization.h"
 #include "NSGDist.h"
+#include "naive.h"
 
 //T : the data type of a coordinate of our points
 //initializer: function used to initialize the centers
@@ -18,28 +19,27 @@
 //  sum of the distance between the new and old centers is less than epsilon, 
 //  we stop early
 //returns: a double, the cost of the final center choice    
-template<typename T, typename Initializer, typename Runner>         
-void Kmeans(T* v, size_t n, size_t d, size_t k, float* centers, size_t* asg, 
-std::string dist_choice, size_t max_iter = 1000, double epsilon=0.01) {
+// template<typename T, typename Initializer, typename Runner>         
+// void Kmeans(T* v, size_t n, size_t d, size_t k, float* centers, size_t* asg, 
+// std::string dist_choice, size_t max_iter = 1000, double epsilon=0.01) {
 
-    Distance D;
-    if (dist_choice=="euclidean") {
-        if (k >= 36 && d >= 36) {
-            D = EuclideanDistance();
+//     Distance D;
+//     if (dist_choice=="euclidean") {
+//         if (k >= 36 && d >= 36) {
+//             D = EuclideanDistance();
 
-        }
-        else {
-            D = EuclideanDistanceSmall();
-        }
-    }
-    else {
-        std::cout << "Invalid distance choice" << std::endl;
-        abort();
-    }
+//         }
+//         else {
+//             D = EuclideanDistanceSmall();
+//         }
+//     }
+//     else {
+//         std::cout << "Invalid distance choice" << std::endl;
+//         abort();
+//     }
 
-    Kmeans<T,Initializer,Runner>(v,n,d,k,centers,asg,D,max_iter,epsilon);
-
-}
+//     Kmeans<T,Initializer,Runner>(v,n,d,k,centers,asg,D,max_iter,epsilon);
+// }
 
 template<typename T, typename Initializer, typename Runner>         
 void Kmeans(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
@@ -49,6 +49,17 @@ Distance& D, size_t max_iter = 1000, double epsilon=0.01) {
     init.initialize(v,n,d,k,c,asg,D);
     Runner run;
     run.cluster(v,n,d,k,c,asg,D,max_iter,epsilon);
+
+}
+
+//debugging function
+void debug_dist(Distance& D) {
+    parlay::sequence<float> buf1(50,1);
+    parlay::sequence<float> buf2(50,2);
+    std::cout << "dist init: " << D.distance(make_slice(buf1).begin(),make_slice(buf2).begin(),50) << std::endl;
+    std::cout << "finished with dist\n";
+
+    abort(); //cutting early
 
 }
 
@@ -76,8 +87,35 @@ int main() {
         std::cout << std::endl;
     }
 
+
+    std::string dist_choice = "euclidean";
+    //DISTANCE MUST BE A dynamically allocated pointer*
+    Distance* D;
+
+    if (dist_choice=="euclidean") {
+        if (k >= 36 && d >= 36) {
+            std::cout << "using vec dist" << std::endl;
+            D = new EuclideanDistance();
+
+        }
+        else {
+            std::cout << "using small dist" <<std::endl;
+            D = new EuclideanDistanceSmall();
+        }
+    }
+    else {
+        std::cout << "Invalid distance choice" << std::endl;
+        abort();
+    }
+
+   //debug_dist(*D);
+   
+
+
     //not actually running kmeans right now
-    Kmeans<uint8_t,LazyStart<uint8_t>,Lazy<uint8_t>>(v,n,d,k,c,asg,"euclidean",10,0.01);
+    //Kmeans<uint8_t,LazyStart<uint8_t>,Lazy<uint8_t>>(v,n,d,k,c,asg,D,10,0.01);
+    Kmeans<uint8_t,LazyStart<uint8_t>,NaiveKmeans<uint8_t>>(v,n,d,k,c,asg,*D,10,0.01);
+
 
     std::cout << "Printing out final centers: "  << std::endl;
     for (size_t i = 0; i < k; i++) {

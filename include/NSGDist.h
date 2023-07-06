@@ -422,6 +422,8 @@ struct EuclideanDistanceSmall : public Distance {
     std::string id() {return "euclidean_small";}
 
     float distance(uint8_t *p, uint8_t *q, unsigned d){
+          std::cout << "uint8: d: " << static_cast<int>(d) << std::endl;
+
     int result = 0;
     for(unsigned i=0; i<d; i++){
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *

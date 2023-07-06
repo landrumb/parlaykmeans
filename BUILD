@@ -39,6 +39,7 @@ cc_library(
   "include/lazy.h",
   "include/NSGDist.h",
   "include/initialization.h",
+  "include/naive.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
@@ -48,6 +49,7 @@ cc_library(
     "@parlaylib//parlay:primitives",
     "@parlaylib//parlay:sequence",
     "@parlaylib//parlay:slice",
+    "@parlaylib//parlay:io",
 
   ],
  
