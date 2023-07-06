@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+bazel-bin
+bazel-out
+bazel-parlaykmeans
+bazel-testlogs

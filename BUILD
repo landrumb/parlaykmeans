@@ -40,6 +40,7 @@ cc_library(
   "include/NSGDist.h",
   "include/initialization.h",
   "include/naive.h",
+  "include/accumulator.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
