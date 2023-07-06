@@ -101,60 +101,6 @@ struct NaiveKmeans {
 }
 
 
-//MUST PASS DISTANCE BY REFERENCE NOT COPY
-//put the coordinates of p onto the stack (in buf) for the calculation
-//this version will try to be more parallel by doing a coordinate on every center then adding
-//nope not faster (at least on this computer my Macbook)
-template<typename T> size_t closest_point_vd_spanned(const point<T>& p, sequence<center<float>>& centers, Distance& D) {
-    if constexpr(std::is_same<T,float>() == true) { //not changing this piece
-      assert(centers.size() > 0);
-        assert(p.coordinates.size() == centers[0].coordinates.size());
-
-          int d = p.coordinates.size();
-
-        //no need to convert with a buffer
-        auto distances = parlay::delayed::map(centers, [&](center<float>& q) {
-            return D.distance(p.coordinates.begin(), make_slice(q.coordinates).begin(),d);
-        });
-
-        return min_element(distances) - distances.begin();
-
-        
-    }
-    else {
-        int k = centers.size();
-        int d = p.coordinates.size();
-
-        sequence<sequence<float>> distances_expanded(k,sequence<float>(d));
-        parallel_for(0,k*d,[&] (size_t icoord){
-          int coord = icoord % d;
-          int cen = icoord/d;
-          float dist = static_cast<float>(p.coordinates[coord])-centers[cen].coordinates[coord];
-          distances_expanded[cen][coord] = dist*dist;
-        });
-
-        auto  distances = parlay::delayed::map(distances_expanded, [&] (sequence<float> seq) {
-          return reduce(seq);
-
-        });
-
-        if (DEBUG_VD) {
-          std::cout << "distance printing" << std::endl;
-          for (int i = 0; i < distances.size(); i++) {
-            std::cout << distances[i] << " " ;
-          }
-          std::cout << std::endl;
-        }
-        return min_element(distances) - distances.begin();
-
-    }
-
-}
-
-
-
-
-
 //put the coordinates of p onto the stack (in buf) for the calculation
 //purely for debugging purposes, a sequential implementation easier to debug
 template<typename T> size_t closest_point_vd_seq(const point<T>& p, sequence<center<float>>& centers, Distance& D) {
