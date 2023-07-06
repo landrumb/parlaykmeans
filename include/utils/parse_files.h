@@ -1,11 +1,11 @@
 #include <iostream>
 #include <algorithm>
-#include "../parlay/parallel.h"
-#include "../parlay/primitives.h"
-#include "../parlay/sequence.h"
-#include "../parlay/slice.h"
-#include "../parse_command_line.h"
-#include "types.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "parlay/sequence.h"
+#include "parlay/slice.h"
+//#include "../parse_command_line.h"
+//#include "types.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>

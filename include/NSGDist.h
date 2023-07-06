@@ -12,8 +12,8 @@
 #include <algorithm>
 #include <type_traits>
 #include <math.h>
-#include "../parlay/parallel.h"
-#include "../parlay/primitives.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
 
 extern bool report_stats;
 
@@ -360,7 +360,7 @@ struct Mips_Distance : public Distance{
 
   float distance(uint8_t *p, uint8_t *q, unsigned d){
     int result = 0;
-    for(int i=0; i<d; i++){
+    for(unsigned i=0; i<d; i++){ //changing type of i to unsigned to avoid compiler warnings
       result += ((int32_t) q[i]) *
                     ((int32_t) p[i]);
     }
@@ -369,7 +369,7 @@ struct Mips_Distance : public Distance{
 
   float distance(int8_t *p, int8_t *q, unsigned d){
     int result = 0;
-    for(int i=0; i<d; i++){
+    for(unsigned i=0; i<d; i++){ //changed type of i to unsigned to avoid compiler warnings
       result += ((int32_t) q[i]) *
                     ((int32_t) p[i]);
     }
@@ -378,7 +378,7 @@ struct Mips_Distance : public Distance{
 
   float distance(float *p, float *q, unsigned d){
       float result = 0;
-      for(int i=0; i<d; i++){
+      for(unsigned i=0; i<d; i++){
         result += (q[i]) * (p[i]);
       }
       return -result;
@@ -393,7 +393,7 @@ struct EuclideanDistance : public Distance{
   float distance(uint8_t *p, uint8_t *q, unsigned d){
    // std::cout << "calling uint8_t dist\n";
     int result = 0;
-    for(int i=0; i<d; i++){
+    for(unsigned i=0; i<d; i++){
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
@@ -403,7 +403,7 @@ struct EuclideanDistance : public Distance{
   float distance(int8_t *p, int8_t *q, unsigned d){
   //  std::cout << "calling int8_t dist" << std::endl;
     int result = 0;
-    for(int i=0; i<d; i++){
+    for(unsigned i=0; i<d; i++){
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
@@ -423,7 +423,7 @@ struct EuclideanDistanceSmall : public Distance {
 
     float distance(uint8_t *p, uint8_t *q, unsigned d){
     int result = 0;
-    for(int i=0; i<d; i++){
+    for(unsigned i=0; i<d; i++){
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
@@ -432,7 +432,7 @@ struct EuclideanDistanceSmall : public Distance {
 
   float distance(int8_t *p, int8_t *q, unsigned d){
     int result = 0;
-    for(int i=0; i<d; i++){
+    for(unsigned i=0; i<d; i++){
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
@@ -440,7 +440,7 @@ struct EuclideanDistanceSmall : public Distance {
   }
   float distance(float* p, float* q, unsigned d) {
     float result = 0;
-    for (int i = 0; i < d; i++) {
+    for (unsigned i = 0; i < d; i++) {
       result += (p[i]-q[i])*(p[i]-q[i]);
     }
     return result;
