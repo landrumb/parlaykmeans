@@ -23,15 +23,20 @@
 #include "include/lazy.h"
 #include "include/naive.h"
 
+#define INITIALIZER Forgy
+#define RUNNER Lazy
+
+const float epsilon = 0.0;
+
 
 template<typename T, typename Initializer, typename Runner>         
 void Kmeans(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
 Distance& D, kmeans_bench logger, size_t max_iter = 1000, double epsilon=0.01) {
 
     Initializer init;
-    init.initialize(v,n,d,k,c,asg,D);
+    init(v,n,d,k,c,asg,D, logger);
     Runner run;
-    run.cluster(v,n,d,k,c,asg,D,max_iter,epsilon);
+    run.cluster(v,n,d,k,c,asg,D, logger, max_iter,epsilon);
 
 }
 
@@ -45,12 +50,75 @@ inline void bench(T* v, size_t n, size_t d, size_t k, Distance& D, size_t max_it
     logger.end_time();
     logger.print();
 
-    // std::cout << empty_centers(centers) << " empty centers" << std::endl;
-    // std::cout << avg_center_size(centers) << " average center size" << std::endl;
-    // std::cout << dist_between_first_center_and_centroid(v, centers, *D) << " distance between first center and centroid" << std::endl;
-    // std::pair<int, int> min_max = min_max_cluster_size(centers);
-    // std::cout << min_max.first << " minimum cluster size, " << min_max.second << " maximum cluster size" << std::endl;
-    // std::cout << msse(v, centers, *D) << " mean sum squared error" << std::endl;
-
     return;
+}
+
+int main(int argc, char* argv[]){
+    commandLine P(argc, argv, "[-k <n_clusters>] [-m <iterations>] [-o <output>] [-i <input>] [-f <ft>] [-t <tp>] [-D <dist>]");
+
+    size_t k = P.getOptionLongValue("-k", 10); // k is number of clusters
+    size_t max_iterations = P.getOptionLongValue("-m", 1000); // max_iterations is the max # of Lloyd iters kmeans will run
+    std::string output = std::string(P.getOptionValue("-o", "kmeans_results.csv")); // maybe the kmeans results get written into this csv
+    std::string input = std::string(P.getOptionValue("-i", "")); // the input file
+    std::string ft = std::string(P.getOptionValue("-f", "bin")); // file type, bin or vecs
+    std::string tp = std::string(P.getOptionValue("-t", "uint8")); // data type
+    std::string dist = std::string(P.getOptionValue("-D", "Euclidian")); // distance choice
+
+    if(input == ""){ // if no input file given, quit
+        std::cout << "Error: input file not specified" << std::endl;
+        abort();
+    }
+
+    if((ft != "bin") && (ft != "vec")){ // if the file type chosen is not one of the two approved file types, quit 
+    std::cout << "Error: file type not specified correctly, specify bin or vec" << std::endl;
+    abort();
+    }
+
+    if((tp != "uint8") && (tp != "int8") && (tp != "float")){ // if the data type isn't one of the three approved data types, quit
+        std::cout << "Error: vector type not specified correctly, specify int8, uint8, or float" << std::endl;
+        abort();
+    }
+
+    if((ft == "vec") && (tp == "int8")){ // you can't store int8s in a vec file apparently I guess
+        std::cout << "Error: incompatible file and vector types" << std::endl;
+        abort();
+    }
+
+    // TODO: add support for vec files
+    if (ft == "vec") {
+        std::cout << "Error: vec file type not supported yet" << std::endl;
+        abort();
+    }
+
+    Distance* D; // create a distance object, it can either by Euclidian or MIPS
+    if (dist == "Euclidian") { 
+        std::cout << "Using Euclidian distance" << std::endl;
+        D = new Euclidian_Distance();
+    } else if (dist == "mips") {
+        std::cout << "Using MIPS distance" << std::endl;
+        D = new Mips_Distance();
+    } else {
+        std::cout << "Error: distance type not specified correctly, specify Euclidean or mips" << std::endl;
+        abort();
+    }
+
+    if (ft == "bin"){
+        if (tp == "float") {
+            auto [v, n, d] = parse_fbin(input.c_str());
+            bench<float, INITIALIZER, RUNNER>(v, n, d, k, D, max_iterations, epsilon);
+        } else if (tp == "uint8") {
+            auto [v, n, d] = parse_uint8bin(input.c_str());
+            bench<uint8_t, INITIALIZER, RUNNER>(v, n, d, k, D, max_iterations, epsilon);
+        } else if (tp == "int8") {
+            auto [v, n, d] = parse_int8bin(input.c_str());
+            bench<int8_t, INITIALIZER, RUNNER>(v, n, d, k, D, max_iterations, epsilon);
+        } else {
+            //  this should actually be unreachable
+            std::cout << "Error: bin type can only be float, uint8, or int8. Supplied type is " << tp << "." << std::endl;
+            abort();
+        }
+    }
+
+    return 0;
+
 }

@@ -64,7 +64,7 @@ size_t* asg) {
 //Then assigns cyclically
 template<typename T>
 struct LazyStart {
-    void initialize(T* v, size_t n, size_t d, size_t k, float* c, 
+    void operator()(T* v, size_t n, size_t d, size_t k, float* c, 
     size_t* asg, Distance& D) {
         for (size_t i = 0; i < k; i++) {
             for (size_t j = 0; j < d; j++) {
