@@ -1,8 +1,14 @@
-#include "utils/parse_files.h"
+#include "include/utils/parse_files.h"
+#include "include/utils/parse_command_line.h"
+#include "include/utils/NSGDist.h"
 #include "lazy.h"
 #include "initialization.h"
-#include "utils/NSGDist.h"
 #include "naive.h"
+
+#include "parlay/sequence.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+
 
 //T : the data type of a coordinate of our points
 //initializer: function used to initialize the centers
