@@ -9,15 +9,6 @@ cc_binary(
     ],
 )
 
-cc_binary(
-	name = "test2",
-	srcs=["test.cpp"],
-	linkopts = ["-pthread"],
-	deps = [
-		"@parlaylib//parlay:parallel",
-	],
-)
-
 
 #What's with this binary library separation?
 cc_binary(
@@ -55,3 +46,40 @@ cc_library(
   ],
  
 )
+
+
+#What's with this binary library separation?
+cc_binary(
+  name="yinyang_debug_test",
+  srcs=["include/yinyang_debugging.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":yinyang_faithful",
+  ],
+ 
+)
+
+
+#making sure that yinyang compiles to help with debugging
+cc_library(
+  name="yinyang_faithful",
+  srcs=["include/yinyang_faithful.h"],
+  hdrs=["include/NSGDist.h"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    "@parlaylib//parlay:parallel",
+    "@parlaylib//parlay:primitives",
+    "@parlaylib//parlay:sequence",
+    "@parlaylib//parlay:slice",
+    "@parlaylib//parlay:io",
+
+  ],
+
+
+)
+
+

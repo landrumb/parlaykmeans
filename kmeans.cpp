@@ -139,7 +139,7 @@ int main() {
 
     delete[] c;
     delete[] asg;
-
+    delete D;
 
 
 }
