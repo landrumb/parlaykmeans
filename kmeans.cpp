@@ -105,13 +105,13 @@ int main(int argc, char* argv[]){
     if (ft == "bin"){
         if (tp == "float") {
             auto [v, n, d] = parse_fbin(input.c_str());
-            bench<float, INITIALIZER, RUNNER>(v, n, d, k, D, max_iterations, epsilon);
+            bench<float, INITIALIZER<float>, RUNNER<float>>(v, n, d, k, D, max_iterations, epsilon);
         } else if (tp == "uint8") {
             auto [v, n, d] = parse_uint8bin(input.c_str());
-            bench<uint8_t, INITIALIZER, RUNNER>(v, n, d, k, D, max_iterations, epsilon);
+            bench<uint8_t, INITIALIZER<uint8_t>, RUNNER<uint8_t>>(v, n, d, k, D, max_iterations, epsilon);
         } else if (tp == "int8") {
             auto [v, n, d] = parse_int8bin(input.c_str());
-            bench<int8_t, INITIALIZER, RUNNER>(v, n, d, k, D, max_iterations, epsilon);
+            bench<int8_t, INITIALIZER<int8_t>, RUNNER<int8_t>>(v, n, d, k, D, max_iterations, epsilon);
         } else {
             //  this should actually be unreachable
             std::cout << "Error: bin type can only be float, uint8, or int8. Supplied type is " << tp << "." << std::endl;
