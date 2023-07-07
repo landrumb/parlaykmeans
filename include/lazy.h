@@ -3,7 +3,7 @@
  */
 
 #include <tuple>
-#include "NSGDist.h"
+#include "utils/NSGDist.h"
 
 template <typename T>
 struct Lazy {
