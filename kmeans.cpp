@@ -1,7 +1,7 @@
 #include "utils/parse_files.h"
 #include "lazy.h"
 #include "initialization.h"
-#include "NSGDist.h"
+#include "utils/NSGDist.h"
 #include "naive.h"
 
 //T : the data type of a coordinate of our points

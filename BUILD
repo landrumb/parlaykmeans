@@ -37,10 +37,10 @@ cc_library(
   srcs=["kmeans.cpp"],
   hdrs = ["include/utils/parse_files.h",
   "include/lazy.h",
-  "include/NSGDist.h",
+  "include/utils/NSGDist.h",
   "include/initialization.h",
   "include/naive.h",
-  "include/accumulator.h",
+  "include/utils/accumulator.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
