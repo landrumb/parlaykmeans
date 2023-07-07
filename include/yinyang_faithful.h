@@ -248,9 +248,63 @@ parlay::sequence<center> compute_centers_vd(
         });
 
     }
-
+    //TODO: If the type is float, then run a separate branch, 
+    //no need to convert to float
     void distances_to_groups(const point&p, parlay::sequence<center>& centers,
-    Distance& D, parlay::sequence<float>&)
+    parlay::sequence<group> groups,
+    Distance& D, size_t t, size_t group_size, 
+    parlay::sequence<float>& distances, parlay::sequence<float> distances2nd) {
+
+        //convert point coordinates to float buffer
+        const int d = p.coordinates.size();
+        float buf[d];
+        T* it = p.coordinates.begin();
+        for (int i = 0; i < d; i++) {
+            buf[i]=*it;
+            it += 1; //add 1 for next?
+        }
+
+        //for each group
+        parallel_for(0,t,(size_t i) {
+            //calculate the distance from each group member to the point
+            auto dist = parlay::map(groups[i].center_ids, 
+            [&](size_t j) {
+            return D.distance(buf, make_slice(centers[j].coordinates).begin(),d);
+            });
+
+            //find the closest and 2nd closest center
+            //TODO make parallel
+            size_t min_index = -1;
+            size_t min2_index = -1; //2nd smallest
+            if (dist[0] < dist[1]) {
+                min_index = 0;
+                min2_index = 1;
+            }
+            else {
+                min_index = 1;
+                min2_index = 0;
+            }
+            for (int j = 2; j < group_size; j++) {
+                if (dist[j] < dist[min2_index]) {
+                    if (dist[j] < dist[min_index]) {
+                        min2_index = min_index;
+                        min_index = j;
+                    
+                    }
+                    else {
+                        min2_index = j;
+                    }
+                 }
+
+            }
+            distances[i] = min_index;
+            distances2nd[i] = min2_index;
+        });
+
+
+        });
+
+    }
 
 
 
@@ -285,6 +339,10 @@ parlay::sequence<center> compute_centers_vd(
         size_t t = k/group_size; //t is the number of groups
         if (group_size * t != k) {
             std::cout << "not exactly divisible t k, aborting" << std::endl;
+            abort();
+        }
+        if (group_size <= 1) {
+            std::cout << "Group size 1 not supported right now, aborting\n";
             abort();
         }
 
@@ -323,7 +381,7 @@ parlay::sequence<center> compute_centers_vd(
         //Yinyang first does a normal iteration of kmeans:   
         
         //Assignment
-        parlay::sequence<sequence<float>> distances(t,sequence<float>());
+        parlay::sequence<sequence<float>> distances(t);
         distances_to_centers()
         // Assign each point to the closest center
         parlay::parallel_for(0, pts.size(), [&](size_t i) {
