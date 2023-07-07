@@ -249,6 +249,9 @@ parlay::sequence<center> compute_centers_vd(
 
     }
 
+    void distances_to_groups(const point&p, parlay::sequence<center>& centers,
+    Distance& D, parlay::sequence<float>&)
+
 
 
     void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
@@ -274,14 +277,17 @@ parlay::sequence<center> compute_centers_vd(
 
         });
 
-        if (10 * t != k) {
+
+        
+
+        
+        size_t group_size = 10;
+        size_t t = k/group_size; //t is the number of groups
+        if (group_size * t != k) {
             std::cout << "not exactly divisible t k, aborting" << std::endl;
             abort();
         }
 
-        
-
-        size_t t = k/10; //t is the number of groups
 
         //cluster on the groups initially using NaiveKmeans
         float* group_centers = new float[t * d];
@@ -292,7 +298,27 @@ parlay::sequence<center> compute_centers_vd(
 
         parallel_for(0,k,(size_t i) {
             centers[i].group_id = group_asg[i];
-        })
+        });
+
+        parlay::sequence<group> groups(t);
+
+
+        //Sadly sequential assigning the groups
+        for (int i = 0; i < k; i++) {
+            groups[centers[i].groups_id].center_ids.push_back(i);
+        }
+
+        //confirm group assignment happened properly
+        //(checking a necessary not sufficient condition)
+        for (int i =0 ;i < t; i++) {
+            if (groups[i].center_ids.size() != group_size) {
+                std::cout << 
+                "Group assignment went wrong, group is wrong size"
+                << std::endl;
+                abort();
+            }
+        }
+
 
         //Yinyang first does a normal iteration of kmeans:   
         

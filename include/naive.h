@@ -128,6 +128,11 @@ struct NaiveKmeans {
             return D.distance(buf, make_slice(q.coordinates).begin(),d);
         });
 
+        //C++ won't auto-cast
+        // auto distances = parlay::delayed::map(centers, [&](center& q) {
+        //     return D.distance(p.coordinates.begin(), make_slice(q.coordinates).begin(),d);
+        // });
+
         if (DEBUG_VD) {
           std::cout << "distance printing" << std::endl;
           for (size_t i = 0; i < distances.size(); i++) {
