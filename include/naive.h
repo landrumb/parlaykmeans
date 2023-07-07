@@ -10,7 +10,7 @@
 #include "parlay/delayed.h"
 #include "parlay/io.h"
 #include "parlay/internal/get_time.h"
-#include "NSGDist.h"
+#include "utils/NSGDist.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
