@@ -274,6 +274,13 @@ parlay::sequence<center> compute_centers_vd(
 
         });
 
+        if (10 * t != k) {
+            std::cout << "not exactly divisible t k, aborting" << std::endl;
+            abort();
+        }
+
+        
+
         size_t t = k/10; //t is the number of groups
 
         //cluster on the groups initially using NaiveKmeans
@@ -290,7 +297,7 @@ parlay::sequence<center> compute_centers_vd(
         //Yinyang first does a normal iteration of kmeans:   
         
         //Assignment
-        parlay::sequence<float> distances(k);
+        parlay::sequence<sequence<float>> distances(t,sequence<float>());
         distances_to_centers()
         // Assign each point to the closest center
         parlay::parallel_for(0, pts.size(), [&](size_t i) {
