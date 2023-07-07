@@ -303,7 +303,8 @@ float* c, size_t* asg, Distance& D, size_t max_iter, double epsilon) {
 
 
 double kmeans_vd(parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
-parlay::sequence<center>& centers, Distance& D, size_t max_iterations, double epsilon)
+parlay::sequence<center>& centers, Distance& D, size_t max_iterations, 
+double epsilon)
 {
 
     std::cout << "running vd" << std::endl;
