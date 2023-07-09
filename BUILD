@@ -66,7 +66,10 @@ cc_binary(
 cc_library(
   name="yinyang_faithful",
   srcs=["include/yinyang_faithful.h"],
-  hdrs=["include/NSGDist.h"],
+  hdrs=["include/utils/NSGDist.h",
+  "include/initialization.h",
+  "include/naive.h",
+  "include/utils/accumulator.h"],
   linkopts=["-pthread"],
   #makes it known that include is an include library
   copts = ["-Iinclude"],

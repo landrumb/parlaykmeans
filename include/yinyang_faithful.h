@@ -7,10 +7,14 @@
 #include "parlay/delayed.h"
 #include "parlay/io.h"
 #include "parlay/internal/get_time.h"
-#include "NSGDist.h"
+#include "utils/NSGDist.h"
+#include "initialization.h"
+#include "naive.h"
 
 template<typename T>
 struct YinyangFaithful {
+
+    bool DEBUG_VD = false;
 
     struct point {
 
@@ -18,23 +22,23 @@ struct YinyangFaithful {
         size_t best; // the index of the best center for the point
         size_t id;
         float ub;
-        float lb;
+        parlay::sequence<float> lb; //lower bounds from a point to each group
+        float global_lb; //global lower bound
 
     
         point() : best(-1), coordinates(nullptr, nullptr), 
-        ub(std::numeric_limits<float>::max()), lb(-1) {
+        ub(std::numeric_limits<float>::max()) {
         }
 
         point(size_t chosen, parlay::slice<T*,T*> coordinates) : best(chosen), 
         coordinates(coordinates.begin(),coordinates.end()), 
-        ub(std::numeric_limits<float>::max()), lb(-1) {
+        ub(std::numeric_limits<float>::max()) {
         
         }
 
-        point(size_t chosen, parlay::slice<T*,T*> coordinates, float ub, 
-        float lb) : best(chosen), 
-        coordinates(coordinates.begin(),coordinates.end()), 
-        ub(ub), lb(lb) {
+        point(size_t chosen, parlay::slice<T*,T*> coordinates, float ub) : 
+        best(chosen), coordinates(coordinates.begin(),coordinates.end()), 
+        ub(ub) {
         
         }
 
@@ -45,7 +49,8 @@ struct YinyangFaithful {
     struct center {
         size_t id; // a unique (hopefully) identifier for the center
         size_t group_id; //the id of the group that the center belongs to
-        parlay::sequence<float> coordinates; // the pointer to coordinates of the center
+        parlay::sequence<float> coordinates; // the pointer to coordinates of 
+        //the center
         float delta;
 
         center(size_t id, parlay::sequence<float> coordinates) : id(id) {
@@ -64,7 +69,9 @@ struct YinyangFaithful {
         //store the ids of all the centers 
         //belonging to this group
         parlay::sequence<size_t> center_ids;
-    }
+
+        float max_drift;
+    };
 
 
     //We copy in the naive kmeans code because Yinyang first does a normal 
@@ -237,19 +244,10 @@ parlay::sequence<center> compute_centers_vd(
 
     }
 
-    //distances to each center
-    //distances put in the distances argument, a sequence of size k
-    void distances_to_centers(const point& p, parlay::sequence<center>& 
-    centers, Distance& D, parlay::sequence<float>& distances) {
-        size_t d = p.coordinates.size();
-        parallel_for(0,k,[&] (size_t i) {
-            distances[i] = D.distance(p.coordinates.begin(),
-            make_slice(q.coordinates).begin(),d);
-        });
-
-    }
     //TODO: If the type is float, then run a separate branch, 
     //no need to convert to float
+
+    //find the distance from a point to each group (closest and 2nd closest)
     void distances_to_groups(const point&p, parlay::sequence<center>& centers,
     parlay::sequence<group> groups,
     Distance& D, size_t t, size_t group_size, 
@@ -265,7 +263,7 @@ parlay::sequence<center> compute_centers_vd(
         }
 
         //for each group
-        parallel_for(0,t,(size_t i) {
+        parallel_for(0,t,[&] (size_t i) {
             //calculate the distance from each group member to the point
             auto dist = parlay::map(groups[i].center_ids, 
             [&](size_t j) {
@@ -302,7 +300,7 @@ parlay::sequence<center> compute_centers_vd(
         });
 
 
-        });
+    
 
     }
 
@@ -350,11 +348,13 @@ parlay::sequence<center> compute_centers_vd(
         //cluster on the groups initially using NaiveKmeans
         float* group_centers = new float[t * d];
         size_t* group_asg = new size_t[k];
+        LazyStart<float> init;
+        init.initialize(c,k,d,t,group_centers,group_asg,D);
+        NaiveKmeans<float> run;
+        run.cluster(c,k,d,t,
+            group_centers, group_asg,D, 5, 0.0001);
 
-        Kmeans<float,LazyStart<float>,NaiveKmeans<float>>(c,k,d,t,
-            group_centers, *D, 5, 0.0001);
-
-        parallel_for(0,k,(size_t i) {
+        parallel_for(0,k,[&] (size_t i) {
             centers[i].group_id = group_asg[i];
         });
 
@@ -381,26 +381,98 @@ parlay::sequence<center> compute_centers_vd(
         //Yinyang first does a normal iteration of kmeans:   
         
         //Assignment
-        parlay::sequence<sequence<float>> distances(t);
-        distances_to_centers()
+        //distance from each group to a point
+        parlay::sequence<parlay::sequence<float>> distances(n,parlay::sequence<float>(t));
+        //distance from 2nd closest point in each group to a point
+        parlay::sequence<parlay::sequence<float>> distances2nd(n,parlay::sequence<float>(t));
         // Assign each point to the closest center
         parlay::parallel_for(0, pts.size(), [&](size_t i) {
-        pts[i].best = closest_point_vd(pts[i], centers,D);
+            distances_to_groups(pts[i],centers,groups,D,t,group_size,distances,
+            distances2nd);
+
+            pts[i].lb = parlay::sequence<float>(t); //initialize the lower bound sequence
         });
 
-        // Compute new centers
-        parlay::sequence<center> new_centers = compute_centers_vd(pts, n, d, k, 
-            centers);
+        //actually take best
+        parlay::parallel_for(0,n,[&] (size_t i) {
+            pts[i].best=min_element(distances[i])-distances[i].begin();
+            pts[i].ub = distances[pts[i].best];
+            //could do in parallel? TODO
+            for (int j = 0; j < t; j++) {
+                //in the group containing the best, you take the 2nd best from
+                //the group
+                if (pts[i].best==j) {
+                    pts[i].lb[j] = distances2nd[i][j];
+                }
+                else {
+                    pts[i].lb[j] = distances[i][j];
+                }
+                
+            }
+        });
 
-        // Check convergence
-        total_diff = 0.0;
-        for (size_t i = 0; i < k; i++) { 
-        float diff = D.distance(centers[i].coordinates.begin(), 
-        new_centers[i].coordinates.begin(),k);
-        total_diff += diff;
+       
+
+        size_t iters = 1;
+        
+        //Step 3: Repeat until convergence
+        while (true) {
+
+             // Compute new centers
+            parlay::sequence<center> new_centers = compute_centers_vd(pts, n, d, k, 
+                centers);
+
+            // Check convergence
+            total_diff = 0.0;
+            for (size_t i = 0; i < k; i++) { 
+            new_centers[i].delta = D.distance(centers[i].coordinates.begin(), 
+            new_centers[i].coordinates.begin(),k);
+            total_diff += new_centers[i].delta;
+            }
+
+            centers = std::move(new_centers);
+
+            //for each group, get max drift for group
+            parlay::parallel_for(0,t,[&] (size_t i) {
+                auto drifts = map(groups[i].center_ids, [&] (size_t j) {
+                    return centers[j].delta;
+
+                });
+                groups[i].max_drift = max_element(drifts);
+
+            });
+
+
+            //3.2: Group filtering
+
+            //update bounds
+            parlay::parallel_for(0,n,[&](size_t i) {
+                pts[i].ub += centers[pts[i].best].delta; 
+                pts[i].global_lb = max(0,pts[i].lb-groups[j].max_drift);
+                for (int j = 0; j < t; j++) {
+                    pts[i].lb[j] = max(0,pts[i].lb-groups[j].max_drift);
+                    if (pts[i].global_lb > pts[i].lb[j]) {
+                        pts[i].global_lb = pts[i].lb[j];
+                    } //continue here TODO
+                }
+
+
+            });
+
+
+
+
+
+
+
+
+            //convergence check
+            if (iters >= max_iter || total_diff < epsilon) break;
+            iters += 1;
+
+
         }
-
-        centers = std::move(new_centers);
+        
 
         delete[] group_centers; //memory cleanup
         delete[] group_asg;
