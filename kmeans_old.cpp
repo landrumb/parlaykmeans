@@ -4,7 +4,7 @@
 #include "lazy.h"
 #include "initialization.h"
 #include "naive.h"
-#include "yinyang_faithful.h"
+#include "yinyang_simp.h"
 
 #include "parlay/sequence.h"
 #include "parlay/parallel.h"
@@ -129,12 +129,12 @@ int main() {
     for (size_t i = 0; i < n; i++) {
         asg2[i] = asg[i];
     }
-    size_t max_iter = 10;
+    size_t max_iter = 30;
     double epsilon = 0.01;
 
     NaiveKmeans<uint8_t> nie;
     nie.cluster(v,n,d,k,c,asg,*D,max_iter,epsilon);
-    YinyangFaithful<uint8_t> yy;
+    YinyangSimp<uint8_t> yy;
     yy.cluster(v,n,d,k,c2,asg2,*D,max_iter,epsilon);
 
 

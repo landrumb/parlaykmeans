@@ -20,8 +20,9 @@ struct YinyangSimp {
 
   struct point {
 
-    parlay::slice<T*, T*> coordinates; // the coordinates of the point
     size_t best; // the index of the best center for the point
+    parlay::slice<T*, T*> coordinates; // the coordinates of the point
+
     size_t id;
     float ub;
     parlay::sequence<float> lb; //lower bounds from a point to each group
@@ -90,7 +91,7 @@ struct YinyangSimp {
         std::cout << "best: " << p.best << " ";
         std::cout << "ub, 2ub: " << p.ub << " " << p.dist_to_center2 << std::endl;
         std::cout << "global lb; lb: " << p.global_lb;
-        for (int i = 0; i < p.lb.size(); i++) {
+        for (size_t i = 0; i < p.lb.size(); i++) {
           std::cout << p.lb[i] << " ";
 
         }
@@ -108,7 +109,7 @@ struct YinyangSimp {
         std::cout << "best: " << p.best << " ";
         std::cout << "ub, 2ub: " << p.ub << " " << p.dist_to_center2 << std::endl;
         std::cout << "global lb; lb: " << p.global_lb << " ";
-        for (int i = 0; i < p.lb.size(); i++) {
+        for (size_t i = 0; i < p.lb.size(); i++) {
           std::cout << p.lb[i] << " ";
 
         }
@@ -133,7 +134,7 @@ struct YinyangSimp {
 
     void print_group(const group& g) {
       std::cout << "ID: " << g.id << "DEL " << g.max_drift << std::endl;
-      for (int i = 0; i < g.center_ids.size(); i++) {
+      for (size_t i = 0; i < g.center_ids.size(); i++) {
         std::cout << g.center_ids[i] << " ";
       }
       std::cout << std::endl;
@@ -148,17 +149,17 @@ struct YinyangSimp {
   parlay::sequence<group> groups) {
     std::cout << "printing all" << std::endl;
     std::cout << "POINTS: " << std::endl;
-    for (int i =0; i < pts.size(); i++) {
+    for (size_t i =0; i < pts.size(); i++) {
       print_point(pts[i]);
     }
     std::cout << "CENTERS: " << std::endl;
 
-    for (int i = 0; i < centers.size(); i++) {
+    for (size_t i = 0; i < centers.size(); i++) {
       print_center(centers[i]);
     }
     std::cout << "GROUPS: " << std::endl;
 
-    for (int i = 0; i < groups.size(); i++) {
+    for (size_t i = 0; i < groups.size(); i++) {
       print_group(groups[i]);
     }
   }
@@ -335,7 +336,7 @@ struct YinyangSimp {
 
     //convert point coordinates to float buffer
     const int d = p.coordinates.size();
-    float buf[d];
+    float buf[2048];
     T* it = p.coordinates.begin();
     for (int i = 0; i < d; i++) {
     buf[i]=*it;
@@ -491,7 +492,7 @@ struct YinyangSimp {
     return total_diff;
 
   }
-//continue here for debugging
+
   void set_point_global_lb(point& p, parlay::sequence<group>& groups,
   size_t t) {
     p.global_lb = std::numeric_limits<float>::max();
@@ -520,6 +521,12 @@ struct YinyangSimp {
 
     std::cout << "Thus begins yinyang debugging" << std::endl;
 
+    if (d > 2048) {
+      std::cout << "d greater than 2048, too big, printing d: " << 
+      d << std::endl;
+      abort();
+    }
+
 
     //format the data according to our naive run
     parlay::sequence<point> pts = parlay::tabulate<point>(n, [&] (size_t i) {
@@ -540,10 +547,10 @@ struct YinyangSimp {
     fill_in_centers(c,centers,k,d);
 
     std::cout << "printing out init points, centers";
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
       print_point(pts[i]);
     }
-    for (int i = 0; i < k; i++) {
+    for (size_t i = 0; i < k; i++) {
       print_center(centers[i]);
     }
     
@@ -560,6 +567,11 @@ struct YinyangSimp {
 
     parlay::sequence<group> groups(t);
 
+    //need to set group's id!! lol
+    for (size_t i = 0; i < t; i++) {
+      groups[i].id = i;
+    }
+
     
 
 
@@ -567,10 +579,11 @@ struct YinyangSimp {
     //sequential assigning the groups their centers
     for (size_t i = 0; i < k; i++) {
       groups[centers[i].group_id].center_ids.push_back(i);
+      
     }
 
      std::cout << "printing out init groups" << std::endl;
-    for (int i = 0; i < t; i++) {
+    for (size_t i = 0; i < t; i++) {
       print_group(groups[i]);
     }
 
@@ -604,7 +617,7 @@ struct YinyangSimp {
     //print out distances, distance2nd
 
     std::cout << "printing out distances, distances2nd for pt 0 " << std::endl;
-    for (int i = 0; i < t; i++) {
+    for (size_t i = 0; i < t; i++) {
       std::cout << distances[0][i].first << " " << distances[0][i].second << 
       " | " << distances2nd[0][i].first << " " << distances2nd[0][i].second << std::endl;
     }
@@ -628,7 +641,7 @@ struct YinyangSimp {
       total_diff = update_centers_drift(pts,n,d,k,centers,D,groups, t);
 
       //convergence check
-      if (iters >= max_iter || total_diff < epsilon) break;
+      if (iters >= max_iter || total_diff <= epsilon) break;
 
       iters += 1;
 
@@ -646,7 +659,7 @@ struct YinyangSimp {
 
       //check everything after each iter
       std::cout << "iter: " << iters << std::endl;
-      print_all(pts,centers,groups);
+      //print_all(pts,centers,groups);
 
       //3.2: Group filtering
 
@@ -656,11 +669,18 @@ struct YinyangSimp {
         
         set_point_global_lb(pts[i],groups,t);
 
+        //setting lbs super low
+        //TODO remove this
+        pts[i].global_lb = -1;
+        for (size_t j = 0; j < t; j++) {
+          pts[i].lb[j] = -1;
+        }
+
         //if our center could change
         if (pts[i].global_lb < pts[i].ub) {
 
           //copy to float buffer
-          float buf[d];
+          float buf[2048];
           T* it = pts[i].coordinates.begin();
           for (size_t coord = 0; coord < d; coord++) {
             buf[coord] = *it;
@@ -687,69 +707,66 @@ struct YinyangSimp {
             if (pts[i].ub > pts[i].lb[j]) {
               //look at each group member (ie each center)
 
+              //reset the lower bound, make it smallest distance we calculate
+              //that's not the real distance away
+              pts[i].lb[j] = std::numeric_limits<float>::max(); 
+
               for (size_t k = 0; k < groups[j].center_ids.size(); k++) {
-              
-                  //since we skip the local filter, we do a distance calculation
-                  float new_d = D.distance(
-                  buf,
-                  parlay::make_slice(
-                    centers[groups[j].center_ids[k]].coordinates).begin(),
-                  d);
 
-                  //note that the ub is tight rn,
-                  //that ub IS the distance to the previously 
-                  //closest center
-                  if (pts[i].ub > new_d) {
-                    //the group with the previous center gets a slightly
-                    //lower bound, because the distance to the old center can 
-                    //become a lower bound
-                    pts[i].lb[centers[pts[i].best].group_id]=pts[i].ub;
+                
+                //since we skip the local filter, we do a distance calculation
+                float new_d = D.distance(
+                buf,
+                parlay::make_slice(
+                  centers[groups[j].center_ids[k]].coordinates).begin(),
+                d);
 
-                    // the previous best distance becomes 2nd best
-                    pts[i].dist_to_center2 = pts[i].ub; 
-                    
-                    //and we can also use this 2nd best distance as a lower
-                    //bound for group j, as the 2nd best distance is 
-                    //necessarily better than all of the other elements
-                    //in group j (even though elt k is THE best)
-                    pts[i].lb[j] = pts[i].ub;
-                      
-                    pts[i].best=groups[j].center_ids[k];
+                //note that the ub is tight rn,
+                //that ub IS the distance to the previously 
+                //closest center
+                if (pts[i].ub > new_d) {
+                  //the group with the previous center gets a slightly
+                  //lower bound, because the distance to the old center can 
+                  //become a lower bound
+                  pts[i].lb[centers[pts[i].best].group_id]=pts[i].ub;
+
+                  // the previous best distance becomes 2nd best
+                  pts[i].dist_to_center2 = pts[i].ub; 
                   
-                    pts[i].ub = new_d;
+                  //and we can also use this 2nd best distance as a lower
+                  //bound for group j, as the 2nd best distance is 
+                  //necessarily better than all of the other elements
+                  //in group j (even though elt k is THE best)
+                  //without local filtering, don't need this
+                  // if (pts[i].ub < pts[i] < lb[j]) {
+                  //   pts[i].lb[j] = pts[i].ub;
+
+                  // }
                     
+                  pts[i].best=groups[j].center_ids[k];
+                
+                  pts[i].ub = new_d;
+                  
+                }
+                else {
+                  if (new_d < pts[i].lb[j]) {
+                    pts[i].lb[j] = new_d;
                   }
+                }
                 
 
               }
             }
-            else {
-              //shift the lower bound again? TODO why is this needed
-              if (pts[i].lb[j] - groups[j].max_drift > 0) {
-                pts[i].lb[j] = pts[i].lb[j] - groups[j].max_drift > 0;
-              }
-              else {
-                pts[i].lb[j] = 0;
-              }
-           
-            }
+            
 
           }
         }
-        
+      
         }
 
 
       });
 
-
-
-
-
-
-
-
-      
 
 
     }

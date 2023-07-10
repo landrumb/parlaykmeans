@@ -33,8 +33,8 @@ struct NaiveKmeans {
 
     struct point {
 
-        parlay::slice<T*, T*> coordinates; // the coordinates of the point
         size_t best; // the index of the best center for the point
+        parlay::slice<T*, T*> coordinates; // the coordinates of the point
 
     
         point() : best(-1), coordinates(nullptr, nullptr) {
@@ -120,7 +120,7 @@ struct NaiveKmeans {
     else {
        
         const int d = p.coordinates.size();
-        float buf[d];
+        float buf[2048];
         T* it = p.coordinates.begin();
         for (int i = 0; i < d; i++) {
             buf[i]=*it;
@@ -316,6 +316,16 @@ double epsilon)
 {
 
     std::cout << "running vd" << std::endl;
+
+
+    if (d > 2048) {
+      std::cout << "d greater than 2048, too big, printing d: " << 
+      d << std::endl;
+      abort();
+    }
+
+
+    
 
     parlay::internal::timer t = parlay::internal::timer();
     t.start();

@@ -156,7 +156,8 @@ cc_library(
   "include/initialization.h",
   "include/naive.h",
   "include/utils/accumulator.h",
-  "include/yinyang_faithful.h",
+  "include/yinyang_simp.h",
+  "include/utils/kmeans_bench.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
