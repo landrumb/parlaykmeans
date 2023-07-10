@@ -69,7 +69,7 @@ auto parse_uint8bin(const char* filename){
     // });
 
     // is passing this pointer without copying safe? I think yes but not sure
-    return std::make_tuple(fileptr + 8, num_vectors, d);
+    return std::make_tuple((uint8_t*)fileptr + 8, num_vectors, d);
 }
 
 auto parse_int8bin(const char* filename){
@@ -89,7 +89,7 @@ auto parse_int8bin(const char* filename){
     //     points[i].coordinates = parlay::make_slice(start, end);
     // });
 
-    return std::make_tuple(fileptr + 8, num_vectors, d);
+    return std::make_tuple((int8_t*)fileptr + 8, num_vectors, d);
 }
 
 auto parse_fbin(const char* filename){
@@ -110,7 +110,7 @@ auto parse_fbin(const char* filename){
     //     points[i].coordinates = parlay::make_slice(start, end);
     // });
 
-    return std::make_tuple(fileptr + 8, num_vectors, d);
+    return std::make_tuple((float*) fileptr + 8, num_vectors, d);
 }
 
 // the below filetypes are not trivially mmap-able to a flat array

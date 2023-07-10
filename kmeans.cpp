@@ -34,7 +34,7 @@ void Kmeans(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
 Distance& D, kmeans_bench logger, size_t max_iter = 1000, double epsilon=0.01) {
 
     Initializer init;
-    init(v,n,d,k,c,asg,D, logger);
+    init(v,n,d,k,c,asg,D);
     Runner run;
     run.cluster(v,n,d,k,c,asg,D, logger, max_iter,epsilon);
 
@@ -91,9 +91,9 @@ int main(int argc, char* argv[]){
     }
 
     Distance* D; // create a distance object, it can either by Euclidian or MIPS
-    if (dist == "Euclidian") { 
-        std::cout << "Using Euclidian distance" << std::endl;
-        D = new Euclidian_Distance();
+    if (dist == "Euclidean") { 
+        std::cout << "Using Euclidean distance" << std::endl;
+        D = new EuclideanDistance();
     } else if (dist == "mips") {
         std::cout << "Using MIPS distance" << std::endl;
         D = new Mips_Distance();
@@ -105,13 +105,13 @@ int main(int argc, char* argv[]){
     if (ft == "bin"){
         if (tp == "float") {
             auto [v, n, d] = parse_fbin(input.c_str());
-            bench<float, INITIALIZER<float>, RUNNER<float>>(v, n, d, k, D, max_iterations, epsilon);
+            bench<float, INITIALIZER<float>, RUNNER<float>>(v, n, d, k, *D, max_iterations, epsilon);
         } else if (tp == "uint8") {
             auto [v, n, d] = parse_uint8bin(input.c_str());
-            bench<uint8_t, INITIALIZER<uint8_t>, RUNNER<uint8_t>>(v, n, d, k, D, max_iterations, epsilon);
+            bench<uint8_t, INITIALIZER<uint8_t>, RUNNER<uint8_t>>(v, n, d, k, *D, max_iterations, epsilon);
         } else if (tp == "int8") {
             auto [v, n, d] = parse_int8bin(input.c_str());
-            bench<int8_t, INITIALIZER<int8_t>, RUNNER<int8_t>>(v, n, d, k, D, max_iterations, epsilon);
+            bench<int8_t, INITIALIZER<int8_t>, RUNNER<int8_t>>(v, n, d, k, *D, max_iterations, epsilon);
         } else {
             //  this should actually be unreachable
             std::cout << "Error: bin type can only be float, uint8, or int8. Supplied type is " << tp << "." << std::endl;

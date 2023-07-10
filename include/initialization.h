@@ -18,7 +18,7 @@
 #include "parlay/sequence.h"
 #include "utils/NSGDist.h"
 #include "utils/accumulator.h"
-
+#include "utils/kmeans_bench.h"
 /* 
     Randomly assigns each point to a cluster, then computes the centers of each 
     cluster.
@@ -35,7 +35,7 @@ struct Forgy {
         asg: pointer to array of assignments
      */
     void operator()(T* v, size_t n, size_t d, size_t k, float* centers, 
-size_t* asg) {
+size_t* asg, Distance& D) {
         // actually uses the lighter weight i % k version
         parlay::parallel_for(0, n, [&](size_t i) {
             asg[i] = i % k;
