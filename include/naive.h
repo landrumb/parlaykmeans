@@ -14,6 +14,7 @@
 #include "parlay/io.h"
 #include "parlay/internal/get_time.h"
 #include "utils/NSGDist.h"
+#include "utils/kmeans_bench.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -271,7 +272,7 @@ parlay::sequence<center> compute_centers_vd(
 }
 
 void cluster(T* v, size_t n, size_t d, size_t k, 
-float* c, size_t* asg, Distance& D, size_t max_iter, double epsilon) {
+float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
 
   //format the data according to our naive run
   parlay::sequence<point> pts = parlay::tabulate<point>(n, [&] (size_t i) {

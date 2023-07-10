@@ -24,7 +24,7 @@
 #include "include/naive.h"
 
 #define INITIALIZER Forgy
-#define RUNNER Lazy
+#define RUNNER NaiveKmeans
 
 const float epsilon = 0.0;
 
@@ -35,8 +35,13 @@ Distance& D, kmeans_bench logger, size_t max_iter = 1000, double epsilon=0.01) {
 
     Initializer init;
     init(v,n,d,k,c,asg,D);
+
+    std::cout << "Initialization complete" << std::endl;
+
     Runner run;
     run.cluster(v,n,d,k,c,asg,D, logger, max_iter,epsilon);
+
+    std::cout << "Clustering complete" << std::endl;
 
 }
 
