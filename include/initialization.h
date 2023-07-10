@@ -9,6 +9,8 @@
 
     Implementations which do not update asg (for algorithms which will have to recompute it regardless in the first iteration) should be named with a trailing '_noasg' (e.g. Forgy_noasg)
 */
+#ifndef INITERS
+#define INITERS
 
 #include "parlay/random.h"
 #include "parlay/parallel.h"
@@ -78,3 +80,5 @@ struct LazyStart {
         }
     }
 };
+
+#endif //INITERS

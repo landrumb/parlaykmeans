@@ -1,3 +1,6 @@
+#ifndef ACC //acc stands for ACCumulator
+#define ACC
+
 #include "parlay/parallel.h"
 #include "parlay/sequence.h"
 #include "parlay/primitives.h"
@@ -89,3 +92,6 @@ struct maximizer {
             counts = parlay::sequence<T>(parlay::num_workers() * width, (T)0);
         }
 };
+
+
+#endif //for ACC

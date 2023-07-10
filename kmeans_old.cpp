@@ -1,9 +1,10 @@
 #include "include/utils/parse_files.h"
-#include "include/utils/parse_command_line.h"
+//#include "include/utils/parse_command_line.h"
 #include "include/utils/NSGDist.h"
 #include "lazy.h"
 #include "initialization.h"
 #include "naive.h"
+#include "yinyang_faithful.h"
 
 #include "parlay/sequence.h"
 #include "parlay/parallel.h"
@@ -52,7 +53,7 @@ void Kmeans(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
 Distance& D, size_t max_iter = 1000, double epsilon=0.01) {
 
     Initializer init;
-    init.initialize(v,n,d,k,c,asg,D);
+    init(v,n,d,k,c,asg,D);
     Runner run;
     run.cluster(v,n,d,k,c,asg,D,max_iter,epsilon);
 
@@ -75,7 +76,7 @@ int main() {
 
     std::cout << "Starting program" << std::endl;
 
-    size_t k = 10;
+    size_t k = 50;
     
     auto file_parts = parse_uint8bin("Data/base.1B.u8bin.crop_nb_1000");
     uint8_t* v = (uint8_t*) std::get<0>(file_parts);
@@ -115,27 +116,45 @@ int main() {
     }
 
    //debug_dist(*D);
-   
+
+   float* c2 = new float[k*d];
+   size_t* asg2 = new size_t[n];
+
+    LazyStart<uint8_t> init;
+    init(v,n,d,k,c,asg,*D);
+    for (size_t i = 0; i < k*d; i++) {
+        c2[i] = c[i];
+    }
+    for (size_t i = 0; i < n; i++) {
+        asg2[i] = asg[i];
+    }
+    size_t max_iter = 10;
+    double epsilon = 0.01;
+
+    NaiveKmeans<uint8_t> nie;
+    nie.cluster(v,n,d,k,c,asg,*D,max_iter,epsilon);
+    YinyangFaithful<uint8_t> yy;
+    yy.cluster(v,n,d,k,c2,asg2,*D,max_iter,epsilon);
 
 
     //not actually running kmeans right now
     //Kmeans<uint8_t,LazyStart<uint8_t>,Lazy<uint8_t>>(v,n,d,k,c,asg,D,10,0.01);
-    Kmeans<uint8_t,LazyStart<uint8_t>,NaiveKmeans<uint8_t>>(v,n,d,k,c,asg,*D,10,0.01);
-
+    //Kmeans<uint8_t,LazyStart<uint8_t>,NaiveKmeans<uint8_t>>(v,n,d,k,c,asg,*D,10,0.01);
+    
 
     std::cout << "Printing out final centers: "  << std::endl;
     for (size_t i = 0; i < k; i++) {
         for (size_t j = 0; j < d; j++) {
-            std::cout << c[i*d + j] <<  " ";
+            std::cout << c[i*d + j] <<  " " << c2[i*d+j] << std::endl;
         }
-        std::cout << std::endl;
+        std::cout << std::endl << std::endl;
     }
 
     std::cout << "Printing out final assignments: " << std::endl;
     for (size_t i = 0; i < n; i++) {
-        std::cout << asg[i] << " ";
+        std::cout << asg[i] << " " << asg2[i] << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
 
     delete[] c;
     delete[] asg;

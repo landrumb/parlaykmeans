@@ -23,6 +23,7 @@ cc_binary(
  
 )
 
+
 cc_library(
   name="kmeans_test",
   srcs=["kmeans.cpp"],
@@ -83,6 +84,47 @@ cc_library(
   ],
 
 
+)
+
+
+
+#comparing a yinyang and naive run
+cc_binary(
+  name="kmeans_test_yy_naive",
+  srcs=["kmeans_old.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":kmeans_yn",
+  ],
+ 
+)
+
+
+cc_library(
+  name="kmeans_yn",
+  srcs=["kmeans_old.cpp"],
+  hdrs = ["include/utils/parse_files.h",
+  "include/lazy.h",
+  "include/utils/NSGDist.h",
+  "include/initialization.h",
+  "include/naive.h",
+  "include/utils/accumulator.h",
+  "include/yinyang_faithful.h",
+  ],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    "@parlaylib//parlay:parallel",
+    "@parlaylib//parlay:primitives",
+    "@parlaylib//parlay:sequence",
+    "@parlaylib//parlay:slice",
+    "@parlaylib//parlay:io",
+
+  ],
+ 
 )
 
 
