@@ -30,7 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Specific files
 bazel-bin
 bazel-out
 bazel-parlaykmeans
 bazel-testlogs
+.vscode/settings.json
