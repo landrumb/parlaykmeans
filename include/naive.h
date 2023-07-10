@@ -325,9 +325,6 @@ double epsilon)
       abort();
     }
 
-
-    
-
     parlay::internal::timer t = parlay::internal::timer();
     t.start();
     
@@ -346,7 +343,7 @@ double epsilon)
 
   float total_diff = 0;
 
-  t.next("finished init");
+  // t.next("finished init");
 
   while (iterations < max_iterations) {
 
@@ -360,7 +357,7 @@ double epsilon)
     
 
    
-    std::cout << "iter" << iterations << std::endl;
+    // std::cout << "iter" << iterations << std::endl;
     iterations++;
 
     if (DEBUG_VD) {

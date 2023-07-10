@@ -49,19 +49,39 @@ struct kmeans_bench {
     double epsilon;
     parlay::sequence<iteration_bench> iterations;
     parlay::internal::timer t;
+    parlay::internal::timer iteration_timer;
     double total_time = 0.0;
+    std::string initializer;
+    std::string runner;
+
+    size_t n_iterations = 0;
 
 
-    kmeans_bench(size_t n, size_t d, size_t k, size_t max_iter, double epsilon) : n(n), d(d), k(k), max_iter(max_iter), epsilon(epsilon) {
+    kmeans_bench(size_t n, size_t d, size_t k, size_t max_iter, double epsilon, std::string initializer, std::string runner) : n(n), d(d), k(k), max_iter(max_iter), epsilon(epsilon), initializer(initializer), runner(runner){
         iterations = parlay::sequence<iteration_bench>();
     }
 
     void start_time() {
+        std::cout << initializer << " initialization with " << runner << " iterations." << std::endl;
+        std::cout << "n:         \t" << n << std::endl;
+        std::cout << "d:         \t" << d << std::endl;
+        std::cout << "k:         \t" << k << std::endl;
+        std::cout << "max_iter:  \t" << max_iter << std::endl;
+        std::cout << "epsilon:   \t" << epsilon << std::endl;
+
         t.start();
+        iteration_timer.start();
     }
 
     void end_time() {
         total_time = t.stop();
+
+        std::cout << "iterations:\t" << n_iterations << std::endl;
+        std::cout << "msse:      \t" << iterations[iterations.size() - 1].msse << std::endl;
+        std::cout << "total time:\t" << total_time << std::endl;
+        std::cout << "avg iteration time:\t" << total_time / iterations.size() << std::endl;
+        // std::cout << "total assignment time:\t" << parlay::reduce(parlay::tabulate(iterations, iterations.size(), )) << std::endl;
+        // std::cout << "total update time:\t" << parlay::reduce(iterations, parlay::addm<double>(), [](iteration_bench b) {return b.update_time;}) << std::endl;
     }
 
     /* 
@@ -75,6 +95,9 @@ struct kmeans_bench {
      */
     void add_iteration(double assign_time, double update_time, double msse, size_t distance_calculations, size_t center_reassignments, parlay::sequence<double> center_movements) {
         iterations.push_back(iteration_bench(assign_time, update_time, msse, distance_calculations, center_reassignments, center_movements));
+        n_iterations++;
+
+        std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << ")" << std::endl;
     }
 
     void print() {
@@ -83,7 +106,7 @@ struct kmeans_bench {
         std::cout << "k:         \t" << k << std::endl;
         std::cout << "max_iter:  \t" << max_iter << std::endl;
         std::cout << "epsilon:   \t" << epsilon << std::endl;
-        std::cout << "iterations:\t" << iterations.size() << std::endl;
+        std::cout << "iterations:\t" << n_iterations << std::endl;
         std::cout << "msse:      \t" << iterations[iterations.size() - 1].msse << std::endl;
         std::cout << "total time:\t" << total_time << std::endl;
         std::cout << "avg iteration time:\t" << total_time / iterations.size() << std::endl;
