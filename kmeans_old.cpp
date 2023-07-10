@@ -76,7 +76,8 @@ int main() {
 
     std::cout << "Starting program" << std::endl;
 
-    size_t k = 50;
+    std::cout << "Note: k, n, d artificially low rn" << std::endl;
+    size_t k = 40;
     
     auto file_parts = parse_uint8bin("Data/base.1B.u8bin.crop_nb_1000");
     uint8_t* v = (uint8_t*) std::get<0>(file_parts);
