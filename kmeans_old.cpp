@@ -80,7 +80,7 @@ int main() {
     std::cout << "Note: k, n, d artificially low rn" << std::endl;
     size_t k = 40;
     
-    auto file_parts = parse_uint8bin("Data/base.1B.u8bin.crop_nb_1000");
+    auto file_parts = parse_uint8bin("Data/base.1B.u8bin.crop_nb_1000000");
     uint8_t* v = (uint8_t*) std::get<0>(file_parts);
     size_t n = std::get<1>(file_parts);
     size_t d = std::get<2>(file_parts);

@@ -34,7 +34,8 @@ cc_library(
   "include/naive.h",
   "include/utils/parse_command_line.h",
   "include/utils/kmeans_bench.h",
-  "include/utils/threadlocal.h"
+  "include/utils/threadlocal.h",
+  "include/yinyang_simp.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
