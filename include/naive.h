@@ -355,7 +355,7 @@ struct Naive {
       
       float assignment_time = t.next_time();
 
-      // Update centers
+      // Update centers 
       threadlocal::accumulator<double>* new_centers = new threadlocal::accumulator<double>[k * d];
       threadlocal::accumulator<size_t>* assignments = new threadlocal::accumulator<size_t>[k];
       parlay::parallel_for(0, n, [&](size_t i) {
