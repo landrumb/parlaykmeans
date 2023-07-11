@@ -152,172 +152,63 @@ struct NaiveKmeans {
     //MUST PASS DISTANCE BY REFERENCE NOT COPY
     //put the coordinates of p onto the stack (in buf) for the calculation
     size_t closest_point_vd(const point& p, 
-    parlay::sequence<center>& centers, Distance& D) {
-    if constexpr(std::is_same<T,float>() == true) {
-     
-
-          int d = p.coordinates.size();
-
-        //no need to convert with a buffer
-        //TODO NOTICE THE SQRT ADDED!
-        auto distances = parlay::delayed::map(centers, [&](center& q) {
-            return std::sqrt(D.distance(p.coordinates.begin(), 
-              make_slice(q.coordinates).begin(),d));
-        });
-
-        return min_element(distances) - distances.begin();
-
-        
-    }
-    else {
-       
-        const int d = p.coordinates.size();
+    parlay::sequence<center>& centers, Distance& D, size_t d) {
+   
         float buf[2048];
         T* it = p.coordinates.begin();
-        for (int i = 0; i < d; i++) {
+        for (size_t i = 0; i < d; i++) {
             buf[i]=*it;
             it += 1; //add 1 for next?
         }
-     
+        
         auto distances = parlay::delayed::map(centers, [&](center& q) {
-            return std::sqrt(D.distance(buf, make_slice(q.coordinates).begin(),d));
+            return D.distance(buf, make_slice(q.coordinates).begin(),d);
         });
-
-        //C++ won't auto-cast
-        // auto distances = parlay::delayed::map(centers, [&](center& q) {
-        //     return D.distance(p.coordinates.begin(), make_slice(q.coordinates).begin(),d);
-        // });
-
-        if (DEBUG_VD) {
-          std::cout << "distance printing" << std::endl;
-          for (size_t i = 0; i < distances.size(); i++) {
-            std::cout << distances[i] << " " ;
-          }
-          std::cout << std::endl;
-        }
 
         return min_element(distances) - distances.begin();
 
     }
 
-  }
-
 
 //compute centers calculates the new centers
-//returns: a sequence of centers
-parlay::sequence<center> compute_centers_ec(const 
-parlay::sequence<point>& pts, size_t n, size_t d, size_t k, const parlay::sequence<center>& centers) {
+void compute_centers(
+  const parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
+  float* c) {
+
 
     parlay::sequence<parlay::sequence<size_t>> indices(k);
-    
-    parlay::sequence<center> new_centers(k);
-    for (size_t i = 0; i < k; i++) {
-        new_centers[i].id = i;
-        new_centers[i].coordinates=parlay::sequence<T>(d,4);
-    }
 
-    for (size_t i = 0; i < n; i++) {
-            
-        indices[pts[i].best].push_back(i); //it's called best not id!!!
-
-    }
-    if (DEBUG_VD) {
-        std::cout << "Debugging: printing out center counts:\n";
-        for (size_t i = 0; i < k; i++) {
-        std::cout << indices[i].size() << std::endl;
-        }
-
-    }
-    
-    parlay::parallel_for (0, k*d, [&] (size_t icoord){
-        size_t i = icoord / d;
-        size_t coord = icoord % d;
-
-        //std::cout<<"icoord " << icoord << "i : " << i << "coord: " << 
-        //  coord << std::endl;
-        //new_centers[i].coordinates[coord] = 
-        //  anti_overflow_avg(map(new_centers[i].points,[&] 
-        //  (size_t ind) {return pts[ind].coordinates[coord];}  ));
-
-        //if there are no values in a certain center, just keep the center
-        // where it is
-        if (indices[i].size() > 0) { //anti_overflow_avg or reduce??
-            new_centers[i].coordinates[coord] = reduce(map(indices[i],[&] 
-            (size_t ind) {
-              return pts[ind].coordinates[coord];})) 
-              / indices[i].size(); //normal averaging now
-
-        }
-        else { 
-            new_centers[i].coordinates[coord] = centers[i].coordinates[coord];
-        }
-
+    //reset the center coords to 0
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      for (size_t j = 0; j < d; j++) {
+        c[i * d + j] = 0;
+      }
+        
     });
 
 
-    return new_centers;
-
-
-}
-
-//compute centers calculates the new centers
-//returns: a sequence of centers
-parlay::sequence<center> compute_centers_vd(
-  const parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
-  const parlay::sequence<center>& centers) {
-
-    if constexpr(std::is_same<T,float>() == true) {
-        //run the normal compute centers
-        return compute_centers_ec(pts,n,d,k,centers);
-    }
-
-    parlay::sequence<parlay::sequence<size_t>> indices(k);
-    
-    parlay::sequence<center> new_centers(k);
-    for (size_t i = 0; i < k; i++) {
-        new_centers[i].id = i;
-        new_centers[i].coordinates=parlay::sequence<float>(d,4);
-    }
-
-
     for (size_t i = 0; i < n; i++) {
             
         indices[pts[i].best].push_back(i); //it's called best not id!!!
 
     }
-    if (DEBUG_VD) {
-        std::cout << "Debugging: printing out center counts:\n";
-        for (size_t i = 0; i < k; i++) {
-        std::cout << indices[i].size() << std::endl;
-        }
-
-    }
-    
-    
-    parlay::parallel_for (0, k*d, [&] (size_t icoord){
+   
+     parlay::parallel_for (0, k*d, [&] (size_t icoord){
         size_t i = icoord / d;
         size_t coord = icoord % d;
-
-      
+       
         //if there are no values in a certain center, just keep the center 
         //where it is
         if (indices[i].size() > 0) { //anti_overflow_avg or reduce?? 
         //note the static cast to double here, because points are whatever
-            new_centers[i].coordinates[coord] = reduce(map(indices[i],[&] 
-            (size_t ind) {return static_cast<float>(
-              pts[ind].coordinates[coord]);})) / indices[i].size(); 
-              //normal averaging now
+           c[icoord] = static_cast<float>(reduce(parlay::map(indices[i],[&] 
+    (size_t ind) {return static_cast<double>(
+    pts[ind].coordinates[coord]);})) / indices[i].size()); 
 
         }
-        else { 
-            new_centers[i].coordinates[coord] = centers[i].coordinates[coord];
-        }
-
-
+      
     });
 
-
-    return new_centers;
 
 
 }
@@ -345,7 +236,7 @@ float* c, size_t* asg, Distance& D,  size_t max_iter, double epsilon) {
   });
 
   //the actual naive run
-  kmeans_vd(pts,n,d,k,centers,D,max_iter,epsilon);
+  kmeans_vd(pts,n,d,k,centers,c, D,max_iter,epsilon);
 
   //put our data back 
   parlay::parallel_for(0,k,[&] (size_t i) {
@@ -361,7 +252,7 @@ float* c, size_t* asg, Distance& D,  size_t max_iter, double epsilon) {
 
 
 double kmeans_vd(parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
-parlay::sequence<center>& centers, Distance& D, size_t max_iterations, 
+parlay::sequence<center>& centers, float* c, Distance& D, size_t max_iterations, 
 double epsilon)
 {
 
@@ -383,13 +274,6 @@ double epsilon)
         return -1;
     }
 
-
-  
-    parlay::sequence<float> buf1(50,1);
-    parlay::sequence<float> buf2(50,2);
-    std::cout << "dist " << D.distance(make_slice(buf1).begin(),
-    make_slice(buf2).begin(),50) << std::endl;
-    std::cout << "finished with dist\n";
   size_t iterations = 0;
 
   float total_diff = 0;
@@ -399,56 +283,34 @@ double epsilon)
   while (iterations < max_iterations) {
 
     print_target(pts,centers,D,PTARGET,CTARGET);
-
-    if (DEBUG_VD) {
-         std::cout << "centers: " << iterations << std::endl;
-    for (size_t i = 0; i < k; i++) {
-       print_center(centers[i]);        
-    }
-
-    }
-    
-
    
-    // std::cout << "iter" << iterations << std::endl;
+    std::cout << "iter" << iterations << std::endl;
     iterations++;
 
-    if (DEBUG_VD) {
-        std::cout << "center printing" << std::endl;
-        for (size_t i = 0; i < k; i++) {
-            print_center(centers[i]);
-        }
-        std::cout << std::endl << std::endl;
-
-    }
      
     t.next("About to do closest points");
     // Assign each point to the closest center
     parlay::parallel_for(0, pts.size(), [&](size_t i) {
-      pts[i].best = closest_point_vd(pts[i], centers,D);
+      pts[i].best = closest_point_vd(pts[i], centers,D,d);
     });
 
     t.next("Finished closest points");
 
-    //parallel version for debugging:
-    // for (size_t i = 0; i < pts.size(); i++) {
-    //   pts[i].best = closest_point_vd_seq(pts[i], centers,*D);
-
-    // }
-
-    std::cout << "past closest pt\n";
-
     // Compute new centers
-    parlay::sequence<center> new_centers = compute_centers_vd(pts, n, d, k, centers);
+    compute_centers(pts, n, d, k, c);
     t.next("Computed the centers");
     // Check convergence
     total_diff = 0.0;
     for (size_t i = 0; i < k; i++) { 
-      float diff = D.distance(centers[i].coordinates.begin(), new_centers[i].coordinates.begin(),k);
+      float diff = D.distance(centers[i].coordinates.begin(), c + i*d,k);
       total_diff += diff;
     }
-
-    centers = std::move(new_centers);
+    //copy back over centers
+    parlay::parallel_for(0,k,[&](size_t i) {
+      for (size_t j = 0; j < d; j++) {
+        centers[i].coordinates[j] = c[i*d+j];
+      }
+    });
 
     std::cout << "difs " << total_diff << " " << epsilon << std::endl;
 
@@ -457,21 +319,9 @@ double epsilon)
     }
     
   }
-    if (DEBUG_VD) {
-         std::cout << "center printing" << std::endl;
-  for (size_t i = 0; i < k; i++) {
-    print_center(centers[i]);
-  }
-  std::cout << "Error" << total_diff << std::endl;
-  std::cout << std::endl << std::endl;
 
-    }
 
-  
-
-  return t.total_time(); //std::make_pair(centers,timer.total_time());
-
-    //return std::make_pair(centers,timer.total_time());
+  return t.total_time();
 
 }
 

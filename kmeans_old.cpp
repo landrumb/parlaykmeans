@@ -80,7 +80,7 @@ int main() {
     std::cout << "Note: k, n, d artificially low rn" << std::endl;
     size_t k = 40;
     
-    auto file_parts = parse_uint8bin("Data/base.1B.u8bin.crop_nb_1000000");
+    auto file_parts = parse_uint8bin("Data/base.1B.u8bin.crop_nb_1000");
     uint8_t* v = (uint8_t*) std::get<0>(file_parts);
     size_t n = std::get<1>(file_parts);
     size_t d = std::get<2>(file_parts);
@@ -125,14 +125,18 @@ int main() {
 
    float* c2 = new float[k*d];
    size_t* asg2 = new size_t[n];
+   float* c3 = new float[k*d];
+   size_t* asg3 = new size_t[n];
 
     LazyStart<uint8_t> init;
     init(v,n,d,k,c,asg,*D);
     for (size_t i = 0; i < k*d; i++) {
         c2[i] = c[i];
+        c3[i]=c[i];
     }
     for (size_t i = 0; i < n; i++) {
         asg2[i] = asg[i];
+        asg3[i]=asg[i];
     }
     size_t max_iter = 10;
     double epsilon = 0.01;
@@ -151,6 +155,13 @@ int main() {
 
     yy.cluster(v,n,d,k,c2,asg2,*D,max_iter,epsilon);
 
+    Naive<uint8_t> other;
+    kmeans_bench logger = 
+    kmeans_bench(n, d, k, max_iter, epsilon, "Lazy", "Naive");
+    logger.start_time();
+    other.cluster(v,n,d,k,c3,asg3,*D,logger,max_iter,epsilon);
+    logger.end_time();
+
 
     //not actually running kmeans right now
     //Kmeans<uint8_t,LazyStart<uint8_t>,Lazy<uint8_t>>(v,n,d,k,c,asg,D,10,0.01);
@@ -167,7 +178,7 @@ int main() {
 
     std::cout << "Printing out final assignments: " << std::endl;
     for (size_t i = 0; i < n; i++) {
-        std::cout << asg[i] << " " << asg2[i] << std::endl;
+        std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
         if (asg[i] != asg2[i]) { //equality check
             std::cout << "failed asg " << i << std::endl;
             abort();

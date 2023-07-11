@@ -326,21 +326,17 @@ struct YinyangSimp {
 
   //compute centers calculates the new centers
   //returns: a sequence of centers
+  //TODO make a different run (no casting) if T is a float
   parlay::sequence<center> compute_centers_vd(
   const parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
   const parlay::sequence<center>& centers) {
-
-    if constexpr(std::is_same<T,float>() == true) {
-    //run the normal compute centers
-    return compute_centers_ec(pts,n,d,k,centers);
-    }
 
     parlay::sequence<parlay::sequence<size_t>> indices(k);
 
     parlay::sequence<center> new_centers(k);
     for (size_t i = 0; i < k; i++) {
     new_centers[i].id = i;
-    new_centers[i].coordinates=parlay::sequence<float>(d,4);
+    new_centers[i].coordinates=parlay::sequence<float>(d,0);
     }
 
 
@@ -367,9 +363,9 @@ struct YinyangSimp {
     //where it is
     if (indices[i].size() > 0) { //anti_overflow_avg or reduce?? 
     //note the static cast to double here, because points are whatever
-    new_centers[i].coordinates[coord] = reduce(parlay::map(indices[i],[&] 
-    (size_t ind) {return static_cast<float>(
-    pts[ind].coordinates[coord]);})) / indices[i].size(); 
+    new_centers[i].coordinates[coord] = static_cast<float>(reduce(parlay::map(indices[i],[&] 
+    (size_t ind) {return static_cast<double>(
+    pts[ind].coordinates[coord]);})) / indices[i].size()); 
     //normal averaging now
 
     }
