@@ -35,6 +35,7 @@ cc_library(
   "include/utils/accumulator.h",
   "include/utils/parse_command_line.h",
   "include/utils/kmeans_bench.h"
+  "include/utils/threadlocal.h"
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
