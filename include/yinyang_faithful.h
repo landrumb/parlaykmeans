@@ -631,15 +631,15 @@ struct YinyangFaithful {
       iters += 1;
 
             //dividers
+      std::cout << "iter: " << iters << std::endl;
+      // for (int j = 0; j < 10; j++) {
+      //   for (int i = 0; i < 50; i++) {
+      //   std::cout << iters;
+      // }
+      // std::cout << std::endl;
 
-      for (int j = 0; j < 10; j++) {
-        for (int i = 0; i < 50; i++) {
-        std::cout << iters;
-      }
-      std::cout << std::endl;
-
-      }
-      std::cout << std::endl;
+      // }
+      // std::cout << std::endl;
       
 
       //check everything after each iter

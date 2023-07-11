@@ -1,4 +1,6 @@
 //yinyang but no local filtering
+#ifndef YYSIMP
+#define YYSIMP
 
 #include <tuple>
 #include "parlay/random.h"
@@ -90,7 +92,7 @@ struct YinyangSimp {
         //std::cout << std::endl;
         std::cout << "best: " << p.best << " ";
         std::cout << "ub, 2ub: " << p.ub << " " << p.dist_to_center2 << std::endl;
-        std::cout << "global lb; lb: " << p.global_lb;
+        std::cout << "global lb; lb: " << p.global_lb << " ";
         for (size_t i = 0; i < p.lb.size(); i++) {
           std::cout << p.lb[i] << " ";
 
@@ -124,6 +126,7 @@ struct YinyangSimp {
       for (size_t i = 0; i < c.coordinates.size(); i++) {
         std::cout << c.coordinates[i] << " ";
       }
+      std::cout << std::endl;
       std::cout << "Delta: " << c.delta << " Group ID: " << 
       c.group_id << std::endl;
 
@@ -152,6 +155,27 @@ struct YinyangSimp {
     for (size_t i =0; i < pts.size(); i++) {
       print_point(pts[i]);
     }
+    std::cout << "CENTERS: " << std::endl;
+
+    for (size_t i = 0; i < centers.size(); i++) {
+      print_center(centers[i]);
+    }
+    std::cout << "GROUPS: " << std::endl;
+
+    for (size_t i = 0; i < groups.size(); i++) {
+      print_group(groups[i]);
+    }
+  }
+
+  //printing all too much junk, so print 41 more useful
+  //just pt 41
+  void print41(parlay::sequence<point> pts, 
+  parlay::sequence<center> centers, 
+  parlay::sequence<group> groups) {
+    std::cout << "printing 41 all" << std::endl;
+    std::cout << "POINTS: " << std::endl;
+    print_point(pts[41]);
+  
     std::cout << "CENTERS: " << std::endl;
 
     for (size_t i = 0; i < centers.size(); i++) {
@@ -330,15 +354,14 @@ struct YinyangSimp {
   //certain distance, and the distance itself
   void distances_to_groups(const point&p, parlay::sequence<center>& centers,
   parlay::sequence<group>& groups,
-  Distance& D, size_t t, 
+  Distance& D, size_t t, size_t d,
   parlay::sequence<std::pair<size_t,float>>& distances, 
   parlay::sequence<std::pair<size_t,float>>& distances2nd) {
 
     //convert point coordinates to float buffer
-    const int d = p.coordinates.size();
     float buf[2048];
     T* it = p.coordinates.begin();
-    for (int i = 0; i < d; i++) {
+    for (size_t i = 0; i < d; i++) {
     buf[i]=*it;
     it += 1; //add 1 for next?
     }
@@ -402,15 +425,35 @@ struct YinyangSimp {
   void init_groups(float* c, size_t k, size_t d, size_t t, 
   float* group_centers, size_t* group_asg, Distance& D, 
   parlay::sequence<center>& centers) {
+
+    std::cout << "Debugging init groups " << std::endl;
     LazyStart<float> init;
     init(c,k,d,t,group_centers,group_asg,D);
     NaiveKmeans<float> run;
     run.cluster(c,k,d,t,
     group_centers, group_asg,D, 5, 0.0001);
+    // std::cout << "Group asg: " << std::endl;
+    // for (size_t i = 0; i < k; i++) {
+    //   std::cout << group_asg[i] << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Couting group centers: " << std::endl;
+    // for (size_t i = 0; i < t; i++) {
+    //   for (size_t j = 0; j < d; j++) {
+    //     std::cout << group_centers[i*d+j] << " ";
+    //   }
+    //   std::cout << std::endl;
+    // }
 
     parlay::parallel_for(0,k,[&] (size_t i) {
       centers[i].group_id = group_asg[i];
     });
+
+    // std::cout << "Couting group ids" << std::endl;
+    // for (size_t i = 0; i < k; i++) {
+    //   std::cout << centers[i].group_id << " ";
+    // }
+    // std::cout << std::endl;
 
   }
 
@@ -474,6 +517,7 @@ struct YinyangSimp {
     for (size_t i = 0; i < k; i++) { 
       new_centers[i].delta = D.distance(centers[i].coordinates.begin(), 
       new_centers[i].coordinates.begin(),d); // lol not a k here, a d
+      new_centers[i].group_id = centers[i].group_id; //need to copy over this info!
       total_diff += new_centers[i].delta;
     }
 
@@ -485,6 +529,7 @@ struct YinyangSimp {
       return centers[j].delta;
 
       });
+      
       groups[i].max_drift = *max_element(drifts);
 
     });
@@ -519,7 +564,13 @@ struct YinyangSimp {
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
   Distance& D, size_t max_iter, double epsilon) {
 
+
     std::cout << "Thus begins yinyang debugging" << std::endl;
+
+    //when we do no iterations, nothing needs to happen at all
+    if (max_iter == 0) {
+      return;
+    }
 
     if (d > 2048) {
       std::cout << "d greater than 2048, too big, printing d: " << 
@@ -546,13 +597,13 @@ struct YinyangSimp {
     //fill in the centers
     fill_in_centers(c,centers,k,d);
 
-    std::cout << "printing out init points, centers";
-    for (size_t i = 0; i < n; i++) {
-      print_point(pts[i]);
-    }
-    for (size_t i = 0; i < k; i++) {
-      print_center(centers[i]);
-    }
+    // std::cout << "printing out init points, centers";
+    // for (size_t i = 0; i < n; i++) {
+    //   print_point(pts[i]);
+    // }
+    // for (size_t i = 0; i < k; i++) {
+    //   print_center(centers[i]);
+    // }
     
     
     size_t t = 4; //TODO change back to k/10
@@ -563,7 +614,26 @@ struct YinyangSimp {
 
     //initialize the groups
     init_groups(c,k,d,t,group_centers,group_asg,D,centers);
-
+    //these checks no longer needed
+    // std::cout << "Couting same info as above (group asg) but outside of the function" << std::endl;
+    // std::cout << "Group asg: " << std::endl;
+    // for (size_t i = 0; i < k; i++) {
+    //   std::cout << group_asg[i] << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Couting group centers: " << std::endl;
+    // for (size_t i = 0; i < t; i++) {
+    //   for (size_t j = 0; j < d; j++) {
+    //     std::cout << group_centers[i*d+j] << " ";
+    //   }
+    //   std::cout << std::endl;
+    // }
+    // std::cout << "Couting group ids" << std::endl;
+    // for (size_t i = 0; i < k; i++) {
+    //   std::cout << centers[i].group_id << " ";
+    // }
+    // std::cout << std::endl;
+    
 
     parlay::sequence<group> groups(t);
 
@@ -608,11 +678,13 @@ struct YinyangSimp {
     
     // Assign each point to the closest center
     parlay::parallel_for(0, pts.size(), [&](size_t i) {
-    distances_to_groups(pts[i],centers,groups,D,t,distances[i],
+    distances_to_groups(pts[i],centers,groups,D,t,d,distances[i],
     distances2nd[i]);
+
 
     pts[i].lb = parlay::sequence<float>(t); //initialize the lower bound sequence
     });
+
 
     //print out distances, distance2nd
 
@@ -625,14 +697,30 @@ struct YinyangSimp {
     //actually take best
     init_all_point_bounds(pts, n, distances, distances2nd, centers, t);
 
-    size_t iters = 0;
+    //iters must start at 1!! (was like that a couple iterations ago
+    //ironically)
+    size_t iters = 1; 
     float total_diff = 0.0;
 
     //confirm that the initial point assigning went correctly
-    print_all(pts,centers,groups);
+    //print_all(pts,centers,groups);
+    //experiment: are we setting the lbs initially wrong, or 
+    //are they becoming wrong over time?
+    // for (int i = 0; i < n; i++) {
+    //   pts[i].global_lb = -1;
+    //   for (size_t j = 0; j < t; j++) {
+    //     pts[i].lb[j] = -1;
+    //   }
+
+    // }
+    
 
     //Step 3: Repeat until convergence
+
+    
     while (true) {
+      std::cout << "print 41 before drift" << std::endl;
+      print41(pts,centers,groups);
 
       
       //3.1: update centers
@@ -641,25 +729,18 @@ struct YinyangSimp {
       total_diff = update_centers_drift(pts,n,d,k,centers,D,groups, t);
 
       //convergence check
-      if (iters >= max_iter || total_diff <= epsilon) break;
+      if (iters >= max_iter || total_diff < epsilon) break;
 
       iters += 1;
 
-            //dividers
+      std::cout << "print 41 after drift" << std::endl;
+      print41(pts,centers,groups);
 
-      for (int j = 0; j < 10; j++) {
-        for (int i = 0; i < 50; i++) {
-        std::cout << iters;
-      }
-      std::cout << std::endl;
-
-      }
-      std::cout << std::endl;
+       
       
 
       //check everything after each iter
       std::cout << "iter: " << iters << std::endl;
-      //print_all(pts,centers,groups);
 
       //3.2: Group filtering
 
@@ -668,12 +749,33 @@ struct YinyangSimp {
         pts[i].ub += centers[pts[i].best].delta; 
         
         set_point_global_lb(pts[i],groups,t);
+        if (i==41) {
+          std::cout << "printing point 41 after set global lb iter " 
+        << iters << std::endl;
+        print_point(pts[41]);
+
+        }
+        
 
         //setting lbs super low
         //TODO remove this
-        pts[i].global_lb = -1;
-        for (size_t j = 0; j < t; j++) {
-          pts[i].lb[j] = -1;
+        // pts[i].global_lb = -1;
+        // for (size_t j = 0; j < t; j++) {
+        //   pts[i].lb[j] = -1;
+        // }
+        if (i == 41) {
+          std::cout << "Analyzing pt 41 " << std::endl;
+          print_point(pts[41]);
+          float buf2[2048];
+          T* it2 = pts[i].coordinates.begin();
+          for (size_t coord = 0; coord < d; coord++) {
+            buf2[coord] = *it2;
+            it2 += 1;
+          }
+          float dist41 = D.distance(buf2,
+          parlay::make_slice(centers[16].coordinates).begin(),d);
+          std::cout << "dist to center 16: " << dist41 << std::endl;
+
         }
 
         //if our center could change
@@ -691,6 +793,8 @@ struct YinyangSimp {
         pts[i].ub = D.distance(buf,
         parlay::make_slice(centers[pts[i].best].coordinates).begin(),
         d);
+
+        
         //check the condition again
         if (pts[i].global_lb < pts[i].ub) {
           //do local filtering (3.3)
@@ -757,10 +861,14 @@ struct YinyangSimp {
 
               }
             }
+            // else { //unsure why this is needed? TODO try removing
+            //   pts[i].lb[j] -= groups[j].max_drift;
+            // }
             
 
           }
         }
+        
       
         }
 
@@ -770,6 +878,9 @@ struct YinyangSimp {
 
 
     }
+    std::cout << "post while loop printing, looking at bounds " << std::endl;
+    print41(pts,centers,groups);
+
 
     //copy back over coordinates
     //put our data back 
@@ -789,3 +900,5 @@ struct YinyangSimp {
   }
 
 };
+
+#endif //YYSIMP

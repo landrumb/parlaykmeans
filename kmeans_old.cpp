@@ -86,14 +86,15 @@ int main() {
 
     float* c = new float[k*d]; // centers
     size_t* asg = new size_t[n];
-
-    std::cout << "Printing out initial points: " << std::endl;
-    for (size_t i = 0; i < n ;i++) {
-        for (size_t j = 0; j < d; j++) {
-            std::cout << static_cast<int>(v[i*d+j]) << " ";
-        }
-        std::cout << std::endl;
-    }
+    
+    //too much text
+    // std::cout << "Printing out initial points: " << std::endl;
+    // for (size_t i = 0; i < n ;i++) {
+    //     for (size_t j = 0; j < d; j++) {
+    //         std::cout << static_cast<int>(v[i*d+j]) << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
 
     std::string dist_choice = "euclidean";
@@ -129,7 +130,7 @@ int main() {
     for (size_t i = 0; i < n; i++) {
         asg2[i] = asg[i];
     }
-    size_t max_iter = 30;
+    size_t max_iter = 2;
     double epsilon = 0.01;
 
     NaiveKmeans<uint8_t> nie;
@@ -146,14 +147,18 @@ int main() {
     std::cout << "Printing out final centers: "  << std::endl;
     for (size_t i = 0; i < k; i++) {
         for (size_t j = 0; j < d; j++) {
-            std::cout << c[i*d + j] <<  " " << c2[i*d+j] << std::endl;
+            std::cout << c[i*d + j] <<  "|" << c2[i*d+j] << " ";
         }
-        std::cout << std::endl << std::endl;
+        std::cout << std::endl;
     }
 
     std::cout << "Printing out final assignments: " << std::endl;
     for (size_t i = 0; i < n; i++) {
         std::cout << asg[i] << " " << asg2[i] << std::endl;
+        if (asg[i] != asg2[i]) { //equality check
+            std::cout << "failed asg " << i << std::endl;
+            abort();
+        }
     }
     std::cout << std::endl << std::endl;
 
