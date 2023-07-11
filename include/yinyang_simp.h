@@ -34,6 +34,7 @@ struct YinyangSimp {
     parlay::sequence<float> lb; //lower bounds from a point to each group
     float global_lb; //global lower bound
     float dist_to_center2; //distance to 2nd closest center (exact)
+    size_t old_best; //the previous best
 
 
     point() : best(-1), coordinates(nullptr, nullptr), 
@@ -62,17 +63,23 @@ struct YinyangSimp {
     parlay::sequence<float> coordinates; // the pointer to coordinates of 
     //the center
     float delta;
+    size_t old_num_members; //how many points belong to that center
+    size_t new_num_members; //the number of members this iter
 
     center(size_t id, parlay::sequence<float> coordinates) : id(id) {
 
     this->coordinates = coordinates;
     delta=0;
     group_id = -1;
+    old_num_members = 0;
+    new_num_members = 0;
     }
 
     center() : id(-1) {
       delta=0;
       group_id = -1;
+      old_num_members = 0;
+      new_num_members = 0;
 
     }
 
@@ -331,7 +338,8 @@ struct YinyangSimp {
   //dist: distance between center id and p 
   void point_set_best_ub(point& p, 
   parlay::sequence<std::pair<size_t,float>>& distances,
-  parlay::sequence<std::pair<size_t,float>>& distances2nd) {
+  parlay::sequence<std::pair<size_t,float>>& distances2nd,
+  parlay::sequence<center>& centers) {
     size_t best_index = -1;
     float best_dist = std::numeric_limits<float>::max();
     float second_dist = std::numeric_limits<float>::max();
@@ -351,8 +359,10 @@ struct YinyangSimp {
 
     }
     p.best = distances[best_index].first;
+    p.old_best = p.best;
     p.ub = distances[best_index].second;
     p.dist_to_center2 = second_dist;
+    centers[p.best].old_num_members += 1; //keep track of membership
 
   }
 
@@ -488,7 +498,7 @@ struct YinyangSimp {
     parlay::parallel_for(0,n,[&] (size_t i) {
 
       //assign closest and 2nd closest center
-      point_set_best_ub(pts[i],distances[i],distances2nd[i]);
+      point_set_best_ub(pts[i],distances[i],distances2nd[i], centers);
 
     // pts[i].best=min_element(distances[i])-distances[i].begin();
     // pts[i].ub = distances[pts[i].best];
@@ -540,6 +550,72 @@ struct YinyangSimp {
       groups[i].max_drift = *max_element(drifts);
 
     });
+
+    return total_diff;
+
+  }
+
+  float update_centers_drift_comparative(parlay::sequence<point>& pts, size_t n, size_t d, 
+  size_t k, parlay::sequence<center>& centers, Distance& D, 
+  parlay::sequence<group>& groups, size_t t) {
+    // Compute new centers
+    double* center_calc = new double[k*d]; //hold new centers here for a bit
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      center_calc[i] = centers[j].coordinates[dim] * centers[j].old_num_members;
+
+    });
+    for (size_t i = 0; i < n; i++) {
+      if (pts[i].best != pts[i].old_best) {
+        for (size_t j = 0; j < d; j++) {
+          center_calc[pts[i].best * d + j] += pts[i].coordinates[j];
+          center_calc[pts[i].old_best *d + j] -= pts[i].coordinates[j];
+        }
+
+      }
+      
+    }
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      center_calc[i] /= centers[j].new_num_members;
+    });
+
+    float* center_calc_float = new float[k*d];
+    parlay::parallel_for(0,k*d,[&] (size_t i) {
+      center_calc_float[i] = center_calc[i];
+    });
+  
+   
+
+    // Check convergence
+    float total_diff = 0.0;
+    for (size_t i = 0; i < k; i++) { 
+      centers[i].delta = sqrt_dist(centers[i].coordinates.begin(), 
+      center_calc_float + i*d,d,D); // lol not a k here, a d
+      total_diff += centers[i].delta;
+    }
+
+    parlay::parallel_for(0,k*d,[&] (size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      centers[i].coordinates[j] = center_calc[i];
+      
+    });
+
+    //for each group, get max drift for group
+    parlay::parallel_for(0,t,[&] (size_t i) {
+      auto drifts = parlay::map(groups[i].center_ids, [&] (size_t j) {
+      return centers[j].delta;
+
+      });
+      
+      groups[i].max_drift = *max_element(drifts);
+
+    });
+
+    delete[] center_calc;
+    delete[] center_calc_float;
 
     return total_diff;
 
@@ -674,9 +750,6 @@ struct YinyangSimp {
     //(checking a necessary not sufficient condition)
     assert_proper_group_size(groups,t);
 
-   
-    
-
     //Yinyang first does a normal iteration of kmeans:   
 
     //Assignment
@@ -710,6 +783,22 @@ struct YinyangSimp {
     //actually take best
     init_all_point_bounds(pts, n, distances, distances2nd, centers, t);
 
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      centers[i].new_num_members = centers[i].old_num_members;
+    });
+
+    //debugging
+    {
+    size_t elt_counter = 0;
+    for (size_t i = 0; i < n; i++) {
+      elt_counter += centers[i].old_num_members;
+
+    }
+    if (elt_counter != n) {
+      std::cout << "error in num_members assignment: " << elt_counter << std::endl;
+      abort();
+    }}
+
     //iters must start at 1!! (was like that a couple iterations ago
     //ironically)
     size_t iters = 1; 
@@ -726,7 +815,7 @@ struct YinyangSimp {
     //   }
 
     // }
-    
+
 
     //Step 3: Repeat until convergence
 
@@ -740,13 +829,15 @@ struct YinyangSimp {
       //3.1: update centers
       //TODO use the yinyang fast update centers method (currently doing
       //a naive update centers)
-      total_diff = update_centers_drift(pts,n,d,k,centers,D,groups, t);
+      //comparative is the fast method
+      total_diff = update_centers_drift_comparative(pts,n,d,k,centers,D,groups, t);
 
       //convergence check
       if (iters >= max_iter || total_diff < epsilon) break;
 
       iters += 1;
 
+      
       std::cout << "print 41 after drift" << std::endl;
       print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
@@ -822,6 +913,13 @@ struct YinyangSimp {
                 //that ub IS the distance to the previously 
                 //closest center
                 if (pts[i].ub > new_d) {
+                  
+                  //mark point has changed, adjust center assignment counts
+                  centers[groups[j].center_ids[k]].new_num_members += 1;
+                  centers[pts[i].best].new_num_members -= 1;
+
+                  pts[i].old_best = pts[i].best; //save the previous best in old_best
+
                   //the group with the previous center gets a slightly
                   //lower bound, because the distance to the old center can 
                   //become a lower bound
@@ -845,6 +943,7 @@ struct YinyangSimp {
                   pts[i].best=groups[j].center_ids[k];
                 
                   pts[i].ub = new_d;
+                  
                   
                 }
                 else {
