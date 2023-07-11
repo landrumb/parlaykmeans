@@ -98,6 +98,9 @@ struct maximizer {
 
 // TODO: write a general thread local reducer that takes a binary function and a neutral element
 
+// TODO: write a thread local average-er that computes minimally lossy averages with small types
+// (floats are going to be too small for large n)
+
 /* 
     Provides a thread local scratch buffer for copying data into.
  */
