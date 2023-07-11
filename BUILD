@@ -180,7 +180,7 @@ cc_library(
   "include/utils/NSGDist.h",
   "include/initialization.h",
   "include/naive.h",
-  "include/utils/accumulator.h",
+  "include/utils/threadlocal.h",
   "include/yinyang_simp.h",
   "include/utils/kmeans_bench.h",
   "include/utils/parse_command_line.h",

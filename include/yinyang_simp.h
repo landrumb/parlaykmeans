@@ -21,6 +21,8 @@ template<typename T>
 struct YinyangSimp {
 
   bool DEBUG_VD = false;
+  size_t TARGET_POINT = 1971;
+  size_t TARGET_CENTER = 17;
 
   struct point {
 
@@ -194,7 +196,7 @@ struct YinyangSimp {
   }
 
   //print a variable pt and center this time
-  void print_target(parlay::sequence<point> pts, 
+  void print_target_wide(parlay::sequence<point> pts, 
   parlay::sequence<center> centers, 
   parlay::sequence<group> groups, Distance& D, size_t ptarget,
   size_t ctarget) {
@@ -203,9 +205,13 @@ struct YinyangSimp {
     print_point(pts[ptarget]);
 
     std::cout << "dist to center  " << ctarget << ": " <<
-    pc_dist(pts[ptarget],centers[ctarget],D,pts[ptarget].coordinates.size());
-  
-    std::cout << std::endl << "CENTERS: " << std::endl;
+    pc_dist(pts[ptarget],centers[ctarget],D,pts[ptarget].coordinates.size())
+    << std::endl;
+    std::cout << "precision print: " << std::setprecision(10) << 
+    pc_dist(pts[ptarget],centers[ctarget],D,pts[ptarget].coordinates.size())
+    << " " << pts[ptarget].ub << std::endl;
+
+    std::cout << "CENTERS: " << std::endl;
 
     for (size_t i = 0; i < centers.size(); i++) {
       print_center(centers[i]);
@@ -217,6 +223,32 @@ struct YinyangSimp {
     }
   }
 
+
+  //print a variable pt and center this time
+  void print_target(parlay::sequence<point> pts, 
+  parlay::sequence<center> centers, parlay::sequence<group>& groups, 
+  Distance& D, size_t ptarget,
+  size_t ctarget) {
+    std::cout << "print target call" << std::endl;
+    std::cout << "precision 10 " << std::setprecision(10) << std::endl;
+    std::cout << "printing target " << ptarget <<  
+    " against centers:  " << pts[ptarget].best << ", " << ctarget << std::endl;
+    print_point(pts[ptarget]);
+    print_center(centers[pts[ptarget].best]);
+    print_center(centers[ctarget]);
+
+    std::cout << "dist to center  " << ctarget << ": " <<
+    pc_dist(pts[ptarget],centers[ctarget],D,pts[ptarget].coordinates.size())
+    << std::endl;
+
+    std::cout << "dist to center  " << pts[ptarget].best << ": " <<
+    pc_dist(pts[ptarget],centers[pts[ptarget].best],D,pts[ptarget].coordinates.size())
+    << std::endl;
+    std::cout << "finished target print>" << 
+    std::endl;
+   
+  }
+
   //for debugging, get distance between point and center
   float pc_dist(point& p, center& c, Distance& D, size_t d) {
     float buf2[2048];
@@ -225,8 +257,8 @@ struct YinyangSimp {
       buf2[coord] = *it2;
       it2 += 1;
     }
-    return D.distance(buf2,
-    parlay::make_slice(c.coordinates).begin(),d);
+    return sqrt_dist(buf2,
+    parlay::make_slice(c.coordinates).begin(),d,D);
     //std::cout << "dist to center 16: " << dist41 << std::endl;
 
   }
@@ -415,7 +447,7 @@ struct YinyangSimp {
     auto dist = parlay::map(groups[i].center_ids, 
     [&](size_t j) { //note j is from centers because it's a map not a for loop (error? TODO)
     return std::make_pair(j,
-    D.distance(buf, make_slice(centers[j].coordinates).begin(),d));
+    sqrt_dist(buf, make_slice(centers[j].coordinates).begin(),d,D));
     });
 
     //find the closest and 2nd closest center
@@ -562,8 +594,8 @@ struct YinyangSimp {
     // Check convergence
     float total_diff = 0.0;
     for (size_t i = 0; i < k; i++) { 
-      new_centers[i].delta = D.distance(centers[i].coordinates.begin(), 
-      new_centers[i].coordinates.begin(),d); // lol not a k here, a d
+      new_centers[i].delta = sqrt_dist(centers[i].coordinates.begin(), 
+      new_centers[i].coordinates.begin(),d,D); // lol not a k here, a d
       new_centers[i].group_id = centers[i].group_id; //need to copy over this info!
       total_diff += new_centers[i].delta;
     }
@@ -604,6 +636,11 @@ struct YinyangSimp {
       } 
     }
 
+  }
+
+  //yinyang needs sqrt dist for triangle inequality to work
+  float sqrt_dist(float* a, float* b, size_t d, Distance& D) {
+    return std::sqrt(D.distance(a,b,d));
   }
 
 
@@ -654,7 +691,7 @@ struct YinyangSimp {
     // }
     
     
-    size_t t = 4; //TODO change back to k/10
+    size_t t = k/10; //TODO change back to k/10
     
     //cluster on the groups initially using NaiveKmeans
     float* group_centers = new float[t * d];
@@ -767,8 +804,8 @@ struct YinyangSimp {
 
     
     while (true) {
-      std::cout << "print 41 before drift" << std::endl;
-      print_target(pts,centers,groups,D,66,28);
+      std::cout << "print center/point before drift" << std::endl;
+      print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
       
@@ -783,7 +820,7 @@ struct YinyangSimp {
       iters += 1;
 
       std::cout << "print 41 after drift" << std::endl;
-      print_target(pts,centers,groups,D,66,28);
+      print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
        
       
@@ -798,10 +835,10 @@ struct YinyangSimp {
         pts[i].ub += centers[pts[i].best].delta; 
         
         set_point_global_lb(pts[i],groups,t);
-        if (i==66) {
+        if (i==TARGET_POINT) {
           std::cout << "printing point 41 after set global lb iter " 
         << iters << std::endl;
-            print_target(pts,centers,groups,D,66,28);
+            print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
         }
@@ -818,9 +855,9 @@ struct YinyangSimp {
           }
 
         //tighten the upper bound
-        pts[i].ub = D.distance(buf,
+        pts[i].ub = sqrt_dist(buf,
         parlay::make_slice(centers[pts[i].best].coordinates).begin(),
-        d);
+        d,D);
 
         
         //check the condition again
@@ -847,11 +884,11 @@ struct YinyangSimp {
 
                 
                 //since we skip the local filter, we do a distance calculation
-                float new_d = D.distance(
+                float new_d = sqrt_dist(
                 buf,
                 parlay::make_slice(
                   centers[groups[j].center_ids[k]].coordinates).begin(),
-                d);
+                d,D);
 
                 //note that the ub is tight rn,
                 //that ub IS the distance to the previously 
@@ -909,7 +946,7 @@ struct YinyangSimp {
 
     }
     std::cout << "post while loop printing, looking at bounds " << std::endl;
-    print_target(pts,centers,groups,D,66,28);
+    print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
     //copy back over coordinates

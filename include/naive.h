@@ -29,6 +29,10 @@
 template <typename T>
 struct NaiveKmeans {
 
+
+  size_t PTARGET = 1971;
+  size_t CTARGET = 25;
+
     //print out a ton of debug info if true
     bool DEBUG_VD = false;
 
@@ -98,6 +102,52 @@ struct NaiveKmeans {
       
     }
 
+  //yinyang needs sqrt dist for triangle inequality to work
+  float sqrt_dist(float* a, float* b, size_t d, Distance& D) {
+    return std::sqrt(D.distance(a,b,d));
+  }
+
+  //for debugging, get distance between point and center
+  float pc_dist(point& p, center& c, Distance& D, size_t d) {
+    float buf2[2048];
+    T* it2 = p.coordinates.begin();
+    for (size_t coord = 0; coord < d; coord++) {
+      buf2[coord] = *it2;
+      it2 += 1;
+    }
+    return sqrt_dist(buf2,
+    parlay::make_slice(c.coordinates).begin(),d,D);
+    //std::cout << "dist to center 16: " << dist41 << std::endl;
+
+  }
+
+
+
+  //print a variable pt and center this time
+  void print_target(parlay::sequence<point> pts, 
+  parlay::sequence<center> centers, 
+  Distance& D, size_t ptarget,
+  size_t ctarget) {
+    if (pts.size() < 10000 || centers.size() < 30) { //do nothing if too small 
+      return;
+    }
+    std::cout << "precision 10 " << std::setprecision(10);
+    std::cout << "printing target " << ptarget <<  
+    " against centers:  " << pts[ptarget].best << ", " << ctarget << std::endl;
+    print_point(pts[ptarget]);
+    print_center(centers[pts[ptarget].best]);
+    print_center(centers[ctarget]);
+
+    std::cout << "dist to center  " << ctarget << ": " <<
+    pc_dist(pts[ptarget],centers[ctarget],D,pts[ptarget].coordinates.size())
+    << std::endl;
+
+    std::cout << "dist to center  " << pts[ptarget].best << ": " <<
+    pc_dist(pts[ptarget],centers[pts[ptarget].best],D,pts[ptarget].coordinates.size())
+    << std::endl;
+   
+  }
+
 
     //MUST PASS DISTANCE BY REFERENCE NOT COPY
     //put the coordinates of p onto the stack (in buf) for the calculation
@@ -109,9 +159,10 @@ struct NaiveKmeans {
           int d = p.coordinates.size();
 
         //no need to convert with a buffer
+        //TODO NOTICE THE SQRT ADDED!
         auto distances = parlay::delayed::map(centers, [&](center& q) {
-            return D.distance(p.coordinates.begin(), 
-              make_slice(q.coordinates).begin(),d);
+            return std::sqrt(D.distance(p.coordinates.begin(), 
+              make_slice(q.coordinates).begin(),d));
         });
 
         return min_element(distances) - distances.begin();
@@ -129,7 +180,7 @@ struct NaiveKmeans {
         }
      
         auto distances = parlay::delayed::map(centers, [&](center& q) {
-            return D.distance(buf, make_slice(q.coordinates).begin(),d);
+            return std::sqrt(D.distance(buf, make_slice(q.coordinates).begin(),d));
         });
 
         //C++ won't auto-cast
@@ -316,6 +367,8 @@ double epsilon)
 
     std::cout << "running vd" << std::endl;
 
+    std::cout << std::setprecision(10) <<  
+    "ensuring precision" << std::endl;
 
     if (d > 2048) {
       std::cout << "d greater than 2048, too big, printing d: " << 
@@ -344,6 +397,8 @@ double epsilon)
   // t.next("finished init");
 
   while (iterations < max_iterations) {
+
+    print_target(pts,centers,D,PTARGET,CTARGET);
 
     if (DEBUG_VD) {
          std::cout << "centers: " << iterations << std::endl;
@@ -411,6 +466,7 @@ double epsilon)
   std::cout << std::endl << std::endl;
 
     }
+
   
 
   return t.total_time(); //std::make_pair(centers,timer.total_time());
