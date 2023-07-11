@@ -309,8 +309,6 @@ float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, doubl
 }
 
 
-
-
 double kmeans_vd(parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
 parlay::sequence<center>& centers, Distance& D, size_t max_iterations, 
 double epsilon)
@@ -422,6 +420,67 @@ double epsilon)
 }
 
 
+};
+
+template <class T>
+struct Naive {
+  void operator()(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
+  Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
+    parlay::internal::timer t = parlay::internal::timer();
+    t.start();
+
+    float* temp_centers = new float[k * d];
+    accumulator<float> squared_errors = accumulator<float>();
+
+    for (size_t i = 0; i < max_iter; i++) {
+      // Assign each point to the closest center
+      parlay::parallel_for(0, n, [&](size_t i) {
+        float min_dist = std::numeric_limits<float>::max();
+        for (size_t j = 0; j < k; j++) {
+          float dist = D.distance(v + i * d, c + j * d, d);
+          if (dist < min_dist) {
+            min_dist = dist;
+            asg[i] = j;
+          }
+        }
+        squared_errors.add(min_dist * min_dist);
+      });
+      float assignment_time = t.next_time();
+      // Update centers
+      accumulator<float>* new_centers = new accumulator<float>[k * d];
+      accumulator<float>* assignments = new accumulator<float>[k];
+      parlay::parallel_for(0, n, [&](size_t i) {
+        for (size_t j = 0; j < d; j++) {
+          new_centers[asg[i] * d + j].add(v[i * d + j]);
+          assignments[asg[i]].add(1);
+        }
+      });
+      for (size_t i = 0; i < k; i++) {
+        for (size_t j = 0; j < d; j++) {
+          temp_centers[i * d + j] = new_centers[i * d + j].total() / assignments[i].total();
+        }
+      }
+      
+      auto deltas = parlay::tabulate(k, [&](size_t i) {
+        return D.distance(temp_centers + i * d, c + i * d, d);
+      });
+
+      float sum_deltas = parlay::reduce(deltas);
+      float update_time = t.next_time();
+      logger.add_iteration(assignment_time, update_time, squared_errors.total() / n, 0, 0, deltas);
+      if (sum_deltas < epsilon) {
+        break;
+      }
+    }
+    return;
+  };
+
+  std::string name() { return "naive"; };
+
+  void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
+  Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
+    this->operator()(v, n, d, k, c, asg, D, logger, max_iter, epsilon);
+  };
 };
 
 
