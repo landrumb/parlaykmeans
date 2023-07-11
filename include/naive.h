@@ -488,9 +488,9 @@ struct Naive {
       squared_errors.reset();
     }
 
-    delete[] temp_centers;
-    delete[] new_centers;
-    delete[] assignments;
+    // delete[] temp_centers;
+    // delete[] new_centers;
+    // delete[] assignments;
 
     return;
   };
