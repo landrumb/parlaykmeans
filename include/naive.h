@@ -465,12 +465,24 @@ struct Naive {
         return D.distance(temp_centers + i * d, c + i * d, d);
       });
 
+      // copy temp centers into c
+      std::copy(temp_centers, temp_centers + k * d, c);
+
       float sum_deltas = parlay::reduce(deltas);
       float update_time = t.next_time();
       logger.add_iteration(assignment_time, update_time, squared_errors.total() / n, 0, 0, deltas);
       if (sum_deltas < epsilon) {
         break;
       }
+
+      // reset accumulators
+      for (size_t i = 0; i < k * d; i++) {
+        new_centers[i].reset();
+      }
+      for (size_t i = 0; i < k; i++) {
+        assignments[i].reset();
+      }
+      squared_errors.reset();
     }
 
     delete[] temp_centers;
