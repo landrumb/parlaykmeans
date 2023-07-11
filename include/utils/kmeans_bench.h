@@ -77,7 +77,7 @@ struct kmeans_bench {
         total_time = t.stop();
 
         std::cout << "iterations:\t" << n_iterations << std::endl;
-        std::cout << "msse:      \t" << iterations[iterations.size() - 1].msse << std::endl;
+        // std::cout << "msse:      \t" << iterations[iterations.size() - 1].msse << std::endl;
         std::cout << "total time:\t" << total_time << std::endl;
         std::cout << "avg iteration time:\t" << total_time / iterations.size() << std::endl;
         // std::cout << "total assignment time:\t" << parlay::reduce(parlay::tabulate(iterations, iterations.size(), )) << std::endl;
@@ -97,7 +97,7 @@ struct kmeans_bench {
         iterations.push_back(iteration_bench(assign_time, update_time, msse, distance_calculations, center_reassignments, center_movements));
         n_iterations++;
 
-        std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << ")" << std::endl;
+        std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << "s)\tmsse: " << msse << std::endl;
     }
 
     void print() {

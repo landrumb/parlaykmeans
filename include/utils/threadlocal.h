@@ -10,7 +10,7 @@
 #include <string>
 
 // no performance difference between 64 and higher values, but 32 is significantly slower
-#define BUFFER 64 
+#define BUFFER 128
 
 namespace threadlocal {
 
@@ -103,6 +103,8 @@ struct maximizer {
 
 /* 
     Provides a thread local scratch buffer for copying data into.
+
+    as-is will probably break if T is int8_t or uint8_t
  */
 template <typename T>
 struct buffer {
@@ -128,29 +130,31 @@ struct buffer {
         std::memcpy(data + offset, src, length * sizeof(T));
     }
 
-    if constexpr (!std::is_same_v<T, int8_t>) {
-        void write(int8_t* src) {
-            size_t id = parlay::worker_id();
-            size_t offset = id * (length + padding);
-            for (size_t i = 0; i < length; i++) {
-                data[offset + i] = static_cast<T>(src[i]);
-            }
+    
+    void write(int8_t* src) {
+        size_t id = parlay::worker_id();
+        size_t offset = id * (length + padding);
+        for (size_t i = 0; i < length; i++) {
+            data[offset + i] = static_cast<T>(src[i]);
         }
     }
+    
 
-    if constexpr (!std::is_same_v<T, uint8_t>) {
-        void write(uint8_t* src) {
-            size_t id = parlay::worker_id();
-            size_t offset = id * (length + padding);
-            for (size_t i = 0; i < length; i++) {
-                data[offset + i] = static_cast<T>(src[i]);
-            }
+    void write(uint8_t* src) {
+        size_t id = parlay::worker_id();
+        size_t offset = id * (length + padding);
+        for (size_t i = 0; i < length; i++) {
+            data[offset + i] = static_cast<T>(src[i]);
         }
     }
     
 
     T* begin() {
         return data + parlay::worker_id() * (length + padding);
+    }
+
+    size_t size() {
+        return length;
     }
 };
 // TODO: write tests to benchmark the above

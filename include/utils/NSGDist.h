@@ -15,6 +15,8 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 
+#include "threadlocal.h"
+
 extern bool report_stats;
 
 namespace efanna2e{
@@ -352,6 +354,10 @@ class Distance{
     virtual float distance(int8_t *p, int8_t *q, unsigned d){return 0;}
     virtual float distance(float *p, float *q, unsigned d){return 0;}
     //virtual ~Distance() = 0; //destructor?
+    virtual float distance(uint8_t *p, float *q, unsigned d){return 0;}
+    virtual float distance(int8_t *p, float *q, unsigned d){return 0;}
+    virtual float distance(float *p, uint8_t *q, unsigned d){return 0;}
+    virtual float distance(float *p, int8_t *q, unsigned d){return 0;}
 
 };
 
@@ -389,6 +395,8 @@ struct Mips_Distance : public Distance{
 
 struct EuclideanDistance : public Distance{
 
+  threadlocal::buffer<float>* buf = nullptr;
+
   std::string id(){return "euclidean";}
 
   float distance(uint8_t *p, uint8_t *q, unsigned d){
@@ -416,6 +424,31 @@ struct EuclideanDistance : public Distance{
    //   std::cout << "comparing distfunc" << std::endl;
       return distfunc.compare(p, q, d);
   }
+
+  float distance(uint8_t *p, float *q, unsigned d){
+      if (buf == nullptr || buf->length < d) {
+        buf = new threadlocal::buffer<float>(d);
+      }
+      buf->write(p);
+      return distance(buf->begin(), q, d);
+  }
+
+  float distance(int8_t *p, float *q, unsigned d){
+      if (buf == nullptr || buf->length < d) {
+        buf = new threadlocal::buffer<float>(d);
+      }
+      buf->write(p);
+      return distance(buf->begin(), q, d);
+  }
+
+  float distance(float *p, uint8_t *q, unsigned d){
+      return distance(q, p, d);
+  }
+
+  float distance(float *p, int8_t *q, unsigned d){
+      return distance(q, p, d);
+  }
+
 };
 
 //Euclidian distance to use if d < 36 (I believe that 30 is the bound, but just to be safe)

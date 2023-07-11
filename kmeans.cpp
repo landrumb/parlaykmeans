@@ -25,7 +25,7 @@
 
 #define INITIALIZER Forgy
 #define INITIALIZER_NAME "Forgy"
-#define RUNNER NaiveKmeans
+#define RUNNER Naive
 #define RUNNER_NAME "Naive"
 
 

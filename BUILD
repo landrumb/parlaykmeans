@@ -32,9 +32,8 @@ cc_library(
   "include/utils/NSGDist.h",
   "include/initialization.h",
   "include/naive.h",
-  "include/utils/accumulator.h",
   "include/utils/parse_command_line.h",
-  "include/utils/kmeans_bench.h"
+  "include/utils/kmeans_bench.h",
   "include/utils/threadlocal.h"
   ],
   linkopts=["-pthread"],
@@ -94,7 +93,6 @@ cc_library(
   srcs=["include/yinyang_faithful.h"],
   hdrs=["include/initialization.h",
   "include/naive.h",
-  "include/utils/accumulator.h",
   "include/utils/parse_files.h",
   "include/lazy.h",
   "include/utils/NSGDist.h",

@@ -17,7 +17,7 @@
 #include "parlay/primitives.h"
 #include "parlay/sequence.h"
 #include "utils/NSGDist.h"
-#include "utils/accumulator.h"
+#include "utils/threadlocal.h"
 #include "utils/kmeans_bench.h"
 /* 
     Randomly assigns each point to a cluster, then computes the centers of each 
@@ -42,7 +42,7 @@ size_t* asg, Distance& D) {
         });
 
         //compute centers
-        accumulator<float>* acc = new accumulator<float>[k*d];
+        threadlocal::accumulator<float>* acc = new threadlocal::accumulator<float>[k*d];
         parlay::parallel_for(0, n, [&](size_t i) {
             size_t c = i % k;
             for (size_t j = 0; j < d; j++) {

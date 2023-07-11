@@ -430,7 +430,7 @@ struct Naive {
     t.start();
 
     float* temp_centers = new float[k * d];
-    accumulator<float> squared_errors = accumulator<float>();
+    threadlocal::accumulator<float> squared_errors = threadlocal::accumulator<float>();
 
     for (size_t i = 0; i < max_iter; i++) {
       // Assign each point to the closest center
@@ -447,8 +447,8 @@ struct Naive {
       });
       float assignment_time = t.next_time();
       // Update centers
-      accumulator<float>* new_centers = new accumulator<float>[k * d];
-      accumulator<float>* assignments = new accumulator<float>[k];
+      threadlocal::accumulator<float>* new_centers = new threadlocal::accumulator<float>[k * d];
+      threadlocal::accumulator<float>* assignments = new threadlocal::accumulator<float>[k];
       parlay::parallel_for(0, n, [&](size_t i) {
         for (size_t j = 0; j < d; j++) {
           new_centers[asg[i] * d + j].add(v[i * d + j]);
@@ -472,6 +472,9 @@ struct Naive {
         break;
       }
     }
+
+    delete[] temp_centers;
+
     return;
   };
 
