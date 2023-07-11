@@ -275,19 +275,19 @@ struct YinyangSimp {
     parlay::sequence<parlay::sequence<size_t>> indices(k);
 
     parlay::sequence<center> new_centers(k);
-    for (int i = 0; i < k; i++) {
+    for (size_t i = 0; i < k; i++) {
     new_centers[i].id = i;
     new_centers[i].coordinates=parlay::sequence<T>(d,0);
     }
 
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
 
     indices[pts[i].best].push_back(i); //it's called best not id!!!
 
     }
     if (DEBUG_VD) {
     std::cout << "Debugging: printing out center counts:\n";
-    for (int i = 0; i < k; i++) {
+    for (size_t i = 0; i < k; i++) {
     std::cout << indices[i].size() << std::endl;
     }
 
