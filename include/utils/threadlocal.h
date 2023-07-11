@@ -10,8 +10,9 @@
 #include <string>
 
 // for accumulator, no performance difference between 64 and higher values, but 32 is significantly slower (<- on benchmark)
-// in actual code for some reason 4 is fastest, with smaller values being immediately slower and larger values gradually slower
-#define BUFFER_ACC 4
+// in actual code for some reason 4 is fastest, with smaller values being immediately slower and larger values gradually slower,
+// although this causes incorrect results when T is a double
+#define BUFFER_ACC 8
 // for padding buffer, larger values seem to be markedly slower
 #define PADDING 16
 
@@ -24,6 +25,10 @@ struct accumulator {
     parlay::sequence<T> counts;
 
     accumulator() {
+        // if (sizeof(T) < 8) {
+        //     width /= 2;
+        // }
+
         counts = parlay::sequence<T>(parlay::num_workers() * width, (T)0);
     }
 
@@ -49,7 +54,7 @@ struct accumulator {
     }
 
     void reset(){
-        counts = parlay::sequence<T>(parlay::num_workers() * width, (T)0);
+        std::fill(counts.begin(), counts.end(), (T)0);
     }
 };
 
