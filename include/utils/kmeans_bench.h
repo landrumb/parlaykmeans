@@ -97,7 +97,7 @@ struct kmeans_bench {
         iterations.push_back(iteration_bench(assign_time, update_time, msse, distance_calculations, center_reassignments, center_movements));
         n_iterations++;
 
-        std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << "s)\tmsse: " << msse << std::endl;
+        std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << "s) \tmsse: " << msse << std::endl;
     }
 
     void print() {

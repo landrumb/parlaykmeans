@@ -443,21 +443,21 @@ struct Naive {
             asg[i] = j;
           }
         }
-        squared_errors.add(min_dist * min_dist);
+        squared_errors.add(min_dist);
       });
       float assignment_time = t.next_time();
       // Update centers
-      threadlocal::accumulator<float>* new_centers = new threadlocal::accumulator<float>[k * d];
-      threadlocal::accumulator<float>* assignments = new threadlocal::accumulator<float>[k];
+      threadlocal::accumulator<double>* new_centers = new threadlocal::accumulator<double>[k * d];
+      threadlocal::accumulator<size_t>* assignments = new threadlocal::accumulator<size_t>[k];
       parlay::parallel_for(0, n, [&](size_t i) {
         for (size_t j = 0; j < d; j++) {
           new_centers[asg[i] * d + j].add(v[i * d + j]);
-          assignments[asg[i]].add(1);
+          assignments[asg[i]].increment();
         }
       });
       for (size_t i = 0; i < k; i++) {
         for (size_t j = 0; j < d; j++) {
-          temp_centers[i * d + j] = new_centers[i * d + j].total() / assignments[i].total();
+          temp_centers[i * d + j] = static_cast<float>(new_centers[i * d + j].total() / assignments[i].total());
         }
       }
       
