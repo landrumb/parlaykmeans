@@ -14,7 +14,7 @@
 // although this causes incorrect results when T is a double
 #define BUFFER_ACC 8
 // for padding buffer, larger values seem to be markedly slower
-#define PADDING 16
+#define PADDING 64
 
 namespace threadlocal {
 

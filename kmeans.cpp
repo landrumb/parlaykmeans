@@ -23,8 +23,8 @@
 #include "include/lazy.h"
 #include "include/naive.h"
 
-#define INITIALIZER Forgy
-#define INITIALIZER_NAME "Forgy"
+#define INITIALIZER MacQueen
+#define INITIALIZER_NAME "MacQueen"
 #define RUNNER Naive
 #define RUNNER_NAME "Naive"
 

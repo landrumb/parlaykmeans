@@ -471,10 +471,10 @@ struct Naive {
       // copy temp centers into c
       std::copy(temp_centers, temp_centers + k * d, c);
 
-      float sum_deltas = parlay::reduce(deltas);
+      float max_delta = parlay::reduce(deltas, parlay::maxm<float>());
       float update_time = t.next_time();
       logger.add_iteration(assignment_time, update_time, squared_errors.total() / n, 0, 0, deltas);
-      if (sum_deltas < epsilon) {
+      if (max_delta <= epsilon) {
         break;
       }
 
@@ -489,6 +489,8 @@ struct Naive {
     }
 
     delete[] temp_centers;
+    delete[] new_centers;
+    delete[] assignments;
 
     return;
   };
