@@ -1,10 +1,11 @@
 #include "include/utils/parse_files.h"
-//#include "include/utils/parse_command_line.h"
+#include "include/utils/parse_command_line.h"
 #include "include/utils/NSGDist.h"
 #include "lazy.h"
 #include "initialization.h"
 #include "naive.h"
 #include "yinyang_simp.h"
+#include "include/utils/kmeans_bench.h"
 
 #include "parlay/sequence.h"
 #include "parlay/parallel.h"
@@ -101,21 +102,24 @@ int main() {
     //DISTANCE MUST BE A dynamically allocated pointer*
     Distance* D;
 
-    if (dist_choice=="euclidean") {
-        if (k >= 36 && d >= 36) {
-            std::cout << "using vec dist" << std::endl;
-            D = new EuclideanDistance();
+    // if (dist_choice=="euclidean") {
+    //     if (k >= 36 && d >= 36) {
+    //         std::cout << "using vec dist" << std::endl;
+    //         D = new EuclideanDistance();
 
-        }
-        else {
-            std::cout << "using small dist" <<std::endl;
-            D = new EuclideanDistanceSmall();
-        }
-    }
-    else {
-        std::cout << "Invalid distance choice" << std::endl;
-        abort();
-    }
+    //     }
+    //     else {
+    //         std::cout << "using small dist" <<std::endl;
+    //         D = new EuclideanDistanceSmall();
+    //     }
+    // }
+    // else {
+    //     std::cout << "Invalid distance choice" << std::endl;
+    //     abort();
+    // }
+    std::cout << "using small dist" << std::endl;
+    D = new EuclideanDistanceSmall();
+    
 
    //debug_dist(*D);
 
@@ -130,12 +134,21 @@ int main() {
     for (size_t i = 0; i < n; i++) {
         asg2[i] = asg[i];
     }
-    size_t max_iter = 2;
+    size_t max_iter = 10;
     double epsilon = 0.01;
+    // kmeans_bench logger = 
+    // kmeans_bench(n, d, k, max_iter, epsilon, "Lazy", "Naive");
+
+    // kmeans_bench logger2 = 
+    // kmeans_bench(n, d, k, max_iter, epsilon, "Lazy", "YY");
 
     NaiveKmeans<uint8_t> nie;
+
+    //logger.start_time();
     nie.cluster(v,n,d,k,c,asg,*D,max_iter,epsilon);
+    //logger.end_time();
     YinyangSimp<uint8_t> yy;
+
     yy.cluster(v,n,d,k,c2,asg2,*D,max_iter,epsilon);
 
 

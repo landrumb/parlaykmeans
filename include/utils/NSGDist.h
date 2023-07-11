@@ -451,7 +451,8 @@ struct EuclideanDistance : public Distance{
 
 };
 
-//Euclidian distance to use if d < 36 (I believe that 30 is the bound, but just to be safe)
+//Euclidian distance to use if d < 36 (I believe that 30 is the bound, but 
+//just to be safe)
 struct EuclideanDistanceSmall : public Distance {
     std::string id() {return "euclidean_small";}
 
@@ -463,7 +464,7 @@ struct EuclideanDistanceSmall : public Distance {
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
-    return (float) result;
+    return std::sqrt((float) result);
   }
 
   float distance(int8_t *p, int8_t *q, unsigned d){
@@ -472,14 +473,14 @@ struct EuclideanDistanceSmall : public Distance {
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
-    return (float) result;
+    return std::sqrt((float) result);
   }
   float distance(float* p, float* q, unsigned d) {
     float result = 0;
     for (unsigned i = 0; i < d; i++) {
       result += (p[i]-q[i])*(p[i]-q[i]);
     }
-    return result;
+    return std::sqrt(result);
   }
 
 

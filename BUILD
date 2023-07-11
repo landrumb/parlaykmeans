@@ -183,6 +183,7 @@ cc_library(
   "include/utils/accumulator.h",
   "include/yinyang_simp.h",
   "include/utils/kmeans_bench.h",
+  "include/utils/parse_command_line.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
