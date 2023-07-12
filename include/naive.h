@@ -282,7 +282,7 @@ double epsilon)
 
   while (iterations < max_iterations) {
 
-    print_target(pts,centers,D,PTARGET,CTARGET);
+    //print_target(pts,centers,D,PTARGET,CTARGET);
    
     std::cout << "iter" << iterations << std::endl;
     iterations++;

@@ -18,6 +18,7 @@
 #include <atomic>
 #include <utility>
 #include <type_traits>
+#include <cmath>
 
 #include "include/initialization.h"
 #include "include/lazy.h"
@@ -103,16 +104,16 @@ size_t max_iter=1000, double epsilon=0) {
     ben_naive.cluster(v,n,d,k,c3,asg3,D,logger,max_iter,epsilon);
     logger.end_time();
 
-    std::cout << "Printing out final centers: "  << std::endl;
-    for (size_t i = 0; i < k; i++) {
-        for (size_t j = 0; j < d; j++) {
+    std::cout << "Printing out first 10 final centers, the first 10 dim: "  << std::endl;
+    for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
+        for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
             std::cout << c[i*d + j] <<  "|" << c2[i*d+j] << " ";
         }
         std::cout << std::endl;
     }
 
-    std::cout << "Printing out final assignments: " << std::endl;
-    for (size_t i = 0; i < n; i++) {
+    std::cout << "Printing out 100 final assignments: " << std::endl;
+    for (size_t i = 0; i < std::min(n,(size_t) 100); i++) {
         std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
         
     }

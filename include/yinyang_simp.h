@@ -788,16 +788,16 @@ struct YinyangSimp {
     });
 
     //debugging
-    {
-    size_t elt_counter = 0;
-    for (size_t i = 0; i < n; i++) {
-      elt_counter += centers[i].old_num_members;
+    // {
+    // size_t elt_counter = 0;
+    // for (size_t i = 0; i < n; i++) {
+    //   elt_counter += centers[i].old_num_members;
 
-    }
-    if (elt_counter != n) {
-      std::cout << "error in num_members assignment: " << elt_counter << std::endl;
-      abort();
-    }}
+    // }
+    // if (elt_counter != n) {
+    //   std::cout << "error in num_members assignment: " << elt_counter << std::endl;
+    //   abort();
+    // }}
 
     //iters must start at 1!! (was like that a couple iterations ago
     //ironically)
@@ -821,8 +821,8 @@ struct YinyangSimp {
 
     
     while (true) {
-      std::cout << "print center/point before drift" << std::endl;
-      print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
+      // std::cout << "print center/point before drift" << std::endl;
+      // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
       
@@ -830,7 +830,7 @@ struct YinyangSimp {
       //TODO use the yinyang fast update centers method (currently doing
       //a naive update centers)
       //comparative is the fast method
-      total_diff = update_centers_drift_comparative(pts,n,d,k,centers,D,groups, t);
+      total_diff = update_centers_drift(pts,n,d,k,centers,D,groups, t);
 
       //convergence check
       if (iters >= max_iter || total_diff < epsilon) break;
@@ -838,8 +838,8 @@ struct YinyangSimp {
       iters += 1;
 
       
-      std::cout << "print 41 after drift" << std::endl;
-      print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
+      // std::cout << "print 41 after drift" << std::endl;
+      // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
        
       
@@ -854,13 +854,13 @@ struct YinyangSimp {
         pts[i].ub += centers[pts[i].best].delta; 
         
         set_point_global_lb(pts[i],groups,t);
-        if (i==TARGET_POINT) {
-          std::cout << "printing point 41 after set global lb iter " 
-        << iters << std::endl;
-            print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
+        // if (i==TARGET_POINT) {
+        //   std::cout << "printing point 41 after set global lb iter " 
+        // << iters << std::endl;
+        //     print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
-        }
+        // }
         
         //if our center could change
         if (pts[i].global_lb < pts[i].ub) {
@@ -972,8 +972,8 @@ struct YinyangSimp {
 
 
     }
-    std::cout << "post while loop printing, looking at bounds " << std::endl;
-    print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
+    // std::cout << "post while loop printing, looking at bounds " << std::endl;
+    // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
     //copy back over coordinates
