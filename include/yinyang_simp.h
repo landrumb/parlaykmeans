@@ -458,12 +458,18 @@ struct YinyangSimp {
   parlay::sequence<center>& centers) {
 
     std::cout << "Debugging init groups " << std::endl;
-   
+
     LazyStart<float> init;
     init(c,k,d,t,group_centers,group_asg,D);
+
+    kmeans_bench logger = kmeans_bench(k,d,t,5,0,"Lazy", "Internal Naive");
+    logger.start_time();
+    
+    
     NaiveKmeans<float> run;
     run.cluster(c,k,d,t,
-    group_centers, group_asg,D, 5, 0.0001);
+    group_centers, group_asg,D,logger, 5, 0.0001);
+    logger.end_time();
 
 
     parlay::parallel_for(0,k,[&] (size_t i) {
@@ -651,7 +657,7 @@ struct YinyangSimp {
   
 
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
-  Distance& D, size_t max_iter, double epsilon) {
+  Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
 
 
     std::cout << "Thus begins yinyang debugging" << std::endl;
@@ -668,6 +674,9 @@ struct YinyangSimp {
     }
 
 
+    parlay::internal::timer tim = parlay::internal::timer();
+    tim.start();
+    
     //format the data according to our naive run
     parlay::sequence<point> pts = parlay::tabulate<point>(n, [&] (size_t i) {
     return point(asg[i],parlay::slice(v+i*d, v+i*d + d));
@@ -741,10 +750,11 @@ struct YinyangSimp {
       
     }
 
-     std::cout << "printing out init groups" << std::endl;
-    for (size_t i = 0; i < t; i++) {
-      print_group(groups[i]);
-    }
+    //Debugging
+    //  std::cout << "printing out init groups" << std::endl;
+    // for (size_t i = 0; i < t; i++) {
+    //   print_group(groups[i]);
+    // }
 
     //confirm group assignment happened properly
     //(checking a necessary not sufficient condition)
@@ -771,14 +781,13 @@ struct YinyangSimp {
     pts[i].lb = parlay::sequence<float>(t); //initialize the lower bound sequence
     });
 
-
+    //Debugging
     //print out distances, distance2nd
-
-    std::cout << "printing out distances, distances2nd for pt 0 " << std::endl;
-    for (size_t i = 0; i < t; i++) {
-      std::cout << distances[0][i].first << " " << distances[0][i].second << 
-      " | " << distances2nd[0][i].first << " " << distances2nd[0][i].second << std::endl;
-    }
+    // std::cout << "printing out distances, distances2nd for pt 0 " << std::endl;
+    // for (size_t i = 0; i < t; i++) {
+    //   std::cout << distances[0][i].first << " " << distances[0][i].second << 
+    //   " | " << distances2nd[0][i].first << " " << distances2nd[0][i].second << std::endl;
+    // }
 
     //actually take best
     init_all_point_bounds(pts, n, distances, distances2nd, centers, t);
@@ -816,7 +825,9 @@ struct YinyangSimp {
 
     // }
 
-
+    //size_t distance_calculations = n*k;
+    float assignment_time = tim.next_time();
+    float update_time = 0;
     //Step 3: Repeat until convergence
 
     
@@ -825,18 +836,27 @@ struct YinyangSimp {
       // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
 
-      
       //3.1: update centers
       //TODO use the yinyang fast update centers method (currently doing
       //a naive update centers)
       //comparative is the fast method
       total_diff = update_centers_drift(pts,n,d,k,centers,D,groups, t);
+      parlay::sequence<float> deltas = parlay::tabulate(k,[&] (size_t i) {
+        return centers[i].delta;
+      });
+      parlay::sequence<double> best_dists = parlay::tabulate(n,[&] (size_t i) {
+        return static_cast<double>(pts[i].ub * pts[i].ub);
+      });
+      double squared_error = parlay::reduce(best_dists);
 
+      update_time = tim.next_time();
+
+      //end of iteration:
+      logger.add_iteration(assignment_time,update_time,squared_error,0,0,deltas);
       //convergence check
       if (iters >= max_iter || total_diff < epsilon) break;
 
       iters += 1;
-
       
       // std::cout << "print 41 after drift" << std::endl;
       // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
@@ -969,7 +989,7 @@ struct YinyangSimp {
 
       });
 
-
+      assignment_time = tim.next_time();
 
     }
     // std::cout << "post while loop printing, looking at bounds " << std::endl;

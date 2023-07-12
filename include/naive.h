@@ -151,8 +151,9 @@ struct NaiveKmeans {
 
     //MUST PASS DISTANCE BY REFERENCE NOT COPY
     //put the coordinates of p onto the stack (in buf) for the calculation
-    size_t closest_point_vd(const point& p, 
-    parlay::sequence<center>& centers, Distance& D, size_t d) {
+    size_t closest_point(const point& p, 
+    parlay::sequence<center>& centers, Distance& D, size_t d, 
+    threadlocal::accumulator<double> squared_errors) {
    
         float buf[2048];
         T* it = p.coordinates.begin();
@@ -165,7 +166,11 @@ struct NaiveKmeans {
             return D.distance(buf, make_slice(q.coordinates).begin(),d);
         });
 
-        return min_element(distances) - distances.begin();
+
+        auto min_elt = min_element(distances);
+        squared_errors.add(static_cast<double>(*min_elt));
+
+        return min_elt - distances.begin();
 
     }
 
@@ -214,7 +219,7 @@ void compute_centers(
 }
 
 void cluster(T* v, size_t n, size_t d, size_t k, 
-float* c, size_t* asg, Distance& D,  size_t max_iter, double epsilon) {
+float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
 
   //format the data according to our naive run
   parlay::sequence<point> pts = parlay::tabulate<point>(n, [&] (size_t i) {
@@ -236,7 +241,7 @@ float* c, size_t* asg, Distance& D,  size_t max_iter, double epsilon) {
   });
 
   //the actual naive run
-  kmeans_vd(pts,n,d,k,centers,c, D,max_iter,epsilon);
+  kmeans_vd(pts,n,d,k,centers,c, D,logger, max_iter,epsilon);
 
   //put our data back 
   parlay::parallel_for(0,k,[&] (size_t i) {
@@ -252,14 +257,15 @@ float* c, size_t* asg, Distance& D,  size_t max_iter, double epsilon) {
 
 
 double kmeans_vd(parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
-parlay::sequence<center>& centers, float* c, Distance& D, size_t max_iterations, 
+parlay::sequence<center>& centers, float* c, Distance& D, 
+kmeans_bench& logger, size_t max_iterations, 
 double epsilon)
 {
 
-    std::cout << "running vd" << std::endl;
+    // std::cout << "running vd" << std::endl;
 
-    std::cout << std::setprecision(10) <<  
-    "ensuring precision" << std::endl;
+    // std::cout << std::setprecision(10) <<  
+    // "ensuring precision" << std::endl;
 
     if (d > 2048) {
       std::cout << "d greater than 2048, too big, printing d: " << 
@@ -278,33 +284,38 @@ double epsilon)
 
   float total_diff = 0;
 
+  threadlocal::accumulator<double> squared_errors = threadlocal::accumulator<double>();
+
   // t.next("finished init");
 
   while (iterations < max_iterations) {
 
     //print_target(pts,centers,D,PTARGET,CTARGET);
    
-    std::cout << "iter" << iterations << std::endl;
+    // std::cout << "iter" << iterations << std::endl;
     iterations++;
 
      
-    t.next("About to do closest points");
+    //t.next("About to do closest points");
     // Assign each point to the closest center
     parlay::parallel_for(0, pts.size(), [&](size_t i) {
-      pts[i].best = closest_point_vd(pts[i], centers,D,d);
+      pts[i].best = closest_point(pts[i], centers,D,
+      d,squared_errors);
     });
 
-    t.next("Finished closest points");
+    //t.next("Finished closest points");
+    float assignment_time = t.next_time();
 
     // Compute new centers
     compute_centers(pts, n, d, k, c);
-    t.next("Computed the centers");
+    //t.next("Computed the centers");
     // Check convergence
-    total_diff = 0.0;
-    for (size_t i = 0; i < k; i++) { 
-      float diff = D.distance(centers[i].coordinates.begin(), c + i*d,k);
-      total_diff += diff;
-    }
+
+    parlay::sequence<float> deltas = parlay::tabulate(k, [&] (size_t i) {
+      return D.distance(centers[i].coordinates.begin(), c + i*d,k);
+    });
+    total_diff = parlay::reduce(deltas);
+   
     //copy back over centers
     parlay::parallel_for(0,k,[&](size_t i) {
       for (size_t j = 0; j < d; j++) {
@@ -312,7 +323,13 @@ double epsilon)
       }
     });
 
-    std::cout << "difs " << total_diff << " " << epsilon << std::endl;
+    float update_time = t.next_time();
+
+    logger.add_iteration(assignment_time,update_time,
+    squared_errors.total(), 0, 0, deltas);
+    squared_errors.reset();
+
+    //std::cout << "difs " << total_diff << " " << epsilon << std::endl;
 
     if (total_diff <= epsilon) {
       break;

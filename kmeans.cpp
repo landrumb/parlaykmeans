@@ -23,7 +23,7 @@
 #include "include/initialization.h"
 #include "include/lazy.h"
 #include "include/naive.h"
-#include "yinyang_simp.h"
+#include "yinyang_simp.h" //can switch to fast_center
 
 #define INITIALIZER MacQueen
 #define INITIALIZER_NAME "MacQueen"
@@ -89,13 +89,20 @@ size_t max_iter=1000, double epsilon=0) {
 
  
     NaiveKmeans<T> nie;
+    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","NaiveKmeans");
+    logger_nie.start_time();
+    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    logger_nie.end_time();
 
-    //logger.start_time();
-    nie.cluster(v,n,d,k,c,asg,D,max_iter,epsilon);
-    //logger.end_time();
     YinyangSimp<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "Lazy","YY");
+    logger_yy.start_time();
 
-    yy.cluster(v,n,d,k,c2,asg2,D,max_iter,epsilon);
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+
+    logger_yy.end_time();
 
     Naive<T> ben_naive;
     kmeans_bench logger = 
