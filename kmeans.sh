@@ -10,4 +10,7 @@ BP=$P/bigann
 # ./bazel-bin/kmeans_test_run -k 1000 -i $BP/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D Euclidean -m 10
 
 TP=$P/text2image1B
-./bazel-bin/kmeans_test_run -k 1000 -i $TP/base.1B.fbin.crop_nb_1000000 -f bin -t float -D Euclidean -m 10
+#./bazel-bin/kmeans_test_run -k 1000 -i $TP/base.1B.fbin.crop_nb_1000000 -f bin -t float -D Euclidean -m 10
+
+#other implementations
+./bazel-bin/kmeans_test_run -k 100000 -i $TP/base.1B.fbin.crop_nb_1000000 -f bin -t float -D Euclidean -m 10 -two yes 

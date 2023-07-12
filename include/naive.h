@@ -179,6 +179,7 @@ struct NaiveKmeans {
 void compute_centers(
   const parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
   float* c) {
+    //std::cout << "entered compute centers" << std::endl;
 
 
     parlay::sequence<parlay::sequence<size_t>> indices(k);
@@ -213,6 +214,8 @@ void compute_centers(
         }
       
     });
+    //std::cout << "left compute centers" << std::endl;
+
 
 
 
@@ -262,7 +265,7 @@ kmeans_bench& logger, size_t max_iterations,
 double epsilon)
 {
 
-    // std::cout << "running vd" << std::endl;
+    std::cout << "running vd" << std::endl;
 
     // std::cout << std::setprecision(10) <<  
     // "ensuring precision" << std::endl;
@@ -283,6 +286,7 @@ double epsilon)
   size_t iterations = 0;
 
   float total_diff = 0;
+  //std::cout << "made it HERE" << std::endl;
 
   threadlocal::accumulator<double> squared_errors = threadlocal::accumulator<double>();
 
@@ -292,7 +296,7 @@ double epsilon)
 
     //print_target(pts,centers,D,PTARGET,CTARGET);
    
-    // std::cout << "iter" << iterations << std::endl;
+    //std::cout << "vd_iter" << iterations << std::endl;
     iterations++;
 
      
@@ -311,9 +315,16 @@ double epsilon)
     //t.next("Computed the centers");
     // Check convergence
 
+    // std::cout << "pre deltas" << std::endl;
+    // std::cout << "n: " << n << "d: " << d << "k: " << k << std::endl;
+
+
     parlay::sequence<float> deltas = parlay::tabulate(k, [&] (size_t i) {
-      return D.distance(centers[i].coordinates.begin(), c + i*d,k);
+      return D.distance(centers[i].coordinates.begin(), c + i*d,d);
     });
+
+    //std::cout << "post deltas" << std::endl;
+
     total_diff = parlay::reduce(deltas);
    
     //copy back over centers

@@ -470,6 +470,7 @@ struct YinyangSimp {
     run.cluster(c,k,d,t,
     group_centers, group_asg,D,logger, 5, 0.0001);
     logger.end_time();
+    std::cout << "survived group init" << std::endl;
 
 
     parlay::parallel_for(0,k,[&] (size_t i) {
@@ -692,6 +693,9 @@ struct YinyangSimp {
     return center(i, parlay::sequence<float>(d));
     });
 
+    logger.add_iteration(tim.next_time(),0,42,0,0,
+    parlay::sequence<float>(k,0));
+
     //fill in the centers
     fill_in_centers(c,centers,k,d);
 
@@ -703,12 +707,15 @@ struct YinyangSimp {
     //   print_center(centers[i]);
     // }
     
-    
-    size_t t = k/10; //TODO change back to k/10
+    //note: using k/100 so will load
+    size_t t = k/20; //TODO change back to k/10
     
     //cluster on the groups initially using NaiveKmeans
     float* group_centers = new float[t * d];
     size_t* group_asg = new size_t[k];
+
+    logger.add_iteration(tim.next_time(),0,43,0,0,
+    parlay::sequence<float>(k,0));
 
     //initialize the groups
     init_groups(c,k,d,t,group_centers,group_asg,D,centers);
@@ -731,6 +738,8 @@ struct YinyangSimp {
     //   std::cout << centers[i].group_id << " ";
     // }
     // std::cout << std::endl;
+
+    //std::cout << "made it here1" << std::endl;
     
 
     parlay::sequence<group> groups(t);
@@ -740,7 +749,9 @@ struct YinyangSimp {
       groups[i].id = i;
     }
 
-    
+    logger.add_iteration(tim.next_time(),0,44,0,0,
+    parlay::sequence<float>(k,0));
+
 
 
     //Sadly 
@@ -749,6 +760,9 @@ struct YinyangSimp {
       groups[centers[i].group_id].center_ids.push_back(i);
       
     }
+
+    logger.add_iteration(tim.next_time(),0,45,0,0,
+    parlay::sequence<float>(k,0));
 
     //Debugging
     //  std::cout << "printing out init groups" << std::endl;
@@ -771,6 +785,9 @@ struct YinyangSimp {
     //distance from 2nd closest point in each group to a point
     parlay::sequence<parlay::sequence<std::pair<size_t,float>>> 
       distances2nd(n,parlay::sequence<std::pair<size_t,float>>(t));
+
+    logger.add_iteration(tim.next_time(),0,46,0,0,
+    parlay::sequence<float>(k,0));
     
     // Assign each point to the closest center
     parlay::parallel_for(0, pts.size(), [&](size_t i) {
@@ -780,6 +797,9 @@ struct YinyangSimp {
 
     pts[i].lb = parlay::sequence<float>(t); //initialize the lower bound sequence
     });
+
+    logger.add_iteration(tim.next_time(),0,47,0,0,
+    parlay::sequence<float>(k,0));
 
     //Debugging
     //print out distances, distance2nd
@@ -791,6 +811,11 @@ struct YinyangSimp {
 
     //actually take best
     init_all_point_bounds(pts, n, distances, distances2nd, centers, t);
+    //std::cout << "made it here2" << std::endl;
+
+    logger.add_iteration(tim.next_time(),0,48,0,0,
+    parlay::sequence<float>(k,0));
+
 
     parlay::parallel_for(0,k,[&] (size_t i) {
       centers[i].new_num_members = centers[i].old_num_members;
@@ -857,6 +882,8 @@ struct YinyangSimp {
       if (iters >= max_iter || total_diff < epsilon) break;
 
       iters += 1;
+      std::cout << "made it hereit: " << iters << std::endl;
+
       
       // std::cout << "print 41 after drift" << std::endl;
       // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
