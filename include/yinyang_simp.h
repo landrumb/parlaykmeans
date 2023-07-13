@@ -1,8 +1,7 @@
 //yinyang but no local filtering
 //this version hopefully will do distances_to_groups better
 //to avoid a huge memory/time cost
-//starting a new file to save the other in case I add errors
-//and have the previous as a reference
+
 #ifndef YYSIMP
 #define YYSIMP
 

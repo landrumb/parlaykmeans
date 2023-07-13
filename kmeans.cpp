@@ -23,7 +23,7 @@
 #include "include/initialization.h"
 #include "include/lazy.h"
 #include "include/naive.h"
-#include "yinyang_simp2.h" //can switch to fast_center
+#include "yinyang_simp.h" //can switch to fast_center
 
 #define INITIALIZER MacQueen
 #define INITIALIZER_NAME "MacQueen"
@@ -88,12 +88,12 @@ size_t max_iter=1000, double epsilon=0) {
     }
 
  
-    // NaiveKmeans<T> nie;
-    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    // epsilon,"Lazy","NaiveKmeans");
-    // logger_nie.start_time();
-    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    // logger_nie.end_time();
+    NaiveKmeans<T> nie;
+    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","NaiveKmeans");
+    logger_nie.start_time();
+    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    logger_nie.end_time();
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
 

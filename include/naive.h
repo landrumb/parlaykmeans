@@ -168,7 +168,8 @@ struct NaiveKmeans {
 
 
         auto min_elt = min_element(distances);
-        squared_errors.add(static_cast<double>(*min_elt));
+        //costly
+        //squared_errors.add(static_cast<double>(*min_elt));
 
         return min_elt - distances.begin();
 

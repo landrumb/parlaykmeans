@@ -36,7 +36,6 @@ cc_library(
   "include/utils/kmeans_bench.h",
   "include/utils/threadlocal.h",
   "include/yinyang_simp.h",
-  "include/yinyang_simp2.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
