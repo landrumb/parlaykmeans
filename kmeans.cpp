@@ -94,6 +94,8 @@ size_t max_iter=1000, double epsilon=0) {
     // logger_nie.start_time();
     // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
     // logger_nie.end_time();
+    // std::cout << "cutting out after my naive" << std::endl;
+    // abort();
 
     YinyangSimp<T> yy;
     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,

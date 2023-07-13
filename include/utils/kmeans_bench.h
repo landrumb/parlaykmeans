@@ -15,18 +15,25 @@
 struct iteration_bench {
     double assign_time;
     double update_time;
+
+    
     double msse;
     size_t distance_calculations;
     size_t center_reassignments;
     parlay::sequence<float> center_movements;
 
-    iteration_bench(double assign_time, double update_time, double msse, size_t distance_calculations, size_t center_reassignments, parlay::sequence<float> center_movements) : assign_time(assign_time), update_time(update_time), msse(msse), distance_calculations(distance_calculations), center_reassignments(center_reassignments) {
+    //setup time tracks time used before the first iteration
+    double setup_time;
+
+    iteration_bench(double assign_time, double update_time, double msse, size_t distance_calculations, size_t center_reassignments, parlay::sequence<float> center_movements,
+    double setup_time=0.0) : assign_time(assign_time), update_time(update_time), msse(msse), distance_calculations(distance_calculations), center_reassignments(center_reassignments), setup_time(setup_time) {
         this->center_movements = center_movements;
     };
 
     void print() {
         std::cout << "assignment time:       \t" << assign_time << std::endl;
         std::cout << "update time:           \t" << update_time << std::endl;
+        std::cout << "setup time:            \t" << setup_time << std::endl;
         std::cout << "msse:                  \t" << msse << std::endl;
         std::cout << "distance calculations: \t" << distance_calculations << std::endl;
         std::cout << "center reassignments:  \t" << center_reassignments << std::endl;
@@ -80,6 +87,18 @@ struct kmeans_bench {
         // std::cout << "msse:      \t" << iterations[iterations.size() - 1].msse << std::endl;
         std::cout << "total time:\t" << total_time << std::endl;
         std::cout << "avg iteration time:\t" << total_time / n_iterations << std::endl;
+
+        //print out final assignment, update time
+        double total_update_time = 0;
+        double total_assign_time = 0;
+        for (size_t i = 0; i < iterations.size(); i++) {
+            total_update_time += iterations[i].update_time;
+            total_assign_time += iterations[i].assign_time;
+            total_setup_time += iterations[i].setup_time;
+        }
+        std::cout << "Total assign time:\t" << total_assign_time << std::endl;
+        std::cout << "Total update time:\t" << total_update_time << std::endl;
+        std::cout << "Total setup time:\t" << total_setup_time << std::endl;
         // std::cout << "total assignment time:\t" << parlay::reduce(parlay::tabulate(iterations, iterations.size(), )) << std::endl;
         // std::cout << "total update time:\t" << parlay::reduce(iterations, parlay::addm<double>(), [](iteration_bench b) {return b.update_time;}) << std::endl;
     }
@@ -93,11 +112,15 @@ struct kmeans_bench {
         center_reassignments: number of points assigned to a new center
         center_movements: sequence of distances moved by each center in an iteration
      */
-    void add_iteration(double assign_time, double update_time, double msse, size_t distance_calculations, size_t center_reassignments, parlay::sequence<float> center_movements) {
-        iterations.push_back(iteration_bench(assign_time, update_time, msse, distance_calculations, center_reassignments, center_movements));
+    void add_iteration(double assign_time, double update_time, double msse, size_t distance_calculations, size_t center_reassignments, parlay::sequence<float> center_movements,double setup_time=0) {
+        iterations.push_back(iteration_bench(assign_time, update_time, msse, distance_calculations, center_reassignments, center_movements,setup_time));
         n_iterations++;
 
-        std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << "s) \tmsse: " << msse << std::endl;
+        iterations[iterations.size()-1].print();
+
+        // std::cout << "iteration " << n_iterations << " complete. (" << iteration_timer.next_time() << "s) \tmsse: " << msse << std::endl;
+        // std::cout << "distance calc: " << distance_calculations << ". center reasg: " << center_reassignments 
+        // << ". center move: " << parlay::reduce(center_movements) << std::endl;
     }
 
     void print() {
