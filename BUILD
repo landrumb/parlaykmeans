@@ -200,4 +200,34 @@ cc_library(
  
 )
 
+#Testing the tester
+cc_test(
+  name = "hello_test",
+  size = "small",
+  srcs = ["extra_tests.cpp"],
+ 
+  deps = ["@googletest//:gtest_main",
+    "@parlaylib//parlay:parallel",
+    "@parlaylib//parlay:primitives",
+    "@parlaylib//parlay:sequence",
+    "@parlaylib//parlay:slice",
+    "@parlaylib//parlay:io",
+    "test_headers"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  
+)
+cc_library(
+  name="test_headers",
+  hdrs=["include/utils/parse_files.h",
+"include/lazy.h",
+"include/utils/NSGDist.h",
+"include/initialization.h",
+"include/naive.h",
+"include/utils/parse_command_line.h",
+"include/utils/kmeans_bench.h",
+"include/utils/threadlocal.h",
+"include/yinyang_simp.h",],
 
+)
