@@ -711,7 +711,8 @@ struct YinyangSimp {
     // }
     
     //note: using k/100 so will load
-    size_t t = k/20; //TODO change back to k/10
+    //making sure t is at least 1
+    size_t t = std::max((size_t) k/20,(size_t) 1); //TODO change back to k/10
     
     //cluster on the groups initially using NaiveKmeans
     float* group_centers = new float[t * d];

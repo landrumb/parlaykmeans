@@ -96,6 +96,7 @@ size_t max_iter=1000, double epsilon=0) {
     logger_nie.end_time();
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
+    std::cout << "starting naive" << std::endl;
 
     YinyangSimp<T> yy;
     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
