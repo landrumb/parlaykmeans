@@ -19,6 +19,10 @@
 #include "utils/NSGDist.h"
 #include "utils/threadlocal.h"
 #include "utils/kmeans_bench.h"
+
+#include <string>
+
+
 /* 
     Randomly assigns each point to a cluster, then computes the centers of each 
     cluster.
@@ -59,6 +63,45 @@ size_t* asg, Distance& D) {
         
         delete[] acc;
     }
+
+    std::string name() {
+        return "Forgy";
+    }
+};
+
+
+/* 
+Takes the first k points as centers, then assigns each point to the closest center.
+(technically MacQueen (a) in the latex doc)
+ */
+template<typename T>
+struct MacQueen {
+    void operator()(T* v, size_t n, size_t d, size_t k, float* centers,
+    size_t* asg, Distance& D) {
+        // copy first k points into centers
+        // this should hopefully compile to a memcpy if T is a float
+        for (size_t i = 0; i < k*d; i++) {
+            centers[i] = v[i];
+        }
+
+        // assign each point to the closest center
+        std::fill(asg, asg + n, 0);
+        parlay::parallel_for(0, n, [&](size_t i) {
+            float min_dist = D.distance(v + i*d, centers, d);
+            for (size_t j = 1; j < k; j++) {
+                float dist = D.distance(v + i*d, centers + j*d, d);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    asg[i] = j;
+                }
+            }
+        });
+        return;
+    };
+
+    std::string name() {
+        return "MacQueen";
+    };
 };
 
 

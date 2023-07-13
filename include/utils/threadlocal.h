@@ -9,18 +9,26 @@
 #include <type_traits>
 #include <string>
 
-// no performance difference between 64 and higher values, but 32 is significantly slower
-#define BUFFER 128
+// for accumulator, no performance difference between 64 and higher values, but 32 is significantly slower (<- on benchmark)
+// in actual code for some reason 4 is fastest, with smaller values being immediately slower and larger values gradually slower,
+// although this causes incorrect results when T is a double
+#define BUFFER_ACC 8
+// for padding buffer, larger values seem to be markedly slower
+#define PADDING 64
 
 namespace threadlocal {
 
 template <typename T>
 struct accumulator {
 
-    size_t width = BUFFER / sizeof(T);
+    size_t width = BUFFER_ACC / sizeof(T);
     parlay::sequence<T> counts;
 
     accumulator() {
+        // if (sizeof(T) < 8) {
+        //     width /= 2;
+        // }
+
         counts = parlay::sequence<T>(parlay::num_workers() * width, (T)0);
     }
 
@@ -46,14 +54,14 @@ struct accumulator {
     }
 
     void reset(){
-        counts = parlay::sequence<T>(parlay::num_workers() * width, (T)0);
+        std::fill(counts.begin(), counts.end(), (T)0);
     }
 };
 
 template <typename T>
 struct minimizer {
 
-    size_t width = BUFFER / sizeof(T);
+    size_t width = BUFFER_ACC / sizeof(T);
     parlay::sequence<T> counts;
 
     minimizer(T init) {
@@ -76,7 +84,7 @@ struct minimizer {
 template <typename T>
 struct maximizer {
 
-        size_t width = BUFFER / sizeof(T);
+        size_t width = BUFFER_ACC / sizeof(T);
         parlay::sequence<T> counts;
 
         maximizer(T init) {
@@ -108,7 +116,7 @@ struct maximizer {
  */
 template <typename T>
 struct buffer {
-    const size_t padding = BUFFER / sizeof(T);
+    const size_t padding = PADDING / sizeof(T);
     size_t length;
     T* data;
 

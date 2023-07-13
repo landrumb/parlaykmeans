@@ -464,7 +464,7 @@ struct EuclideanDistanceSmall : public Distance {
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
-    return std::sqrt((float) result);
+    return (float) result;
   }
 
   float distance(int8_t *p, int8_t *q, unsigned d){
@@ -473,14 +473,14 @@ struct EuclideanDistanceSmall : public Distance {
       result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                     ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
     }
-    return std::sqrt((float) result);
+    return (float) result;
   }
   float distance(float* p, float* q, unsigned d) {
     float result = 0;
     for (unsigned i = 0; i < d; i++) {
       result += (p[i]-q[i])*(p[i]-q[i]);
     }
-    return std::sqrt(result);
+    return result;
   }
 
 
