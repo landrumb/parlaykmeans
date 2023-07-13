@@ -23,7 +23,7 @@
 #include "include/initialization.h"
 #include "include/lazy.h"
 #include "include/naive.h"
-#include "yinyang_simp.h" //can switch to fast_center
+#include "yinyang_simp2.h" //can switch to fast_center
 
 #define INITIALIZER MacQueen
 #define INITIALIZER_NAME "MacQueen"
@@ -31,7 +31,7 @@
 #define RUNNER_NAME "Naive"
 
 
-const float epsilon = 0.0;
+const float epsilon = 0.00001; //want to stop
 
 
 template<typename T, typename Initializer, typename Runner>         

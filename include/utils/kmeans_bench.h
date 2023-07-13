@@ -91,6 +91,7 @@ struct kmeans_bench {
         //print out final assignment, update time
         double total_update_time = 0;
         double total_assign_time = 0;
+        double total_setup_time = 0;
         for (size_t i = 0; i < iterations.size(); i++) {
             total_update_time += iterations[i].update_time;
             total_assign_time += iterations[i].assign_time;

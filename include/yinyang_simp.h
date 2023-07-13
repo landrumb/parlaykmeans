@@ -1,4 +1,8 @@
 //yinyang but no local filtering
+//this version hopefully will do distances_to_groups better
+//to avoid a huge memory/time cost
+//starting a new file to save the other in case I add errors
+//and have the previous as a reference
 #ifndef YYSIMP
 #define YYSIMP
 
@@ -774,44 +778,36 @@ struct YinyangSimp {
     //(checking a necessary not sufficient condition)
     assert_proper_group_size(groups,t);
 
-    //Yinyang first does a normal iteration of kmeans:   
+    //Init the point bounds:
 
-    //Assignment
-    //distance from each group to a point
-    //at index (i,j) is the the id of the closest center in group j,
-    //as well as the distance between point i and the closest center
-    parlay::sequence<parlay::sequence<std::pair<size_t,float>>> 
-      distances(n,parlay::sequence<std::pair<size_t,float>>(t));
-    //distance from 2nd closest point in each group to a point
-    parlay::sequence<parlay::sequence<std::pair<size_t,float>>> 
-      distances2nd(n,parlay::sequence<std::pair<size_t,float>>(t));
-
-    logger.add_iteration(0,0,46,0,0,
-    parlay::sequence<float>(k,0),tim.next_time());
-    
-    // Assign each point to the closest center
-    parlay::parallel_for(0, pts.size(), [&](size_t i) {
-    distances_to_groups(pts[i],centers,groups,D,t,d,distances[i],
-    distances2nd[i]);
+    //first, we find the closest center to each point
+    parlay::parallel_for(0,n,[&] (size_t i) {
+       float buf[2048];
+        T* it = pts[i].coordinates.begin();
+        for (size_t j = 0; j < d; j++) {
+            buf[j]=*it;
+            it += 1; //add 1 for next?
+        }
+        
+        auto distances = parlay::delayed::map(centers, [&](center& q) {
+            return std::sqrt(D.distance(buf, make_slice(q.coordinates).begin(),d));
+        });
 
 
-    pts[i].lb = parlay::sequence<float>(t); //initialize the lower bound sequence
+        pts[i].best = min_element(distances) - distances.begin();
+
+        pts[i].ub = distances[pts[i].best];
+        pts[i].lb = parlay::sequence<float>(t,std::numeric_limits<float>::max());
+
+        for (size_t j = 0; j < k; j++) {
+          if (j != pts[i].best) {
+            pts[i].lb[centers[j].group_id] = 
+            std::min(pts[i].lb[centers[j].group_id],distances[j]);
+          }
+
+        }
+      
     });
-
-    logger.add_iteration(0,0,47,0,0,
-    parlay::sequence<float>(k,0),tim.next_time());
-
-    //Debugging
-    //print out distances, distance2nd
-    // std::cout << "printing out distances, distances2nd for pt 0 " << std::endl;
-    // for (size_t i = 0; i < t; i++) {
-    //   std::cout << distances[0][i].first << " " << distances[0][i].second << 
-    //   " | " << distances2nd[0][i].first << " " << distances2nd[0][i].second << std::endl;
-    // }
-
-    //actually take best
-    init_all_point_bounds(pts, n, distances, distances2nd, centers, t);
-    //std::cout << "made it here2" << std::endl;
 
     logger.add_iteration(0,0,48,0,0,
     parlay::sequence<float>(k,0),tim.next_time());
