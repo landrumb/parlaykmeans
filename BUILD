@@ -6,6 +6,8 @@ cc_binary(
     linkopts = ["-pthread"],
     deps = [
       "@parlaylib//parlay:parallel",
+      "@parlaylib//parlay:sequence",
+      "@parlaylib//parlay:primitives",
     ],
 )
 
@@ -36,6 +38,7 @@ cc_library(
   "include/utils/kmeans_bench.h",
   "include/utils/threadlocal.h",
   "include/yinyang_simp.h",
+  "include/utils/union_find.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
@@ -219,7 +222,7 @@ cc_test(
   
 )
 cc_library(
-  name="test_headers",
+  name="kmeans_headers",
   hdrs=["include/utils/parse_files.h",
 "include/lazy.h",
 "include/utils/NSGDist.h",
@@ -228,7 +231,8 @@ cc_library(
 "include/utils/parse_command_line.h",
 "include/utils/kmeans_bench.h",
 "include/utils/threadlocal.h",
-"include/yinyang_simp.h",],
+"include/yinyang_simp.h",
+"include/utils/union_find.h"],
 
 )
 
@@ -236,7 +240,7 @@ cc_library(
 #Testing the tester
 cc_test(
   name = "yy_google_test",
-  size = "medium",
+  size = "small",
   srcs = ["yy_tests.cpp"],
  
   deps = ["@googletest//:gtest_main",
@@ -245,7 +249,7 @@ cc_test(
     "@parlaylib//parlay:sequence",
     "@parlaylib//parlay:slice",
     "@parlaylib//parlay:io",
-    "test_headers"],
+    "kmeans_headers"],
   linkopts=["-pthread"],
   #makes it known that include is an include library
   copts = ["-Iinclude"],

@@ -19,6 +19,7 @@
 #include "initialization.h"
 #include "naive.h"
 #include "include/utils/kmeans_bench.h"
+#include "include/utils/union_find.h"
 
 template<typename T>
 struct YinyangSimp {
@@ -273,6 +274,273 @@ struct YinyangSimp {
 
   }
 
+  void fill_in_centers(float* c, parlay::sequence<center>& centers, 
+  size_t k, size_t d) {
+    parlay::parallel_for(0,k, [&] (size_t i) {
+    for (size_t j = 0; j < d; j++) {
+    centers[i].coordinates[j] = *(c + i*d + j);
+    }
+
+    });
+  }
+
+  
+
+  //initialize the groups by running a naive kmeans a few times
+  void init_groups(float* c, size_t k, size_t d, size_t t, 
+  float* group_centers, size_t* group_asg, Distance& D, 
+  parlay::sequence<center>& centers) {
+
+    std::cout << "Debugging init groups " << std::endl;
+
+    LazyStart<float> init;
+    init(c,k,d,t,group_centers,group_asg,D);
+
+    kmeans_bench logger = kmeans_bench(k,d,t,5,0,"Lazy", "Internal Naive");
+    logger.start_time();
+    
+    
+    NaiveKmeans<float> run;
+    run.cluster(c,k,d,t,
+    group_centers, group_asg,D,logger, 5, 0.0001);
+    logger.end_time();
+    std::cout << "survived group init" << std::endl;
+
+
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      centers[i].group_id = group_asg[i];
+    });
+
+
+  }
+
+  //note that groups can have different sizes!
+  //now the groups can have any positive size, even size 1
+  void assert_proper_group_size(parlay::sequence<group>& groups, 
+   size_t t, bool DEBUG_FLAG=false) {
+    if (DEBUG_FLAG) {
+       std::cout << "printing out init groups" << std::endl;
+      for (size_t i = 0; i < t; i++) {
+        print_group(groups[i]);
+      }
+    }
+    
+    for (size_t i =0 ;i < t; i++) {
+      if (groups[i].center_ids.size() == 0) {
+        std::cout << 
+        "Group assignment went wrong, group is wrong size"
+        << std::endl;
+        std::cout << groups[i].center_ids.size() << std::endl;
+        abort();
+      }
+    }
+  }
+
+  // compute_centers_guy() {
+  //   T* zero_vec[2048];
+  //   for(size_t i = 0; i < d; i++) {
+  //     zero_vec[i] = 0;
+  //   }
+  //   auto addpair = [](const std::pair<T*,long>& a, 
+  //   const std::pair<T*, long& b) {
+  //     return std::make_pair(
+  //       parlay::tabulate(d,[&] (size_t i) {
+  //         return *(a.first+i) + *(b.first+i);
+  //       },100),
+  //       a.second+b.second);
+  //   };
+  //   auto addme = parlay::binary_op(addpair,std::pair(zero_vec,0l));
+
+  //   auto closest = parlay::map(pts, [&] (point& p) {
+  //     return std::make_pair(p.best,std::make_pair(p.coordinates.begin(),1l));
+
+  //   });
+
+  //   auto mid_and_counts = parlay::reduce_by_index(closest,k,addme);
+
+  //   auto new_kpts = parlay::map(mid_and_counts, [&] (auto mcnt){
+  //     return mcnt.first / (double) mcnt.second;});
+  
+
+  // }
+
+  //compute centers calculates the new centers
+  //returns: a sequence of centers
+  //TODO make a different run (no casting) if T is a float
+  //can't do const with filter
+  //passing by reference, doing a copy wasteful
+  parlay::sequence<center> compute_centers_filter(
+  parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
+  const parlay::sequence<center>& centers, parlay::sequence<center>& new_centers) {
+
+    //update centers timer
+    parlay::internal::timer t2;
+    t2.start();
+
+    std::cout << "using the filter version " << std::endl;
+
+    parlay::sequence<parlay::sequence<size_t>> indices(k);
+
+
+
+    t2.next("Made new centers");
+
+    // union_find<size_t> UF(n);
+    // auto addpair [] (const std::pair<size_t, size_t>& a, const std::pair<size_t, size_t>& b) {
+    //   if (a.first <= b.first && pts[a].best==pts[b].best) {
+    //     UF.link(a.first,b.first);
+    //   }
+    // }
+
+    // for (size_t i = 0; i < n; i++) {
+
+    //   indices[pts[i].best].push_back(i); //it's called best not id!!!
+    // }
+
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      auto temp = parlay::filter(pts,[&] (point& p) {
+        return p.best==i;
+      });
+      indices[i] = parlay::map(temp, [&] (point& p) {
+        return p.id;
+      });
+      // indices[i] = parlay::map(temp, [&] (point& p) {
+      //   return p.id;
+      // });
+    });
+
+
+    if (DEBUG_VD) {
+    std::cout << "Debugging: printing out center counts:\n";
+    for (size_t i = 0; i < k; i++) {
+    std::cout << indices[i].size() << std::endl;
+    }
+
+    }
+
+    t2.next("Got indices");
+
+
+    parlay::parallel_for (0, k*d, [&] (size_t icoord){
+    size_t i = icoord / d;
+    size_t coord = icoord % d;
+
+
+    //if there are no values in a certain center, just keep the center 
+    //where it is
+    if (indices[i].size() > 0) { //anti_overflow_avg or reduce?? 
+    //note the static cast to double here, because points are whatever
+    new_centers[i].coordinates[coord] = static_cast<float>(reduce(parlay::map(indices[i],[&] 
+    (size_t ind) {return static_cast<double>(
+    pts[ind].coordinates[coord]);})) / indices[i].size()); 
+    //normal averaging now
+
+    }
+    else { 
+    new_centers[i].coordinates[coord] = centers[i].coordinates[coord];
+    }
+
+
+    }); 
+
+    t2.next("Done with adding");
+
+
+    return new_centers;
+
+
+  }
+
+
+  //compute centers calculates the new centers
+  //returns: a sequence of centers
+  //TODO make a different run (no casting) if T is a float
+  //can't do const with filter
+  //passing by reference, doing a copy wasteful
+  //compute centers comparative filter
+  parlay::sequence<center> compute_centers_filter_comp(
+  parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
+  const parlay::sequence<center>& centers, parlay::sequence<center>& new_centers) {
+
+    //update centers timer
+    parlay::internal::timer t2;
+    t2.start();
+
+    std::cout << "using the filter version " << std::endl;
+
+    parlay::sequence<parlay::sequence<size_t>> indices(k);
+
+
+
+    t2.next("Made new centers");
+
+    // union_find<size_t> UF(n);
+    // auto addpair [] (const std::pair<size_t, size_t>& a, const std::pair<size_t, size_t>& b) {
+    //   if (a.first <= b.first && pts[a].best==pts[b].best) {
+    //     UF.link(a.first,b.first);
+    //   }
+    // }
+
+    // for (size_t i = 0; i < n; i++) {
+
+    //   indices[pts[i].best].push_back(i); //it's called best not id!!!
+    // }
+
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      auto temp = parlay::filter(pts,[&] (point& p) {
+        return p.best==i;
+      });
+      indices[i] = parlay::map(temp, [&] (point& p) {
+        return p.id;
+      });
+      // indices[i] = parlay::map(temp, [&] (point& p) {
+      //   return p.id;
+      // });
+    });
+
+
+    if (DEBUG_VD) {
+    std::cout << "Debugging: printing out center counts:\n";
+    for (size_t i = 0; i < k; i++) {
+    std::cout << indices[i].size() << std::endl;
+    }
+
+    }
+
+    t2.next("Got indices");
+
+
+    parlay::parallel_for (0, k*d, [&] (size_t icoord){
+    size_t i = icoord / d;
+    size_t coord = icoord % d;
+
+
+    //if there are no values in a certain center, just keep the center 
+    //where it is
+    if (indices[i].size() > 0) { //anti_overflow_avg or reduce?? 
+    //note the static cast to double here, because points are whatever
+    new_centers[i].coordinates[coord] = static_cast<float>(reduce(parlay::map(indices[i],[&] 
+    (size_t ind) {return static_cast<double>(
+    pts[ind].coordinates[coord]);})) / indices[i].size()); 
+    //normal averaging now
+
+    }
+    else { 
+    new_centers[i].coordinates[coord] = centers[i].coordinates[coord];
+    }
+
+
+    }); 
+
+    t2.next("Done with adding");
+
+
+    return new_centers;
+
+
+  }
+
+
   //compute centers calculates the new centers
   //returns: a sequence of centers
   //TODO make a different run (no casting) if T is a float
@@ -331,221 +599,26 @@ struct YinyangSimp {
 
   }
 
-  //given a point and a list of distances from the point to the closest
-  //and second closest center in each group, set p's initial
-  //best center, ub, and distance to 2nd closest center
-
-  //at index i:
-  //<size_t id, float dist>
-  //id: id of center in group i that is closest to p
-  //dist: distance between center id and p 
-  void point_set_best_ub(point& p, 
-  parlay::sequence<std::pair<size_t,float>>& distances,
-  parlay::sequence<std::pair<size_t,float>>& distances2nd,
-  parlay::sequence<center>& centers) {
-    size_t best_index = -1;
-    float best_dist = std::numeric_limits<float>::max();
-    float second_dist = std::numeric_limits<float>::max();
-    for (size_t i = 0; i < distances.size(); i++) {
-      if (distances[i].second < best_dist) {
-        best_index = i;
-        second_dist = best_dist;
-        best_dist = distances[i].second;
-      }
-      else if (distances[i].second < second_dist) {
-        second_dist = distances[i].second;
-      }
-      //no need to compare distances2nd against the best dist
-      if (distances2nd[i].second < second_dist) {
-        second_dist = distances2nd[i].second;
-      }
-
-    }
-    p.best = distances[best_index].first;
-    p.old_best = p.best;
-    p.ub = distances[best_index].second;
-    p.dist_to_center2 = second_dist;
-
-  }
-
-  //TODO: If the type is float, then run a separate branch, 
-  //no need to convert to float
-
-  //find the distance from a point to each group (closest and 2nd closest)
-  //records a pair <size_t, float>: the id of the center giving a 
-  //certain distance, and the distance itself
-  void distances_to_groups(const point&p, parlay::sequence<center>& centers,
-  parlay::sequence<group>& groups,
-  Distance& D, size_t t, size_t d,
-  parlay::sequence<std::pair<size_t,float>>& distances, 
-  parlay::sequence<std::pair<size_t,float>>& distances2nd) {
-
-    //convert point coordinates to float buffer
-    float buf[2048];
-    T* it = p.coordinates.begin();
-    for (size_t i = 0; i < d; i++) {
-    buf[i]=*it;
-    it += 1; //add 1 for next?
-    }
-
-    //for each group
-    parlay::parallel_for(0,t,[&] (size_t i) {
-    //calculate the distance from each group member to the point
-    auto dist = parlay::map(groups[i].center_ids, 
-    [&](size_t j) { //note j is from centers because it's a map not a for loop (error? TODO)
-    return std::make_pair(j,
-    sqrt_dist(buf, make_slice(centers[j].coordinates).begin(),d,D));
-    });
-
-    //if a group only has only member, then 2nd should store a very large distance
-    if (groups[i].center_ids.size() == 1) {
-      distances[i] = dist[0];
-      distances2nd[i] = std::make_pair(0,std::numeric_limits<float>::max());
-
-    }
-    else {
-      //find the closest and 2nd closest center
-      //TODO make parallel
-      size_t min_index = -1;
-      size_t min2_index = -1; //2nd smallest
-      if (dist[0].second < dist[1].second) {
-      min_index = 0;
-      min2_index = 1;
-      }
-      else {
-      min_index = 1;
-      min2_index = 0;
-      }
-      for (size_t j = 2; j < groups[i].center_ids.size(); j++) {
-      if (dist[j].second < dist[min2_index].second) {
-      if (dist[j].second < dist[min_index].second) {
-      min2_index = min_index;
-      min_index = j;
-
-      }
-      else {
-      min2_index = j;
-      }
-      }
-
-      }
-      distances[i] = dist[min_index];
-      distances2nd[i] = dist[min2_index];
-      
-
-    }
-    });
-
-
-
-
-
-  }
-
-  void fill_in_centers(float* c, parlay::sequence<center>& centers, 
-  size_t k, size_t d) {
-    parlay::parallel_for(0,k, [&] (size_t i) {
-    for (size_t j = 0; j < d; j++) {
-    centers[i].coordinates[j] = *(c + i*d + j);
-    }
-
-    });
-  }
-
-  
-
-  //initialize the groups by running a naive kmeans a few times
-  void init_groups(float* c, size_t k, size_t d, size_t t, 
-  float* group_centers, size_t* group_asg, Distance& D, 
-  parlay::sequence<center>& centers) {
-
-    std::cout << "Debugging init groups " << std::endl;
-
-    LazyStart<float> init;
-    init(c,k,d,t,group_centers,group_asg,D);
-
-    kmeans_bench logger = kmeans_bench(k,d,t,5,0,"Lazy", "Internal Naive");
-    logger.start_time();
-    
-    
-    NaiveKmeans<float> run;
-    run.cluster(c,k,d,t,
-    group_centers, group_asg,D,logger, 5, 0.0001);
-    logger.end_time();
-    std::cout << "survived group init" << std::endl;
-
-
-    parlay::parallel_for(0,k,[&] (size_t i) {
-      centers[i].group_id = group_asg[i];
-    });
-
-
-  }
-
-  //note that groups can have different sizes!
-  //now the groups can have any positive size, even size 1
-  void assert_proper_group_size(parlay::sequence<group>& groups, 
-   size_t t) {
-    for (size_t i =0 ;i < t; i++) {
-      if (groups[i].center_ids.size() == 0) {
-        std::cout << 
-        "Group assignment went wrong, group is wrong size"
-        << std::endl;
-        std::cout << groups[i].center_ids.size() << std::endl;
-        abort();
-      }
-    }
-  }
-
-  //on the first iteration, for all points, set the point's best center
-  //and the upper and lower bounds, and the 2nd closest center
-  //(all the init point info)
-  void init_all_point_bounds(parlay::sequence<point>& pts, size_t n, 
-  parlay::sequence<parlay::sequence<std::pair<size_t,float>>>& distances, 
-  parlay::sequence<parlay::sequence<std::pair<size_t,float>>>& distances2nd,
-  parlay::sequence<center>& centers, size_t t) {
-    parlay::parallel_for(0,n,[&] (size_t i) {
-
-      //assign closest and 2nd closest center
-      point_set_best_ub(pts[i],distances[i],distances2nd[i], centers);
-
-    // pts[i].best=min_element(distances[i])-distances[i].begin();
-    // pts[i].ub = distances[pts[i].best];
-    //could do in parallel? TODO
-    for (size_t j = 0; j < t; j++) {
-      //in the group containing the best, you take the 2nd best from
-      //the group
-      if (centers[pts[i].best].group_id==j) {
-        pts[i].lb[j] = distances2nd[i][j].second;
-      }
-      //but in any other group, the lower bound is the group element
-      //closest to p
-      else {
-        pts[i].lb[j] = distances[i][j].second;
-      }
-
-    }
-
-
-    });
-
-  }
-
   float update_centers_drift(parlay::sequence<point>& pts, size_t n, size_t d, 
   size_t k, parlay::sequence<center>& centers, Distance& D, 
   parlay::sequence<group>& groups, size_t t) {
     // Compute new centers
-    parlay::sequence<center> new_centers = compute_centers_vd(pts, n, d, k, 
-    centers);
+    parlay::sequence<center> new_centers(k);
+    parlay::parallel_for (0,k, [&] (size_t i) {
+      new_centers[i].id = i;
+      new_centers[i].coordinates=parlay::sequence<float>(d,0);
+    });
+    compute_centers_filter(pts, n, d, k, centers, new_centers);
 
     // Check convergence
-    float total_diff = 0.0;
-    for (size_t i = 0; i < k; i++) { 
+    parlay::sequence<float> total_diffs_arr(k,0);
+    parlay::parallel_for (0,k,[&] (size_t i) { 
       new_centers[i].delta = sqrt_dist(centers[i].coordinates.begin(), 
       new_centers[i].coordinates.begin(),d,D); // lol not a k here, a d
       new_centers[i].group_id = centers[i].group_id; //need to copy over this info!
-      total_diff += new_centers[i].delta;
-    }
+      total_diffs_arr[i] = new_centers[i].delta;
+    });
+    float total_diff = parlay::reduce(total_diffs_arr);
 
     centers = std::move(new_centers); //Q* cause of error? TODO move failing perhaps no evidence though
 
@@ -566,25 +639,16 @@ struct YinyangSimp {
 
   float update_centers_drift_comparative(parlay::sequence<point>& pts, size_t n, size_t d, 
   size_t k, parlay::sequence<center>& centers, Distance& D, 
-  parlay::sequence<group>& groups, size_t t) {
+  parlay::sequence<group>& groups, size_t t,
+  double* center_calc,double* center_calc_float) {
     // Compute new centers
-    double* center_calc = new double[k*d]; //hold new centers here for a bit
     parlay::parallel_for(0,k*d,[&](size_t i) {
       size_t j = i / d;
       size_t dim = i % d;
       center_calc[i] = centers[j].coordinates[dim] * centers[j].old_num_members;
 
     });
-    // for (size_t i = 0; i < n; i++) {
-    //   if (pts[i].best != pts[i].old_best) {
-    //     for (size_t j = 0; j < d; j++) {
-    //       center_calc[pts[i].best * d + j] += pts[i].coordinates[j];
-    //       center_calc[pts[i].old_best *d + j] -= pts[i].coordinates[j];
-    //     }
 
-    //   }
-      
-    // }
     //add/subtract to centers
     parlay::parallel_for(0,d,[&] (size_t coord) {
       for (size_t i = 0; i < n; i++) {
@@ -602,7 +666,6 @@ struct YinyangSimp {
       center_calc[i] /= centers[j].new_num_members;
     });
 
-    float* center_calc_float = new float[k*d];
     parlay::parallel_for(0,k*d,[&] (size_t i) {
       center_calc_float[i] = center_calc[i];
     });
@@ -634,8 +697,7 @@ struct YinyangSimp {
 
     });
 
-    delete[] center_calc;
-    delete[] center_calc_float;
+   
 
     return total_diff;
 
@@ -667,8 +729,29 @@ struct YinyangSimp {
     return std::sqrt(D.distance(a,b,d));
   }
 
+  void debug_group_asg_centers(parlay::sequence<center>& centers,float* group_centers, float* group_asg,
+  size_t n, size_t d, size_t k, size_t t) {
+    std::cout << "Couting same info as above (group asg) but outside of the function" << std::endl;
+    std::cout << "Group asg: " << std::endl;
+    for (size_t i = 0; i < k; i++) {
+      std::cout << group_asg[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Couting group centers: " << std::endl;
+    for (size_t i = 0; i < t; i++) {
+      for (size_t j = 0; j < d; j++) {
+        std::cout << group_centers[i*d+j] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "Couting group ids" << std::endl;
+    for (size_t i = 0; i < k; i++) {
+      std::cout << centers[i].group_id << " ";
+    }
+    std::cout << std::endl;
 
-  
+    std::cout << "made it here1" << std::endl;
+  }
 
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
   Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
@@ -697,6 +780,7 @@ struct YinyangSimp {
 
     });
     //TODO remove pt.id purely for debugging
+    //NVM pt.id actually useful!
     parlay::parallel_for(0,n,[&] (size_t i) {
       pts[i].id=  i;
     });
@@ -711,18 +795,10 @@ struct YinyangSimp {
 
     //fill in the centers
     fill_in_centers(c,centers,k,d);
-
-    // std::cout << "printing out init points, centers";
-    // for (size_t i = 0; i < n; i++) {
-    //   print_point(pts[i]);
-    // }
-    // for (size_t i = 0; i < k; i++) {
-    //   print_center(centers[i]);
-    // }
     
-    //note: using k/100 so will load
     //making sure t is at least 1
-    size_t t = std::max((size_t) k/20,(size_t) 1); //TODO change back to k/10
+    //TODO change back to k/10 (k/20 loads faster)
+    size_t t = std::max((size_t) k/20,(size_t) 1); 
     
     //cluster on the groups initially using NaiveKmeans
     float* group_centers = new float[t * d];
@@ -733,28 +809,8 @@ struct YinyangSimp {
 
     //initialize the groups
     init_groups(c,k,d,t,group_centers,group_asg,D,centers);
-    //these checks no longer needed
-    // std::cout << "Couting same info as above (group asg) but outside of the function" << std::endl;
-    // std::cout << "Group asg: " << std::endl;
-    // for (size_t i = 0; i < k; i++) {
-    //   std::cout << group_asg[i] << " ";
-    // }
-    // std::cout << std::endl;
-    // std::cout << "Couting group centers: " << std::endl;
-    // for (size_t i = 0; i < t; i++) {
-    //   for (size_t j = 0; j < d; j++) {
-    //     std::cout << group_centers[i*d+j] << " ";
-    //   }
-    //   std::cout << std::endl;
-    // }
-    // std::cout << "Couting group ids" << std::endl;
-    // for (size_t i = 0; i < k; i++) {
-    //   std::cout << centers[i].group_id << " ";
-    // }
-    // std::cout << std::endl;
+    // these checks no longer needed
 
-    //std::cout << "made it here1" << std::endl;
-    
 
     parlay::sequence<group> groups(t);
 
@@ -766,8 +822,6 @@ struct YinyangSimp {
     logger.add_iteration(0,0,44,0,0,
     parlay::sequence<float>(k,0),tim.next_time());
 
-
-
     //Sadly 
     //sequential assigning the groups their centers
     for (size_t i = 0; i < k; i++) {
@@ -777,15 +831,6 @@ struct YinyangSimp {
 
     logger.add_iteration(0,0,45,0,0,
     parlay::sequence<float>(k,0),0);
-
-       // 
-
-
-    //Debugging
-    //  std::cout << "printing out init groups" << std::endl;
-    // for (size_t i = 0; i < t; i++) {
-    //   print_group(groups[i]);
-    // }
 
     //confirm group assignment happened properly
     //(checking a necessary not sufficient condition)
@@ -842,39 +887,33 @@ struct YinyangSimp {
     tim.next_time());
 
     //debugging
-    // {
-    // size_t elt_counter = 0;
-    // for (size_t i = 0; i < n; i++) {
-    //   elt_counter += centers[i].old_num_members;
+    {
+    size_t elt_counter = 0;
+    for (size_t i = 0; i < k; i++) {
+      elt_counter += centers[i].old_num_members;
 
-    // }
-    // if (elt_counter != n) {
-    //   std::cout << "error in num_members assignment: " << elt_counter << std::endl;
-    //   abort();
-    // }}
+    }
+    if (elt_counter != n) {
+      std::cout << "error in num_members assignment: " << elt_counter << std::endl;
+      abort();
+    }}
+    std::cout << "Passed elt counter test " << std::endl;
 
     //iters must start at 1!! (was like that a couple iterations ago
     //ironically)
     size_t iters = 1; 
     float total_diff = 0.0;
 
-    //confirm that the initial point assigning went correctly
-    //print_all(pts,centers,groups);
-    //experiment: are we setting the lbs initially wrong, or 
-    //are they becoming wrong over time?
-    // for (int i = 0; i < n; i++) {
-    //   pts[i].global_lb = -1;
-    //   for (size_t j = 0; j < t; j++) {
-    //     pts[i].lb[j] = -1;
-    //   }
-
-    // }
-
     parlay::sequence<size_t> distance_calculations = parlay::sequence<size_t>(k);
     parlay::sequence<uint8_t> center_reassignments = parlay::sequence<uint8_t>(n);
     float assignment_time = tim.next_time();
     float update_time = 0;
     //Step 3: Repeat until convergence
+    //bool first_time = true; //check if first time entering the loop
+
+    //for center calculation
+    double* center_calc = new double[k*d];
+    float* center_calc_float = new float[k*d];
 
     
     while (true) {
@@ -886,7 +925,17 @@ struct YinyangSimp {
       //TODO use the yinyang fast update centers method (currently doing
       //a naive update centers)
       //comparative is the fast method
-      total_diff = update_centers_drift_comparative(pts,n,d,k,centers,D,groups, t);
+      //comparative update only works if the center was the centroid of
+      //the last iteration, so need to do a normal update the first time
+      //welp yy's special update center doesn't parallelize well
+      // if (first_time) {
+      total_diff = update_centers_drift(pts,n,d,k,centers,D,groups,t);
+      //   first_time = false;
+      // }
+      // else {
+      //   total_diff = update_centers_drift_comparative(pts,n,d,k,centers,D,groups, t);
+      // }
+      
       parlay::sequence<float> deltas = parlay::tabulate(k,[&] (size_t i) {
         return centers[i].delta;
       });
@@ -912,9 +961,6 @@ struct YinyangSimp {
       // std::cout << "print 41 after drift" << std::endl;
       // print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
 
-       
-      
-
       //check everything after each iter
       std::cout << "iter: " << iters << std::endl;
 
@@ -929,8 +975,6 @@ struct YinyangSimp {
         //   std::cout << "printing point 41 after set global lb iter " 
         // << iters << std::endl;
         //     print_target(pts,centers,groups,D,TARGET_POINT,TARGET_CENTER);
-
-
         // }
         
         //if our center could change
@@ -1038,7 +1082,6 @@ struct YinyangSimp {
           }
         }
         
-      
         }
 
 
@@ -1065,6 +1108,8 @@ struct YinyangSimp {
 
     delete[] group_centers; //memory cleanup
     delete[] group_asg;
+    delete[] center_calc;
+    delete[] center_calc_float;
 
   }
 

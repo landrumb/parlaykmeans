@@ -3,22 +3,22 @@
 #include <ostream>
 #include <iostream>
 
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 
-#include "include/yinyang_simp.h"
+// #include "include/yinyang_simp.h"
 
-#include "include/utils/parse_files.h"
-#include "include/utils/parse_command_line.h"
-#include "include/utils/NSGDist.h"
-#include "lazy.h"
-#include "initialization.h"
-#include "naive.h"
-#include "yinyang_simp.h"
-#include "include/utils/kmeans_bench.h"
+// #include "include/utils/parse_files.h"
+// #include "include/utils/parse_command_line.h"
+// #include "include/utils/NSGDist.h"
+// #include "lazy.h"
+// #include "initialization.h"
+// #include "naive.h"
+// #include "yinyang_simp.h"
+// #include "include/utils/kmeans_bench.h"
 
-#include "include/parlay/sequence.h"
-#include "include/parlay/parallel.h"
-#include "include/parlay/primitives.h"
+#include "parlay/sequence.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
 
 
 // struct kmeans_test : testing::test{
@@ -92,5 +92,32 @@ int main() {
   size_t a = 0;
   size_t b = 1;
   std::cout << "min of " << std::min(a,b) << std::endl;
+
+  std::cout << "Working on parlay filter " << std::endl;
+
+  parlay::sequence<size_t> my_ints = {5,4,20,10};
+  auto filtered = parlay::filter(my_ints,[&] (size_t& i) {
+    return i > 7;
+
+  });
+  //std::cout << filtered << std::endl;
+  for (size_t i = 0; i < filtered.size(); i++) {
+    std::cout << filtered[i] << " ";
+  }
+    std::cout << std::endl;
+
+
+  parlay::sequence<size_t> mapped = parlay::map(filtered,
+  [&] (size_t i) {
+    return i+1;
+  });
+
+  for (size_t i = 0; i < mapped.size(); i++) {
+    std::cout << mapped[i] << " ";
+  }
+  std::cout << std::endl;
+
+
+
   return 1;
 }
