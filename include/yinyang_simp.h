@@ -365,7 +365,6 @@ struct YinyangSimp {
     p.old_best = p.best;
     p.ub = distances[best_index].second;
     p.dist_to_center2 = second_dist;
-    centers[p.best].old_num_members += 1; //keep track of membership
 
   }
 
@@ -576,16 +575,28 @@ struct YinyangSimp {
       center_calc[i] = centers[j].coordinates[dim] * centers[j].old_num_members;
 
     });
-    for (size_t i = 0; i < n; i++) {
-      if (pts[i].best != pts[i].old_best) {
-        for (size_t j = 0; j < d; j++) {
-          center_calc[pts[i].best * d + j] += pts[i].coordinates[j];
-          center_calc[pts[i].old_best *d + j] -= pts[i].coordinates[j];
-        }
+    // for (size_t i = 0; i < n; i++) {
+    //   if (pts[i].best != pts[i].old_best) {
+    //     for (size_t j = 0; j < d; j++) {
+    //       center_calc[pts[i].best * d + j] += pts[i].coordinates[j];
+    //       center_calc[pts[i].old_best *d + j] -= pts[i].coordinates[j];
+    //     }
 
-      }
+    //   }
       
-    }
+    // }
+    //add/subtract to centers
+    parlay::parallel_for(0,d,[&] (size_t coord) {
+      for (size_t i = 0; i < n; i++) {
+        if (pts[i].best != pts[i].old_best) {
+          center_calc[pts[i].best * d + coord] += pts[i].coordinates[coord];
+          center_calc[pts[i].old_best *d + coord] -= pts[i].coordinates[coord];
+        }
+      }
+
+
+    });
+
     parlay::parallel_for(0,k*d,[&](size_t i) {
       size_t j = i / d;
       center_calc[i] /= centers[j].new_num_members;
@@ -596,8 +607,7 @@ struct YinyangSimp {
       center_calc_float[i] = center_calc[i];
     });
   
-   
-
+  
     // Check convergence
     float total_diff = 0.0;
     for (size_t i = 0; i < k; i++) { 
@@ -609,7 +619,7 @@ struct YinyangSimp {
     parlay::parallel_for(0,k*d,[&] (size_t i) {
       size_t j = i / d;
       size_t dim = i % d;
-      centers[i].coordinates[j] = center_calc[i];
+      centers[j].coordinates[dim] = center_calc[i];
       
     });
 
@@ -768,6 +778,9 @@ struct YinyangSimp {
     logger.add_iteration(0,0,45,0,0,
     parlay::sequence<float>(k,0),0);
 
+       // 
+
+
     //Debugging
     //  std::cout << "printing out init groups" << std::endl;
     // for (size_t i = 0; i < t; i++) {
@@ -795,6 +808,7 @@ struct YinyangSimp {
 
 
         pts[i].best = min_element(distances) - distances.begin();
+        pts[i].old_best = pts[i].best;
 
         pts[i].ub = distances[pts[i].best];
         pts[i].lb = parlay::sequence<float>(t,std::numeric_limits<float>::max());
@@ -809,13 +823,23 @@ struct YinyangSimp {
       
     });
 
+    
+
     logger.add_iteration(0,0,48,0,0,
     parlay::sequence<float>(k,0),tim.next_time());
 
+    //sadly linear
+    for (size_t i =0 ; i < n; i++) {
+      centers[pts[i].best].old_num_members += 1; //keep track of membership
+
+    }
 
     parlay::parallel_for(0,k,[&] (size_t i) {
       centers[i].new_num_members = centers[i].old_num_members;
     });
+
+    logger.add_iteration(0,0,49,0,0,parlay::sequence<float>(k,0),
+    tim.next_time());
 
     //debugging
     // {
@@ -862,7 +886,7 @@ struct YinyangSimp {
       //TODO use the yinyang fast update centers method (currently doing
       //a naive update centers)
       //comparative is the fast method
-      total_diff = update_centers_drift(pts,n,d,k,centers,D,groups, t);
+      total_diff = update_centers_drift_comparative(pts,n,d,k,centers,D,groups, t);
       parlay::sequence<float> deltas = parlay::tabulate(k,[&] (size_t i) {
         return centers[i].delta;
       });

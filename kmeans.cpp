@@ -88,15 +88,15 @@ size_t max_iter=1000, double epsilon=0) {
     }
 
  
-    NaiveKmeans<T> nie;
-    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    epsilon,"Lazy","NaiveKmeans");
-    logger_nie.start_time();
-    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    logger_nie.end_time();
+    // NaiveKmeans<T> nie;
+    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    // epsilon,"Lazy","NaiveKmeans");
+    // logger_nie.start_time();
+    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    // logger_nie.end_time();
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
-    std::cout << "starting naive" << std::endl;
+    // std::cout << "starting naive" << std::endl;
 
     YinyangSimp<T> yy;
     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
@@ -106,6 +106,8 @@ size_t max_iter=1000, double epsilon=0) {
     yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
     logger_yy.end_time();
+    std::cout << "Cutting out after yy" << std::endl;
+    abort();
 
     Naive<T> ben_naive;
     kmeans_bench logger = 
