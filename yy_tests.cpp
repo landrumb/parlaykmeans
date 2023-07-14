@@ -1,4 +1,4 @@
-//file with additional tests
+//file with additional tests for yy
 
 #include <gtest/gtest.h>
 #include "include/utils/parse_command_line.h"
@@ -28,22 +28,11 @@
 #include "include/naive.h"
 #include "yinyang_simp.h" //can switch to fast_center
 
-// TEST(HelloTest,Basic) {
-//   EXPECT_EQ(5*5,25);
-
-//   std::cout << "can you print from here?" << std::endl;
-// }
-
-
-// TEST(GoodbyeTest,Initial) {
-//   EXPECT_EQ(7+99,106);
-// }
-
 //Test fixture for NaiveKmeans Testing
 //Runs clustering on a data file
 //The SetUpTestSuite function allows different tests to use the same
 //data run
-class NaiveKmeansTest : public ::testing::Test {
+class YyTest : public ::testing::Test {
   protected:
 
   
@@ -67,7 +56,7 @@ class NaiveKmeansTest : public ::testing::Test {
 
   std::cout << "madre it there" << std::endl;
   
-  NaiveKmeans<float> nie;
+  YinyangSimp<float> nie;
   kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,epsilon,
   "Lazy","Naivekmeans");
   logger_nie.start_time();
@@ -97,19 +86,19 @@ class NaiveKmeansTest : public ::testing::Test {
 
 };
 //initialize static vals
-float* NaiveKmeansTest::c = nullptr;
-float* NaiveKmeansTest::v = nullptr;
-size_t NaiveKmeansTest::n = 0;
-size_t NaiveKmeansTest::k = 0;
-size_t NaiveKmeansTest::d = 0;
-size_t NaiveKmeansTest::max_iter = 0;
-Distance* NaiveKmeansTest::D = nullptr;
-float NaiveKmeansTest::epsilon = 0;
-size_t* NaiveKmeansTest::asg = nullptr;
+float* YyTest::c = nullptr;
+float* YyTest::v = nullptr;
+size_t YyTest::n = 0;
+size_t YyTest::k = 0;
+size_t YyTest::d = 0;
+size_t YyTest::max_iter = 0;
+Distance* YyTest::D = nullptr;
+float YyTest::epsilon = 0;
+size_t* YyTest::asg = nullptr;
 
 //Tests that the values in num_members make sense,
 //And that points are assigned to a valid center
-TEST_F(NaiveKmeansTest,MemberCheck) {
+TEST_F(YyTest,MemberCheck) {
 
     parlay::sequence<size_t> num_members = parlay::sequence<size_t>(k,0);
 
@@ -142,7 +131,7 @@ TEST_F(NaiveKmeansTest,MemberCheck) {
 
 //Test on Naive to confirm correct outputs 
 //Tests whether the center is indeed the center of the points
-TEST_F(NaiveKmeansTest,CenterCentroids) {
+TEST_F(YyTest,CenterCentroids) {
   
   double* centroids = new double[d*k];
   parlay::sequence<size_t> num_members = parlay::sequence<size_t>(k,0);
@@ -170,7 +159,6 @@ TEST_F(NaiveKmeansTest,CenterCentroids) {
   std::cout << "total mems " << parlay::reduce(num_members) << std::endl;
 
   EXPECT_EQ(parlay::reduce(num_members),n);
-
 
   //confirm that assignments are to a possible center
   for (size_t i = 0; i < n; i++) {
@@ -204,7 +192,7 @@ TEST_F(NaiveKmeansTest,CenterCentroids) {
 }
 
 //Makes sure that each point is assigned to its closest center
-TEST_F(NaiveKmeansTest,ClosestPoints) {
+TEST_F(YyTest,ClosestPoints) {
    //rang is range from 0 to k incl excl
     parlay::sequence<size_t> rang = parlay::tabulate(k,[&] (size_t i) {
       return i;
@@ -224,74 +212,4 @@ TEST_F(NaiveKmeansTest,ClosestPoints) {
     }
 
     delete[] bests; //memory cleanup
-}
-TEST(EuclideanDistanceSmallTesting,Size10PrintoutsFloat) {
-  Distance* D = new EuclideanDistanceSmall();
-  parlay::sequence<float> ones(10,1);
-  parlay::sequence<float> other_ones(10,1);
-  parlay::sequence<float> twos(10,2);
-  parlay::sequence<float> rang = parlay::tabulate(10,[&] (size_t i) {
-      return static_cast<float>(i);
-    });
-  parlay::sequence<float> double_rang = parlay::tabulate(10,[&] (size_t i) {
-      return static_cast<float>(2*i);
-    });
-  EXPECT_EQ(D->distance(parlay::make_slice(ones).begin(),
-  parlay::make_slice(other_ones).begin(),10),0);
-
-  EXPECT_EQ(1,1);
-
-  for (int i = 0; i < 10; i++) {
-    std::cout << double_rang[i] << std::endl;
-  }
-
-  EXPECT_EQ(D->distance(parlay::make_slice(ones).begin(),
-  parlay::make_slice(twos).begin(),10),10);
-
-  EXPECT_EQ(D->distance(parlay::make_slice(ones).begin(),
-  parlay::make_slice(double_rang).begin(),10),970);
-
-  //confirm float handling
-  parlay::sequence<float> halves(10,.5);
-  EXPECT_LE(
-    std::abs(D->distance(parlay::make_slice(halves).begin(),
-  parlay::make_slice(ones).begin(),10)-2.5),.001);
-
-  parlay::sequence<float> shorty1 = parlay::sequence<float>(1,17);
-  float* shorty2 = new float[1];
-  shorty2[0] = 34;
-  EXPECT_EQ(D->distance(parlay::make_slice(shorty1).begin(),
-  shorty2,1),289);
-
-  //ZERO DIST
-  EXPECT_EQ(D->distance(parlay::make_slice(shorty1).begin(),
-  shorty2,0),0);
-
-  delete[] shorty2;
-
-   
-}
-
-TEST(EuclideanDistanceSmallTesting,Size10PrintoutsInt) {
-  Distance* D = new EuclideanDistanceSmall();
-  parlay::sequence<uint8_t> threes(10,3);
-  parlay::sequence<uint8_t> other_ones(10,1);
-  parlay::sequence<uint8_t> sevens(10,7);
-  parlay::sequence<uint8_t> rang = parlay::tabulate(10,[&] (size_t i) {
-      return static_cast<uint8_t>(i);
-    });
-  parlay::sequence<uint8_t> double_rang = parlay::tabulate(10,[&] (size_t i) {
-      return static_cast<uint8_t>(2*i);
-    });
-  EXPECT_EQ(D->distance(parlay::make_slice(threes).begin(),
-  parlay::make_slice(other_ones).begin(),10),40);
-
-  EXPECT_EQ(1,1);
-
-  EXPECT_EQ(D->distance(parlay::make_slice(threes).begin(),
-  parlay::make_slice(sevens).begin(),10),160);
-
-  EXPECT_EQ(D->distance(parlay::make_slice(threes).begin(),
-  parlay::make_slice(double_rang).begin(),10),690);
-
 }

@@ -231,3 +231,23 @@ cc_library(
 "include/yinyang_simp.h",],
 
 )
+
+
+#Testing the tester
+cc_test(
+  name = "yy_google_test",
+  size = "medium",
+  srcs = ["yy_tests.cpp"],
+ 
+  deps = ["@googletest//:gtest_main",
+    "@parlaylib//parlay:parallel",
+    "@parlaylib//parlay:primitives",
+    "@parlaylib//parlay:sequence",
+    "@parlaylib//parlay:slice",
+    "@parlaylib//parlay:io",
+    "test_headers"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  
+)

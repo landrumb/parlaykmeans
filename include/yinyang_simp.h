@@ -847,6 +847,7 @@ struct YinyangSimp {
     // }
 
     parlay::sequence<size_t> distance_calculations = parlay::sequence<size_t>(k);
+    parlay::sequence<uint8_t> center_reassignments = parlay::sequence<uint8_t>(n);
     float assignment_time = tim.next_time();
     float update_time = 0;
     //Step 3: Repeat until convergence
@@ -873,12 +874,14 @@ struct YinyangSimp {
       update_time = tim.next_time();
 
       //end of iteration:
-      logger.add_iteration(assignment_time,update_time,squared_error,parlay::reduce(distance_calculations),0,deltas);
+      logger.add_iteration(assignment_time,update_time,squared_error,parlay::reduce(distance_calculations),
+      parlay::reduce(center_reassignments),deltas);
       //convergence check
       if (iters >= max_iter || total_diff <= epsilon) break;
 
       iters += 1;
       distance_calculations = parlay::sequence<size_t>(n,0); //reset distance calc counter
+      center_reassignments = parlay::sequence<uint8_t>(n,0);
       std::cout << "made it hereit: " << iters << std::endl;
 
       
@@ -989,6 +992,8 @@ struct YinyangSimp {
                   pts[i].best=groups[j].center_ids[k];
                 
                   pts[i].ub = new_d;
+                  //log center reassign
+                  center_reassignments[i] = 1;
                   
                   
                 }
