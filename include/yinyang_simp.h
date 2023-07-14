@@ -402,6 +402,45 @@ struct YinyangSimp {
     t2.next("Done with copying");
   }
 
+
+  void compute_centers_comparative(parlay::sequence<point>& pts, size_t n, size_t d, 
+  size_t k, parlay::sequence<center>& centers, 
+  double* center_calc,float* center_calc_float) {
+    // Compute new centers
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
+
+    });
+
+    parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
+      return p.best != p.old_best;
+    });
+
+    //Remark: changed_points usually very small so this is okay
+    for (size_t i = 0; i < changed_points.size(); i++) {
+      //TODO should this inner loop be ||? (on d)
+      for (size_t coord =0 ; coord < d; coord++) {
+        center_calc[pts[i].best * d + coord] += pts[i].coordinates[coord];
+        center_calc[pts[i].old_best *d + coord] -= pts[i].coordinates[coord];
+      }
+    
+    }
+
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      if (centers[j].new_num_members != 0) {
+        center_calc[i] /= centers[j].new_num_members;
+      }
+    });
+
+    parlay::parallel_for(0,k*d,[&] (size_t i) {
+      center_calc_float[i] = center_calc[i];
+    });
+
+  }
+
   //computes the drift, then initializes the new centers
   float update_centers_drift(parlay::sequence<point>& pts, size_t n, size_t d, 
   size_t k, parlay::sequence<center>& centers, Distance& D, 
