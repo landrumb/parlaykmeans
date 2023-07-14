@@ -875,7 +875,7 @@ struct YinyangSimp {
       //end of iteration:
       logger.add_iteration(assignment_time,update_time,squared_error,parlay::reduce(distance_calculations),0,deltas);
       //convergence check
-      if (iters >= max_iter || total_diff < epsilon) break;
+      if (iters >= max_iter || total_diff <= epsilon) break;
 
       iters += 1;
       distance_calculations = parlay::sequence<size_t>(n,0); //reset distance calc counter

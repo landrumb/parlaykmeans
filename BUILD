@@ -202,8 +202,8 @@ cc_library(
 
 #Testing the tester
 cc_test(
-  name = "hello_test",
-  size = "small",
+  name = "kmeans_google_test",
+  size = "medium",
   srcs = ["extra_tests.cpp"],
  
   deps = ["@googletest//:gtest_main",
