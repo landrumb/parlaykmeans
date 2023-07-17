@@ -58,7 +58,7 @@ class YyTest : public ::testing::Test {
   
   YinyangSimp<float> nie;
   kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,epsilon,
-  "Lazy","Naivekmeans");
+  "Lazy","Yy");
   logger_nie.start_time();
   nie.cluster(v,n,d,k,c,asg,*D,logger_nie,max_iter,epsilon);
 

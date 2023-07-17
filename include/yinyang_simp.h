@@ -393,6 +393,8 @@ struct YinyangSimp {
 
     }); 
 
+  
+
     t2.next("Done with adding");
 
     parlay::parallel_for(0,k*d,[&] (size_t i) {
@@ -406,6 +408,9 @@ struct YinyangSimp {
   void compute_centers_comparative(parlay::sequence<point>& pts, size_t n, size_t d, 
   size_t k, parlay::sequence<center>& centers, 
   double* center_calc,float* center_calc_float) {
+
+    parlay::internal::timer t2;
+    t2.start();
     // Compute new centers
     parlay::parallel_for(0,k*d,[&](size_t i) {
       size_t j = i / d;
@@ -413,20 +418,74 @@ struct YinyangSimp {
       center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
 
     });
+      t2.next("Multiplied");
+
 
     parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
       return p.best != p.old_best;
     });
 
-    //Remark: changed_points usually very small so this is okay
-    for (size_t i = 0; i < changed_points.size(); i++) {
-      //TODO should this inner loop be ||? (on d)
-      for (size_t coord =0 ; coord < d; coord++) {
-        center_calc[pts[i].best * d + coord] += pts[i].coordinates[coord];
-        center_calc[pts[i].old_best *d + coord] -= pts[i].coordinates[coord];
-      }
-    
-    }
+    t2.next("Filtered");
+
+    parlay::sequence<parlay::sequence<point>> add_these_all(k);
+    parlay::sequence<parlay::sequence<point>> sub_these_all(k);
+    parlay::parallel_for (0,k,[&] (size_t i) {
+      add_these_all[i] = parlay::filter(changed_points, [&] (point& p) {
+        return p.best==i;
+      });
+      sub_these_all[i] = parlay::filter(changed_points, [&] (point& p) {
+        return p.old_best == i;
+      });
+
+    });
+
+    t2.next("Extra filtering");
+
+    parlay::parallel_for(0,k*d,[&] (size_t jcoord) {
+      size_t j = jcoord / d;
+      size_t coord = jcoord % d;
+      // parlay::sequence<point> add_these = parlay::filter(changed_points, [&] (point& p) {
+      //   return p.best==j;
+      // });
+      // parlay::sequence<point> sub_these = parlay::filter(changed_points, [&] (point& p) {
+      //   return p.old_best == j;
+      // });
+      // for (size_t coord = 0; coord < d; coord++) {
+        parlay::sequence<point> add_these = add_these_all[j];
+        parlay::sequence<point> sub_these = sub_these_all[j];
+        double diff_to_add = 0;
+        for (size_t m = 0; m < add_these.size(); m++) {
+          diff_to_add += add_these[m].coordinates[coord];
+        }
+        for (size_t m = 0; m < sub_these.size(); m++) {
+          diff_to_add -= sub_these[m].coordinates[coord];
+        }
+        center_calc[j*d+coord] += diff_to_add;
+
+      // }
+      // for (size_t coord = 0; coord < d; coord++) {
+      //   center_calc[j*d+coord] = center_calc[j*d+coord] + 
+      //   parlay::reduce(parlay::map(add_these,[&] (point& p) {return static_cast<double>(p.coordinates[coord]);} ),100) - 
+      //   parlay::reduce(parlay::map(sub_these, [&] (point& p) {return static_cast<double>(p.coordinates[coord]);}),100);
+
+      // }
+    });
+
+
+    // //Remark: changed_points usually very small so this is okay
+    // for (size_t i = 0; i < changed_points.size(); i++) {
+    //   //TODO should this inner loop be ||? (on d)
+    //   point p = pts[i];
+    //   for (size_t coord =0 ; coord < d; coord++) {
+      //TODO CAST TO DOUBLE
+    //     center_calc[p.best * d + coord] += p.coordinates[coord];
+    //     center_calc[p.old_best *d + coord] -= p.coordinates[coord];
+    //   }
+
+    // }
+
+
+    t2.next("Added/subbed changes");
 
     parlay::parallel_for(0,k*d,[&](size_t i) {
       size_t j = i / d;
@@ -439,6 +498,8 @@ struct YinyangSimp {
       center_calc_float[i] = center_calc[i];
     });
 
+    t2.next("Copied back");
+
   }
 
   //computes the drift, then initializes the new centers
@@ -449,7 +510,8 @@ struct YinyangSimp {
     // Check convergence
     parlay::sequence<float> total_diffs_arr(k,0);
     parlay::parallel_for (0,k,[&] (size_t i) { 
-      centers[i].delta = sqrt_dist(centers[i].coordinates.begin(), 
+      centers[i].delta = sqrt_dist(
+        parlay::make_slice(centers[i].coordinates).begin(), 
       center_calc_float+i*d,d,D);
       total_diffs_arr[i] = centers[i].delta;
     });
@@ -645,9 +707,19 @@ struct YinyangSimp {
     double* center_calc = new double[k*d];
     float* center_calc_float = new float[k*d];
 
+    bool first_time = true;
+
     
     while (true) {
-      compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float);
+      //the first iteration, we don't have previous centers to compare to
+      //so we must do a full-adding version of compute centers
+      if (first_time) {
+        compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float);
+        first_time=false;
+      }
+      else {
+        compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float);
+      }
       total_diff = update_centers_drift(pts,n,d,k,centers,D,groups,t,center_calc_float);
       
       parlay::sequence<float> deltas = parlay::tabulate(k,[&] (size_t i) {
