@@ -404,7 +404,7 @@ struct YinyangSimp {
     t2.next("Done with copying");
   }
 
-
+  // Compute centers by comparing to the previous results
   void compute_centers_comparative(parlay::sequence<point>& pts, size_t n, size_t d, 
   size_t k, parlay::sequence<center>& centers, 
   double* center_calc,float* center_calc_float) {
@@ -444,13 +444,7 @@ struct YinyangSimp {
     parlay::parallel_for(0,k*d,[&] (size_t jcoord) {
       size_t j = jcoord / d;
       size_t coord = jcoord % d;
-      // parlay::sequence<point> add_these = parlay::filter(changed_points, [&] (point& p) {
-      //   return p.best==j;
-      // });
-      // parlay::sequence<point> sub_these = parlay::filter(changed_points, [&] (point& p) {
-      //   return p.old_best == j;
-      // });
-      // for (size_t coord = 0; coord < d; coord++) {
+
         parlay::sequence<point> add_these = add_these_all[j];
         parlay::sequence<point> sub_these = sub_these_all[j];
         double diff_to_add = 0;
@@ -462,32 +456,204 @@ struct YinyangSimp {
         }
         center_calc[j*d+coord] += diff_to_add;
 
-      // }
-      // for (size_t coord = 0; coord < d; coord++) {
-      //   center_calc[j*d+coord] = center_calc[j*d+coord] + 
-      //   parlay::reduce(parlay::map(add_these,[&] (point& p) {return static_cast<double>(p.coordinates[coord]);} ),100) - 
-      //   parlay::reduce(parlay::map(sub_these, [&] (point& p) {return static_cast<double>(p.coordinates[coord]);}),100);
+    }); 
 
-      // }
+        t2.next("Added/subbed changes");
+
+
+      parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      if (centers[j].new_num_members != 0) {
+        center_calc[i] /= centers[j].new_num_members;
+      }
+      else {
+        center_calc[i] = centers[j].coordinates[dim];
+      }
     });
 
+    parlay::parallel_for(0,k*d,[&] (size_t i) {
+      center_calc_float[i] = center_calc[i];
+    });
 
-    // //Remark: changed_points usually very small so this is okay
-    // for (size_t i = 0; i < changed_points.size(); i++) {
-    //   //TODO should this inner loop be ||? (on d)
-    //   point p = pts[i];
-    //   for (size_t coord =0 ; coord < d; coord++) {
-      //TODO CAST TO DOUBLE
-    //     center_calc[p.best * d + coord] += p.coordinates[coord];
-    //     center_calc[p.old_best *d + coord] -= p.coordinates[coord];
-    //   }
+    t2.next("Copied back");
 
-    // }
+  }
 
+  // Compute centers by comparing to the previous results
+  //this version will parallelise differently
+  //takes .3-.4s/iter on k=1mil, n=10, iter=5
+  void compute_centers_comparative2(parlay::sequence<point>& pts, size_t n, size_t d, 
+  size_t k, parlay::sequence<center>& centers, 
+  double* center_calc,float* center_calc_float) {
+
+    parlay::internal::timer t2;
+    t2.start();
+    // Compute new centers
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
+
+    });
+      t2.next("Multiplied2");
+
+
+    parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
+      return p.best != p.old_best;
+    });
+
+    t2.next("Filtered2");
+
+    parlay::sequence<parlay::sequence<point>> add_these_all(k);
+    parlay::sequence<parlay::sequence<point>> sub_these_all(k);
+    parlay::parallel_for (0,k,[&] (size_t i) {
+      add_these_all[i] = parlay::filter(changed_points, [&] (point& p) {
+        return p.best==i;
+      });
+      sub_these_all[i] = parlay::filter(changed_points, [&] (point& p) {
+        return p.old_best == i;
+      });
+
+    });
+
+    t2.next("Extra filtering2");
+
+    parlay::parallel_for(0,k*d,[&] (size_t jcoord) {
+      size_t j = jcoord / d;
+      size_t coord = jcoord % d;
+ 
+    
+        double diff_to_add = 0;
+        for (size_t m = 0; m < add_these_all[j].size(); m++) {
+          diff_to_add += add_these_all[j][m].coordinates[coord];
+        }
+        for (size_t m = 0; m < sub_these_all[j].size(); m++) {
+          diff_to_add -= sub_these_all[j][m].coordinates[coord];
+        }
+        center_calc[j*d+coord] += diff_to_add;
+
+    });
 
     t2.next("Added/subbed changes");
 
     parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      if (centers[j].new_num_members != 0) {
+        center_calc[i] /= centers[j].new_num_members;
+      }
+    });
+
+    parlay::parallel_for(0,k*d,[&] (size_t i) {
+      center_calc_float[i] = center_calc[i];
+    });
+
+    t2.next("Copied back");
+
+  }
+
+  // Compute centers by comparing to the previous results
+  // .5 s
+  void compute_centers_comparative3(parlay::sequence<point>& pts, size_t n, size_t d, 
+  size_t k, parlay::sequence<center>& centers, 
+  double* center_calc,float* center_calc_float) {
+
+    parlay::internal::timer t2;
+    t2.start();
+    // Compute new centers
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
+
+    });
+      t2.next("Multiplied3");
+
+
+    parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
+      return p.best != p.old_best;
+    });
+
+    t2.next("Filtered");
+
+    parlay::parallel_for(0,k,[&] (size_t j) {
+    
+      parlay::sequence<point> add_these = parlay::filter(changed_points, [&] (point& p) {
+        return p.best==j;
+      });
+      parlay::sequence<point> sub_these = parlay::filter(changed_points, [&] (point& p) {
+        return p.old_best == j;
+      });
+     
+      for (size_t coord = 0; coord < d; coord++) {
+        center_calc[j*d+coord] = center_calc[j*d+coord] + 
+        parlay::reduce(parlay::map(add_these,[&] (point& p) {return static_cast<double>(p.coordinates[coord]);} )) - 
+        parlay::reduce(parlay::map(sub_these, [&] (point& p) {return static_cast<double>(p.coordinates[coord]);}));
+
+      }
+    },5); 
+
+    t2.next("Added/subbed changes");
+
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      if (centers[j].new_num_members != 0) {
+        center_calc[i] /= centers[j].new_num_members;
+      }
+    });
+
+    parlay::parallel_for(0,k*d,[&] (size_t i) {
+      center_calc_float[i] = center_calc[i];
+    });
+
+    t2.next("Copied back");
+
+
+    }
+
+
+  // Compute centers by comparing to the previous results
+  // Version 4 almost fully sequential 
+  // This honestly the fastest so far (.25s)? (depends on input)
+  void compute_centers_comparative4(parlay::sequence<point>& pts, size_t n, size_t d, 
+  size_t k, parlay::sequence<center>& centers, 
+  double* center_calc,float* center_calc_float) {
+
+    parlay::internal::timer t2;
+    t2.start();
+    // Compute new centers
+    parlay::parallel_for(0,k*d,[&](size_t i) {
+      size_t j = i / d;
+      size_t dim = i % d;
+      center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
+
+    });
+      t2.next("Multiplied");
+
+
+    parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
+      return p.best != p.old_best;
+    });
+
+    t2.next("Filtered");
+
+
+    //Remark: changed_points usually very small so this is okay
+    for (size_t i = 0; i < changed_points.size(); i++) {
+      //TODO should this inner loop be ||? (on d)
+      point p = pts[i];
+      for (size_t coord =0 ; coord < d; coord++) {
+      //TODO CAST TO DOUBLE
+        center_calc[p.best * d + coord] += static_cast<double>(p.coordinates[coord]);
+        center_calc[p.old_best *d + coord] -= static_cast<double>(p.coordinates[coord]);
+      }
+
+    }
+
+    t2.next("Added/subbed changes");
+
+
+      parlay::parallel_for(0,k*d,[&](size_t i) {
       size_t j = i / d;
       if (centers[j].new_num_members != 0) {
         center_calc[i] /= centers[j].new_num_members;
@@ -701,6 +867,7 @@ struct YinyangSimp {
 
     float assignment_time = tim.next_time();
     float update_time = 0;
+    float setup_time = 0;
     //Step 3: Repeat until convergence
 
     //for center calculation
@@ -734,7 +901,7 @@ struct YinyangSimp {
 
       //end of iteration stat updating
       logger.add_iteration(assignment_time,update_time,squared_error,parlay::reduce(distance_calculations),
-      parlay::reduce(center_reassignments),deltas);
+      parlay::reduce(center_reassignments),deltas,setup_time);
 
       //convergence check
       if (iters >= max_iter || total_diff <= epsilon) break;
@@ -806,8 +973,9 @@ struct YinyangSimp {
                     if (pts[i].ub > new_d) {
                       
                       //mark point has changed, adjust center assignment counts
-                      centers[groups[j].center_ids[k]].new_num_members += 1;
-                      centers[pts[i].best].new_num_members -= 1;
+                      //shoot this isn't thread safe
+                      //centers[groups[j].center_ids[k]].new_num_members += 1;
+                      //centers[pts[i].best].new_num_members -= 1;
 
                       pts[i].old_best = pts[i].best; //save the previous best in old_best
 
@@ -848,6 +1016,15 @@ struct YinyangSimp {
       });
 
       assignment_time = tim.next_time();
+
+      //see how long it takes to get the new_num_members info
+      parlay::parallel_for(0,k, [&] (size_t i) {
+        centers[i].new_num_members=parlay::filter(pts, [&] (point& p) {
+          return p.best == i;
+        }).size();
+      },1); // 1 granularity
+
+      setup_time = tim.next_time();
 
     }
    
