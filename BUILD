@@ -39,6 +39,7 @@ cc_library(
   "include/utils/threadlocal.h",
   "include/yinyang_simp.h",
   "include/utils/union_find.h",
+  "include/quantized.h",
   ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
@@ -255,3 +256,4 @@ cc_test(
   copts = ["-Iinclude"],
   
 )
+

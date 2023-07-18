@@ -24,6 +24,7 @@
 #include "include/lazy.h"
 #include "include/naive.h"
 #include "yinyang_simp.h" //can switch to fast_center
+#include "quantized.h"
 
 #define INITIALIZER MacQueen
 #define INITIALIZER_NAME "MacQueen"
@@ -86,6 +87,12 @@ size_t max_iter=1000, double epsilon=0) {
         asg2[i] = asg[i];
         asg3[i]=asg[i];
     }
+
+    QuantizedKmeans<T> quant;
+    kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
+    logger_quant.start_time();
+    quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
+    logger_quant.end_time();
 
  
     // NaiveKmeans<T> nie;
