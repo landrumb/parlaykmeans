@@ -297,7 +297,7 @@ struct YinyangSimp {
     
     NaiveKmeans<float> run;
     run.cluster(c,k,d,t,
-    group_centers, group_asg,D,logger, 5, 0.0001);
+    group_centers, group_asg,D,logger, 5, 0.0001,true);
     logger.end_time();
     //std::cout << "survived group init" << std::endl;
 
@@ -350,17 +350,19 @@ struct YinyangSimp {
   void compute_centers_filter(
   parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
   const parlay::sequence<center>& centers, double* center_calc,
-  float* center_calc_float) {
+  float* center_calc_float,bool suppress_logging=false) {
 
     //update centers timer
+    //commenting out timer prints because too much printing
     parlay::internal::timer t2;
     t2.start();
-
-    std::cout << "using the filter version " << std::endl;
+    if (!suppress_logging) {
+      std::cout << "using the filter version " << std::endl;
+    }
 
     parlay::sequence<parlay::sequence<size_t>> indices(k);
 
-    t2.next("Made new centers");
+    //t2.next("Made new centers");
 
     parlay::parallel_for(0,k,[&] (size_t i) {
       auto temp = parlay::filter(pts,[&] (point& p) {
@@ -372,7 +374,7 @@ struct YinyangSimp {
     
     });
 
-    t2.next("Got indices");
+    //t2.next("Got indices");
 
     parlay::parallel_for (0, k*d, [&] (size_t icoord){
     size_t i = icoord / d;
@@ -395,13 +397,13 @@ struct YinyangSimp {
 
   
 
-    t2.next("Done with adding");
+    //t2.next("Done with adding");
 
     parlay::parallel_for(0,k*d,[&] (size_t i) {
       center_calc_float[i] = center_calc[i];
     });
 
-    t2.next("Done with copying");
+    //t2.next("Done with copying");
   }
 
   // Compute centers by comparing to the previous results
@@ -418,14 +420,14 @@ struct YinyangSimp {
       center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
 
     });
-      t2.next("Multiplied");
+     // t2.next("Multiplied");
 
 
     parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
       return p.best != p.old_best;
     });
 
-    t2.next("Filtered");
+   // t2.next("Filtered");
 
     parlay::sequence<parlay::sequence<point>> add_these_all(k);
     parlay::sequence<parlay::sequence<point>> sub_these_all(k);
@@ -439,7 +441,7 @@ struct YinyangSimp {
 
     });
 
-    t2.next("Extra filtering");
+    //t2.next("Extra filtering");
 
     parlay::parallel_for(0,k*d,[&] (size_t jcoord) {
       size_t j = jcoord / d;
@@ -458,7 +460,7 @@ struct YinyangSimp {
 
     }); 
 
-        t2.next("Added/subbed changes");
+      //  t2.next("Added/subbed changes");
 
 
       parlay::parallel_for(0,k*d,[&](size_t i) {
@@ -476,7 +478,7 @@ struct YinyangSimp {
       center_calc_float[i] = center_calc[i];
     });
 
-    t2.next("Copied back");
+    //t2.next("Copied back");
 
   }
 
@@ -496,14 +498,14 @@ struct YinyangSimp {
       center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
 
     });
-      t2.next("Multiplied2");
+    //  t2.next("Multiplied2");
 
 
     parlay::sequence<point> changed_points = parlay::filter(pts,[&] (point& p) {
       return p.best != p.old_best;
     });
 
-    t2.next("Filtered2");
+    //t2.next("Filtered2");
 
     parlay::sequence<parlay::sequence<point>> add_these_all(k);
     parlay::sequence<parlay::sequence<point>> sub_these_all(k);
@@ -517,7 +519,7 @@ struct YinyangSimp {
 
     });
 
-    t2.next("Extra filtering2");
+   // t2.next("Extra filtering2");
 
     parlay::parallel_for(0,k*d,[&] (size_t jcoord) {
       size_t j = jcoord / d;
@@ -535,7 +537,7 @@ struct YinyangSimp {
 
     });
 
-    t2.next("Added/subbed changes");
+   // t2.next("Added/subbed changes");
 
     parlay::parallel_for(0,k*d,[&](size_t i) {
       size_t j = i / d;
@@ -746,8 +748,11 @@ struct YinyangSimp {
     std::cout << "made it here1" << std::endl;
   }
 
+  //suppress logging used in quantized method
+  //seeing the yy runs of the individual blocks 
+  //can be confusing, especially as they are run in parallel
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, 
-  Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
+  Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon,bool suppress_logging=false) {
 
     parlay::internal::timer tim = parlay::internal::timer();
     tim.start();
@@ -783,17 +788,31 @@ struct YinyangSimp {
     //fill in the centers
     fill_in_centers(c,centers,k,d);
     
-    //making sure t is at least 1
-    //TODO change back to k/10 (k/20 loads faster)
-    size_t t = std::max((size_t) k/20,(size_t) 1); 
-    
+    //We want t to be big without overloading memory
+    //because our memory cost contains O(nt) 
+    size_t t;
+    if (k <= 100) {
+      t=k;
+    }
+    else if (k <= 1000) {
+      t = k/10;
+
+    }
+    else if (k <= 10000) {
+      t = k/20;
+    }
+    else {
+      t = k/100;
+    }
   
     parlay::sequence<group> groups(t);
     //initialize the groups
     init_groups(c,k,d,t,D,centers,groups);
-
-    logger.add_iteration(0,0,45,0,0,
+    if (!suppress_logging) {
+       logger.add_iteration(0,0,45,0,0,
     parlay::sequence<float>(k,0),tim.next_time());
+    }
+   
 
     //confirm group assignment happened properly
     //(checking a necessary not sufficient condition)
@@ -828,9 +847,12 @@ struct YinyangSimp {
 
         }
     });
-
-    logger.add_iteration(0,0,48,0,0,
+    if (!suppress_logging) {
+       logger.add_iteration(0,0,48,0,0,
     parlay::sequence<float>(k,0),tim.next_time());
+
+    }
+   
 
     //set num_members for the centers
     parlay::parallel_for(0,k,[&] (size_t i) {
@@ -840,9 +862,12 @@ struct YinyangSimp {
       centers[i].new_num_members=belonging_pts.size();
       centers[i].old_num_members=belonging_pts.size();
     });
-
-    logger.add_iteration(0,0,49,0,0,parlay::sequence<float>(k,0),
+    if (!suppress_logging) {
+      logger.add_iteration(0,0,49,0,0,parlay::sequence<float>(k,0),
     tim.next_time());
+
+    }
+    
 
     //debugging
     {
@@ -881,11 +906,11 @@ struct YinyangSimp {
       //the first iteration, we don't have previous centers to compare to
       //so we must do a full-adding version of compute centers
       if (first_time) {
-        compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float);
+        compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float,suppress_logging);
         first_time=false;
       }
       else {
-        compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float);
+        compute_centers_filter(pts,n,d,k,centers,center_calc,center_calc_float,suppress_logging);
       }
       total_diff = update_centers_drift(pts,n,d,k,centers,D,groups,t,center_calc_float);
       
@@ -900,17 +925,23 @@ struct YinyangSimp {
       update_time = tim.next_time();
 
       //end of iteration stat updating
-      logger.add_iteration(assignment_time,update_time,squared_error,parlay::reduce(distance_calculations),
+      if (!suppress_logging) {
+         logger.add_iteration(assignment_time,update_time,squared_error,parlay::reduce(distance_calculations),
       parlay::reduce(center_reassignments),deltas,setup_time);
 
+
+      }
       //convergence check
       if (iters >= max_iter || total_diff <= epsilon) break;
 
       iters += 1;
       distance_calculations = parlay::sequence<size_t>(n,0); //reset distance calc counter
       center_reassignments = parlay::sequence<uint8_t>(n,0);
+      if (!suppress_logging) {
+        std::cout << "iter: " << iters << std::endl;
 
-      std::cout << "iter: " << iters << std::endl;
+
+      }
 
       //3.2: Group filtering
 

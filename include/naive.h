@@ -223,7 +223,7 @@ void compute_centers(
 }
 
 void cluster(T* v, size_t n, size_t d, size_t k, 
-float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
+float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon,bool suppress_logging=false) {
 
   //format the data according to our naive run
   parlay::sequence<point> pts = parlay::tabulate<point>(n, [&] (size_t i) {
@@ -245,7 +245,7 @@ float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, doubl
   });
 
   //the actual naive run
-  kmeans_vd(pts,n,d,k,centers,c, D,logger, max_iter,epsilon);
+  kmeans_vd(pts,n,d,k,centers,c, D,logger, max_iter,epsilon,suppress_logging);
 
   //put our data back 
   parlay::parallel_for(0,k,[&] (size_t i) {
@@ -263,10 +263,13 @@ float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, doubl
 double kmeans_vd(parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
 parlay::sequence<center>& centers, float* c, Distance& D, 
 kmeans_bench& logger, size_t max_iterations, 
-double epsilon)
+double epsilon,bool suppress_logging=false)
 {
-
+  if (!suppress_logging) {
     std::cout << "running vd" << std::endl;
+
+
+  }
 
     // std::cout << std::setprecision(10) <<  
     // "ensuring precision" << std::endl;
@@ -336,9 +339,12 @@ double epsilon)
     });
 
     float update_time = t.next_time();
-
-    logger.add_iteration(assignment_time,update_time,
+    if (!suppress_logging) {
+      logger.add_iteration(assignment_time,update_time,
     squared_errors.total(), 0, 0, deltas);
+
+    }
+  
     squared_errors.reset();
 
     //std::cout << "difs " << total_diff << " " << epsilon << std::endl;

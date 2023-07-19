@@ -94,6 +94,9 @@ size_t max_iter=1000, double epsilon=0) {
     quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
     logger_quant.end_time();
 
+    // std::cout << "cutting out after quant" << std::endl;
+    // abort();
+
  
     // NaiveKmeans<T> nie;
     // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
@@ -113,8 +116,8 @@ size_t max_iter=1000, double epsilon=0) {
     yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
     logger_yy.end_time();
-    std::cout << "Cutting out after yy" << std::endl;
-    abort();
+    // std::cout << "Cutting out after yy" << std::endl;
+    // abort();
 
     Naive<T> ben_naive;
     kmeans_bench logger = 

@@ -88,34 +88,57 @@ int main() {
   // test.push_back(5);
   // test.push_back(22);
   // auto dist = parlay::map(test,[&](size_t j))
-  std::cout << "min of " << std::min(5,7) << std::endl;
-  size_t a = 0;
-  size_t b = 1;
-  std::cout << "min of " << std::min(a,b) << std::endl;
+  // std::cout << "min of " << std::min(5,7) << std::endl;
+  // size_t a = 0;
+  // size_t b = 1;
+  // std::cout << "min of " << std::min(a,b) << std::endl;
 
-  std::cout << "Working on parlay filter " << std::endl;
+  // std::cout << "Working on parlay filter " << std::endl;
 
-  parlay::sequence<size_t> my_ints = {5,4,20,10};
-  auto filtered = parlay::filter(my_ints,[&] (size_t& i) {
-    return i > 7;
+  // parlay::sequence<size_t> my_ints = {5,4,20,10};
+  // auto filtered = parlay::filter(my_ints,[&] (size_t& i) {
+  //   return i > 7;
 
-  });
-  //std::cout << filtered << std::endl;
-  for (size_t i = 0; i < filtered.size(); i++) {
-    std::cout << filtered[i] << " ";
-  }
-    std::cout << std::endl;
+  // });
+  // //std::cout << filtered << std::endl;
+  // for (size_t i = 0; i < filtered.size(); i++) {
+  //   std::cout << filtered[i] << " ";
+  // }
+  //   std::cout << std::endl;
 
 
-  parlay::sequence<size_t> mapped = parlay::map(filtered,
-  [&] (size_t i) {
-    return i+1;
-  });
+  // parlay::sequence<size_t> mapped = parlay::map(filtered,
+  // [&] (size_t i) {
+  //   return i+1;
+  // });
 
-  for (size_t i = 0; i < mapped.size(); i++) {
-    std::cout << mapped[i] << " ";
-  }
-  std::cout << std::endl;
+  // for (size_t i = 0; i < mapped.size(); i++) {
+  //   std::cout << mapped[i] << " ";
+  // }
+  // std::cout << std::endl;
+
+  size_t k = 81;
+  size_t kstar = 3;
+  size_t split = 4;
+  
+
+  std::cout << "Debugging center selects" << std::endl;
+
+  std::cout << "pow(Kstar, 0) " << std::pow(kstar,0) << std::endl;
+  std::cout << "1 / pow(kstar,0)" << (1/std::pow(kstar,0)) << std::endl;
+
+   for (size_t i = 0; i < k; i++) {
+      parlay::sequence<size_t> center_selects(split);
+      std::cout << "printing center select for i: " << i << std::endl;
+
+      for (size_t j = 0; j < split; j++) {
+        center_selects[j] = static_cast<long>(i / std::pow(kstar,j)) % kstar;
+        std::cout << center_selects[j] << " ";
+
+      }
+      std::cout << std::endl;
+    
+    }
 
 
 

@@ -22,6 +22,10 @@ struct QuantizedKmeans {
 
 
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
+
+    parlay::internal::timer t2;
+    t2.start();
+
     size_t split = 4; //number of blocks to split dimensions into
     size_t len_per_split = d/split;
     size_t kstar = static_cast<size_t>(std::pow(k,1.0/split));
@@ -45,7 +49,10 @@ struct QuantizedKmeans {
     });
 
     //Debug! need to initialize? () init not allowed
-    parlay::sequence<kmeans_bench> loggers(split);
+    parlay::sequence<kmeans_bench> loggers;
+    for (size_t i = 0 ; i < split; i++) {
+      loggers.push_back(kmeans_bench(n,len_per_split,kstar,max_iter,epsilon,"Lazy","Piece of Quantized"));
+    }
 
     parlay::sequence<float*> cx(split);
     for (size_t i = 0 ; i < split ; i++) {
@@ -57,6 +64,9 @@ struct QuantizedKmeans {
       asgx[i] = new size_t[n];
     }
 
+    parlay::sequence<float> zero_filled_seq(0);
+    logger.add_iteration(0,0,51,0,0,zero_filled_seq,t2.next_time());
+
     //new initialization, the previous initialization can't be copied?
     //TODO how to use previous init?
     LazyStart<T> init;
@@ -64,24 +74,30 @@ struct QuantizedKmeans {
       init(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D);
     });
 
+    logger.add_iteration(0,0,52,0,0,zero_filled_seq,t2.next_time());
+
     YinyangSimp<T> yy;
 
+    //Because printing in parallel a mess, suppresses internal yy logging
     parlay::parallel_for(0,split,[&] (size_t i) {
       loggers[i].start_time();
-      yy.cluster(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D,loggers[i],max_iter,epsilon);
+      yy.cluster(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D,loggers[i],max_iter,epsilon,true);
       loggers[i].end_time();
     });
+
+    logger.add_iteration(t2.next_time(),0,53,0,0,zero_filled_seq,0);
+
 
     //copy answers into c, expanding outward
     for (size_t i = 0; i < k; i++) {
       parlay::sequence<size_t> center_selects(split);
-      std::cout << "printing center select for i: " << std::endl;
+      //std::cout << "printing center select for i: " << i << std::endl;
 
       for (size_t j = 0; j < split; j++) {
-        center_selects[j] = static_cast<size_t>(i / std::pow(kstar,j)) % static_cast<size_t>(std::pow(kstar,j+1));
-        std::cout << center_selects[i] << " ";
+        center_selects[j] = static_cast<long>(i / std::pow(kstar,j)) % kstar;
+        //std::cout << center_selects[j] << " ";
       }
-      std::cout << std::endl;
+      //std::cout << std::endl;
     
       for (size_t j = 0; j < d; j++) {
         c[i*d+j] = cx[j/len_per_split][center_selects[j/len_per_split]*d+j%len_per_split];
@@ -100,8 +116,14 @@ struct QuantizedKmeans {
       }
     });
 
+    //Check msse
+    double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
+      return D.distance(v+i*d,c+asg[i]*d,d);
+    }));
+    msse /= n; //divide by n because mean msse
 
 
+    logger.add_iteration(0,t2.next_time(),msse,0,0,zero_filled_seq,0);
 
   }
 
