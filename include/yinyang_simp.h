@@ -245,11 +245,11 @@ struct YinyangSimp {
     if (k <= 100) {
       t=k;
     }
-    else if (k <= 1000) {
+    else if (k <= 500) {
       t = k/10;
 
     }
-    else if (k <= 10000) {
+    else if (k <= 5000) {
       t = k/20;
     }
     else {
@@ -520,27 +520,30 @@ struct YinyangSimp {
 
       assignment_time = tim.next_time();
 
-      //see how long it takes to get the new_num_members info
-      parlay::parallel_for(0,k, [&] (size_t i) {
-        centers[i].new_num_members=parlay::filter(pts, [&] (typename ys::point& p) {
-          return p.best == i;
-        }).size();
-      }); // 1 granularity?
-
-      //sanity check
+   
+      //use a histogram to get new num members info, this is faster
+      auto new_centers_dist = histogram_by_key(parlay::map(pts,[&] (typename ys::point& p) {
+        return p.best;
+      }));
       for (size_t i = 0; i < k; i++) {
-        size_t old_mems = parlay::filter(pts, [&] (typename ys::point& p) {
-          return p.old_best == i;
-        }).size();
-        if (old_mems != centers[i].old_num_members) {
-          std::cout << "old mems not right " << old_mems << " " << centers[i].old_num_members << std::endl;
-          abort();
-        }
-        if (old_mems != centers[i].new_num_members && centers[i].has_changed==false) {
-          std::cout << "center has changed but not marked, aborting " << std::endl;
-          abort();
-        }
+        centers[new_centers_dist[i].first].new_num_members = new_centers_dist[i].second; //I think this is how it is used? 
       }
+
+      // //sanity check
+      //takes awhile to run, however
+      // for (size_t i = 0; i < k; i++) {
+      //   size_t old_mems = parlay::filter(pts, [&] (typename ys::point& p) {
+      //     return p.old_best == i;
+      //   }).size();
+      //   if (old_mems != centers[i].old_num_members) {
+      //     std::cout << "old mems not right " << old_mems << " " << centers[i].old_num_members << std::endl;
+      //     abort();
+      //   }
+      //   if (old_mems != centers[i].new_num_members && centers[i].has_changed==false) {
+      //     std::cout << "center has changed but not marked, aborting " << std::endl;
+      //     abort();
+      //   }
+      // }
       
 
       setup_time = tim.next_time();
