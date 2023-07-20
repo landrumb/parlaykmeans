@@ -19,8 +19,64 @@
 template <typename T>
 struct QuantizedKmeans {
 
+  //for my sanity
+  typedef parlay::sequence<parlay::sequence<float>> matrix;
+  typedef parlay::sequence<parlay::sequence<T>> tmat;
 
 
+  //given a data sequence and a codebook, return an encoded version
+  parlay::sequence<size_t> quantize_pq(parlay::sequence<T>& data, 
+  parlay::sequence<parlay::sequence<parlay::sequence<float>>>& subcenters,
+  size_t d, size_t m, size_t h, Distance& D) {
+    parlay::sequence<size_t> code(m,0);
+    //copy point into buffer
+    float buf[2048];
+    T* it = parlay::make_slice(data).begin();
+    for (size_t j = 0; j < d; j++) {
+        buf[j]=*it;
+        it += 1; //increment the pointer
+    }
+    //for each block, add the id of our closest subcenter to our code
+    for (size_t i = 0; i < m; i++) {
+      auto distances = parlay::delayed::map(subcenters[i], [&] (parlay::sequence<float> c) {
+        return D.distance(parlay::make_slice(c).begin(),buf,d);
+      });
+      //is this parlay::min_elt? TODO where is min_elt coming from, std?
+      code[i] = std::min_element(distances) - distances.begin();
+    }
+    return code;
+  }
+
+  //quantization method will add here
+  //data <- data vector we want to quantize
+  //R <- rotation matrix 
+  //d <- # of dim
+  //m <- # of blocks of subcenters
+  //h <- # of subcenters per block
+  parlay::sequence<size_t> quantize_opq(parlay::sequence<T>& data, 
+  parlay::sequence<parlay::sequence<float>>& R, 
+  parlay::sequence<parlay::sequence<parlay::sequence<float>>>& subcenters,
+  size_t d, size_t m, size_t h, Distance& D) {
+    parlay::sequence<T> new_data = parlay::tabulate(d,[&] (size_t i) {
+      return parlay::reduce(parlay::tabulate(d,[&] (size_t j) {
+        return data[j] * R[i][j];
+      }));
+    });
+    return quantize_pq(new_data,subcenters,d,m,h,D);
+  }
+
+  //train the product quant
+  //returns:  
+  //subcenters <- list of the subcenter matrices for each block and
+  //R (rotation matrix)
+  //using an identity initialization
+  std::pair<matrix, matrix> train_opq (tmat pts, size_t m, size_t h, size_t niter) {
+
+  }
+
+
+
+  
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
 
     parlay::internal::timer t2;
