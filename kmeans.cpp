@@ -69,6 +69,15 @@ inline void bench_two(T* v, size_t n, size_t d, size_t k, Distance& D,
 size_t max_iter=1000, double epsilon=0) {
     std::cout << "Running bench two " << std::endl;
 
+    std::cout << "printing 1st 10 points, first 10 dim of each" << std::endl;
+    for (size_t i = 0; i < 10; i++) {
+        for (size_t j = 0; j < std::min(d,(size_t) 10); j++) {
+            std::cout << v[i*d +j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
     float* c = new float[k*d]; // centers
     size_t* asg = new size_t[n];
 
@@ -118,6 +127,7 @@ size_t max_iter=1000, double epsilon=0) {
     logger_yy.end_time();
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
+
 
     Naive<T> ben_naive;
     kmeans_bench logger = 

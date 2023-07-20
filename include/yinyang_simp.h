@@ -17,7 +17,7 @@
 #include "initialization.h"
 #include "naive.h"
 #include "include/utils/kmeans_bench.h"
-#include "include/utils/union_find.h"
+//#include "include/utils/union_find.h"
 
 template<typename T>
 struct YinyangSimp {
@@ -630,6 +630,7 @@ struct YinyangSimp {
       center_calc[i] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
 
     });
+
       t2.next("Multiplied");
 
 
