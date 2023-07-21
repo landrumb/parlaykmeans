@@ -68,6 +68,7 @@ template <typename T, typename Initializer, typename Runner1, typename Runner2>
 inline void bench_two(T* v, size_t n, size_t d, size_t k, Distance& D, 
 size_t max_iter=1000, double epsilon=0) {
     std::cout << "Running bench two " << std::endl;
+    std::cout << "n d " << n << " " << d << std::endl;
 
     std::cout << "printing 1st 10 points, first 10 dim of each" << std::endl;
     for (size_t i = 0; i < 10; i++) {
@@ -97,11 +98,11 @@ size_t max_iter=1000, double epsilon=0) {
         asg3[i]=asg[i];
     }
 
-    QuantizedKmeans<T> quant;
-    kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
-    logger_quant.start_time();
-    quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
-    logger_quant.end_time();
+    // QuantizedKmeans<T> quant;
+    // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
+    // logger_quant.start_time();
+    // quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
+    // logger_quant.end_time();
 
     // std::cout << "cutting out after quant" << std::endl;
     // abort();

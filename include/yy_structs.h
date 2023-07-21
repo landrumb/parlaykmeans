@@ -129,7 +129,7 @@ struct YyStructs {
       
     }
 
-    void print_center(const center& c) {
+    static void print_center(const center& c) {
       std::cout << "ID" << c.id << std::endl;
       std::cout <<"COORDS ";
       for (size_t i = 0; i < c.coordinates.size(); i++) {
