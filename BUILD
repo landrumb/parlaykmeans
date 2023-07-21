@@ -38,7 +38,7 @@ cc_library(
   "include/utils/kmeans_bench.h",
   "include/utils/threadlocal.h",
   "include/yinyang_simp.h",
-  "include/utils/union_find.h",
+# "include/utils/union_find.h",
   "include/quantized.h",
   ],
   linkopts=["-pthread"],

@@ -24,6 +24,25 @@ struct QuantizedKmeans {
   typedef parlay::sequence<parlay::sequence<T>> tmat;
 
 
+  parlay::sequence<size_t> rand_seq(size_t n, size_t k){
+      assert(n > k);
+      std::random_device randomizer;
+      std::mt19937 generate(randomizer());
+    // std::uniform_int_distribution<size_t> dis(1, n);
+
+      parlay::sequence<size_t> random_numbers(k);
+      size_t bucket = n / k;
+
+      parallel_for(0, k, [&](size_t i){
+          std::uniform_int_distribution<size_t> dis(bucket * i, bucket * (i+1) - 1);
+          random_numbers[i] = dis(generate);
+      });
+    
+
+    return random_numbers;
+  }
+
+
   //given a data sequence and a codebook, return an encoded version
   parlay::sequence<size_t> quantize_pq(parlay::sequence<T>& data, 
   parlay::sequence<parlay::sequence<parlay::sequence<float>>>& subcenters,
@@ -69,9 +88,42 @@ struct QuantizedKmeans {
   //returns:  
   //subcenters <- list of the subcenter matrices for each block and
   //R (rotation matrix)
-  //using an identity initialization
-  std::pair<matrix, matrix> train_opq (tmat pts, size_t m, size_t h, size_t niter) {
+  //using an identity (natural) initialization
+  std::pair<matrix, matrix> train_opq (tmat pts, size_t n, size_t d, size_t m, size_t h, size_t niter) {
 
+    if (d % m != 0) {
+      std::cout << "does not split evenly d, m, aborting\n";
+      abort();
+    }
+    size_t subdim = d/m;
+
+    matrix R(d,parlay::sequence<float>(d));
+    for (size_t i =0 ; i  < d; i++) {
+      R[i][i]=1;
+    }
+    parlay::sequence<matrix> subcenters(m,matrix(d,parlay::sequence<float>(h)));
+
+    for (size_t i = 0; i < m; i++) {
+      parlay::sequence<size_t> perm = rand_seq(n,h);
+      //grabbing a reference for ease of typing
+      matrix& current_center = subcenters[i];
+      for (size_t j = 0; j < h; j++) {
+        size_t chsn_pt_coord = perm[j]; //chosen point coordinate
+        //note that centers go down columns
+        for (size_t coord = i*subdim; coord < (i+1)*subdim; coord++) {
+          current_center[coord][j] = pts[coord][chsn_pt_coord];
+
+        }
+
+      }
+    }
+
+    //do clustering
+
+    //do svd to get out rotation matrix
+    //how do we do svd? is it built into parlay? use eigen or something like that?
+
+    
   }
 
 
@@ -87,9 +139,12 @@ struct QuantizedKmeans {
     size_t kstar = static_cast<size_t>(std::pow(k,1.0/split));
     if (split*len_per_split != d) {
       std::cout << "d not divisible by 4, aborting" << std::endl;
+      abort();
+
     }
     if (std::abs(std::pow(kstar,split)-k) >= .1) {
       std::cout << "k does not have 4th root, aborting" << std::endl;
+      abort();
     }
     //new point struct
     //TODO make kmeans method that doesn't need this copy
@@ -165,19 +220,42 @@ struct QuantizedKmeans {
     //but for now just copying in whatever the 0th index has
     //alternatively could do a majority vote scheme
     //did this translation occur correctly?
-    parlay::parallel_for(0,n,[&] (size_t i) {
-      asg[i] = 0;
-      for (size_t j = 0; j < split; j++) {
-        asg[i] += asgx[j][i] * std::pow(kstar,j);
-      }
-    });
+    
+    // parlay::parallel_for(0,n,[&] (size_t i) {
+    //   asg[i] = 0;
+    //   for (size_t j = 0; j < split; j++) {
+    //     asg[i] += asgx[j][i] * std::pow(kstar,j);
+    //   }
+    // });
+
 
     //Check msse
-    double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
-      return D.distance(v+i*d,c+asg[i]*d,d);
-    }));
-    msse /= n; //divide by n because mean msse
+    // double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
+    //   return D.distance(v+i*d,c+asg[i]*d,d);
+    // }));
+    // msse /= n; //divide by n because mean msse
 
+
+    //rang is range from [0,k)
+    parlay::sequence<size_t> rang = parlay::tabulate(k,[&] (size_t i) {
+      return i;
+    });
+
+    //calculate msse and do assignments together
+    double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
+      float buf[2048];
+      T* it = v+i*d;
+      for (size_t j = 0; j < d; j++) {
+          buf[j]=*it;
+          it += 1; //increment the pointer
+      }
+      auto distances = parlay::delayed::map(rang, [&] (size_t k) {
+        return D.distance(buf,c+k*d,d);
+      });
+      asg[i] = parlay::min_element(distances) - distances.begin();
+      return distances[asg[i]];
+      
+    }))/n;
 
     logger.add_iteration(0,t2.next_time(),msse,0,0,zero_filled_seq,0);
 

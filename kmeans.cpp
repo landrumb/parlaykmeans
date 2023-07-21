@@ -117,29 +117,29 @@ size_t max_iter=1000, double epsilon=0) {
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    YinyangSimp<T> yy;
-    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    "Lazy","YY");
-    logger_yy.start_time();
+    // YinyangSimp<T> yy;
+    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    // "Lazy","YY");
+    // logger_yy.start_time();
 
-    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    logger_yy.end_time();
+    // logger_yy.end_time();
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
 
 
-    Naive<T> ben_naive;
-    kmeans_bench logger = 
-    kmeans_bench(n, d, k, max_iter, epsilon, "Lazy", "Naive");
-    logger.start_time();
-    ben_naive.cluster(v,n,d,k,c3,asg3,D,logger,max_iter,epsilon);
-    logger.end_time();
+    // Naive<T> ben_naive;
+    // kmeans_bench logger = 
+    // kmeans_bench(n, d, k, max_iter, epsilon, "Lazy", "Naive");
+    // logger.start_time();
+    // ben_naive.cluster(v,n,d,k,c3,asg3,D,logger,max_iter,epsilon);
+    // logger.end_time();
 
-    std::cout << "Printing out first 10 final centers, the first 10 dim: "  << std::endl;
+    std::cout << "Printing out first 10 final centers, the first 100 dim: "  << std::endl;
     for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
         for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
-            std::cout << c[i*d + j] <<  "|" << c2[i*d+j] << " ";
+            std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
         }
         std::cout << std::endl;
     }
