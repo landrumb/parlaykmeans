@@ -189,7 +189,7 @@ struct QuantizedKmeans {
     //for (size_t i = 0; i < split; i++) {
       init(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D);
     //}
-    //});
+    });
 
     logger.add_iteration(0,0,52,0,0,zero_filled_seq,t2.next_time());
 
