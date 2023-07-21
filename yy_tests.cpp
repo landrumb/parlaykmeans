@@ -181,8 +181,11 @@ TEST_F(YyTest,CenterCentroids) {
   //TODO how tightly should we set this?
   //putting centroids in double to get a bit better precision
   for(size_t i=0; i < k*d; i++){
-    EXPECT_LE(std::abs(centroids[i]/num_members[i/d]-c[i]),.1)
+    if (num_members[i/d] >0) {
+      EXPECT_LE(std::abs(centroids[i]/num_members[i/d]-c[i]),.1)
     << "This one failed\n";
+    }
+    
   }
   
   delete[] centroids;

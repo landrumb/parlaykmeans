@@ -32,7 +32,7 @@
 #define RUNNER_NAME "Naive"
 
 
-const float epsilon = 0.00001; //want to stop
+const float epsilon = 0;//0.00001; //want to stop
 
 
 template<typename T, typename Initializer, typename Runner>         
@@ -97,11 +97,11 @@ size_t max_iter=1000, double epsilon=0) {
         asg3[i]=asg[i];
     }
 
-    QuantizedKmeans<T> quant;
-    kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
-    logger_quant.start_time();
-    quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
-    logger_quant.end_time();
+    // QuantizedKmeans<T> quant;
+    // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
+    // logger_quant.start_time();
+    // quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
+    // logger_quant.end_time();
 
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
@@ -124,7 +124,7 @@ size_t max_iter=1000, double epsilon=0) {
 
     // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    // logger_yy.end_time();
+    logger_yy.end_time();
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
 

@@ -29,95 +29,15 @@ cc_binary(
 cc_library(
   name="kmeans_test",
   srcs=["kmeans.cpp"],
-  hdrs = ["include/utils/parse_files.h",
-  "include/lazy.h",
-  "include/utils/NSGDist.h",
-  "include/initialization.h",
-  "include/naive.h",
-  "include/utils/parse_command_line.h",
-  "include/utils/kmeans_bench.h",
-  "include/utils/threadlocal.h",
-  "include/yinyang_simp.h",
-# "include/utils/union_find.h",
-  "include/quantized.h",
-  ],
   linkopts=["-pthread"],
   #makes it known that include is an include library
   copts = ["-Iinclude"],
   deps = [
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
+    "kmeans_headers",
 
   ],
  
 )
-
-
-#What's with this binary library separation?
-cc_binary(
-  name="yinyang_debug_test",
-  srcs=["include/yinyang_debugging.cpp"],
-  linkopts=["-pthread"],
-  #makes it known that include is an include library
-  copts = ["-Iinclude"],
-  deps = [
-    ":yinyang_simp",
-  ],
- 
-)
-
-
-#making sure that yinyang compiles to help with debugging
-cc_library(
-  name="yinyang_faithful",
-  srcs=["include/yinyang_faithful.h"],
-  hdrs=["include/utils/NSGDist.h",
-  "include/initialization.h",
-  "include/naive.h",
-  "include/utils/accumulator.h"],
-  linkopts=["-pthread"],
-  #makes it known that include is an include library
-  copts = ["-Iinclude"],
-  deps = [
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
-
-  ],
-
-
-)
-#making sure that yinyang compiles to help with debugging
-cc_library(
-  name="yinyang_simp",
-  srcs=["include/yinyang_faithful.h"],
-  hdrs=["include/initialization.h",
-  "include/naive.h",
-  "include/utils/parse_files.h",
-  "include/lazy.h",
-  "include/utils/NSGDist.h",
-  "include/yinyang_simp.h",
-  "include/utils/kmeans_bench.h"],
-  linkopts=["-pthread"],
-  #makes it known that include is an include library
-  copts = ["-Iinclude"],
-  deps = [
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
-
-  ],
-
-
-)
-
 
 
 #comparing a yinyang and naive run
@@ -128,37 +48,10 @@ cc_binary(
   #makes it known that include is an include library
   copts = ["-Iinclude"],
   deps = [
-    ":kmeans_yn",
+    ":kmeans_headers",
   ],
  
 )
-
-
-cc_library(
-  name="kmeans_yn",
-  srcs=["kmeans_old.cpp"],
-  hdrs = ["include/utils/parse_files.h",
-  "include/lazy.h",
-  "include/utils/NSGDist.h",
-  "include/initialization.h",
-  "include/naive.h",
-  "include/utils/accumulator.h",
-  "include/yinyang_faithful.h",
-  ],
-  linkopts=["-pthread"],
-  #makes it known that include is an include library
-  copts = ["-Iinclude"],
-  deps = [
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
-
-  ],
- 
-)
-
 
 
 
@@ -171,57 +64,26 @@ cc_binary(
   #makes it known that include is an include library
   copts = ["-Iinclude"],
   deps = [
-    ":kmeans_yn_simp",
+    ":kmeans_headers",
   ],
  
 )
 
-
-cc_library(
-  name="kmeans_yn_simp",
-  srcs=["kmeans_old.cpp"],
-  hdrs = ["include/utils/parse_files.h",
-  "include/lazy.h",
-  "include/utils/NSGDist.h",
-  "include/initialization.h",
-  "include/naive.h",
-  "include/utils/threadlocal.h",
-  "include/yinyang_simp.h",
-  "include/utils/kmeans_bench.h",
-  "include/utils/parse_command_line.h",
-  ],
-  linkopts=["-pthread"],
-  #makes it known that include is an include library
-  copts = ["-Iinclude"],
-  deps = [
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
-
-  ],
- 
-)
 
 #Testing the tester
 cc_test(
   name = "kmeans_google_test",
-  size = "medium",
+  size = "small",
   srcs = ["extra_tests.cpp"],
  
   deps = ["@googletest//:gtest_main",
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
-    "test_headers"],
+    "kmeans_headers"],
   linkopts=["-pthread"],
   #makes it known that include is an include library
   copts = ["-Iinclude"],
   
 )
+
 cc_library(
   name="kmeans_headers",
   hdrs=["include/utils/parse_files.h",
@@ -233,24 +95,30 @@ cc_library(
 "include/utils/kmeans_bench.h",
 "include/utils/threadlocal.h",
 "include/yinyang_simp.h",
-#"include/utils/union_find.h"
+"include/utils/union_find.h",
+"include/yy_structs.h",
+"include/yy_compute_centers.h",
+"include/quantized.h",],
+
+linkopts=["-pthread"],
+#makes it known that include is an include library
+copts = ["-Iinclude"],
+deps = [
+  "@parlaylib//parlay:parallel",
+  "@parlaylib//parlay:primitives",
+  "@parlaylib//parlay:sequence",
+  "@parlaylib//parlay:slice",
+  "@parlaylib//parlay:io",
 ],
 
 )
-
 
 #Testing the tester
 cc_test(
   name = "yy_google_test",
   size = "small",
   srcs = ["yy_tests.cpp"],
- 
   deps = ["@googletest//:gtest_main",
-    "@parlaylib//parlay:parallel",
-    "@parlaylib//parlay:primitives",
-    "@parlaylib//parlay:sequence",
-    "@parlaylib//parlay:slice",
-    "@parlaylib//parlay:io",
     "kmeans_headers"],
   linkopts=["-pthread"],
   #makes it known that include is an include library
