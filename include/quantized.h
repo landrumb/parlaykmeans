@@ -137,6 +137,10 @@ struct QuantizedKmeans {
     size_t split = 4; //number of blocks to split dimensions into
     size_t len_per_split = d/split;
     size_t kstar = static_cast<size_t>(std::pow(k,1.0/split));
+
+    std::cout << "kstar is " << kstar << std::endl;
+    std::cout << "len_per_split is " << len_per_split << std::endl;
+
     if (split*len_per_split != d) {
       std::cout << "d not divisible by 4, aborting" << std::endl;
       abort();
@@ -162,7 +166,7 @@ struct QuantizedKmeans {
     //Debug! need to initialize? () init not allowed
     parlay::sequence<kmeans_bench> loggers;
     for (size_t i = 0 ; i < split; i++) {
-      loggers.push_back(kmeans_bench(n,len_per_split,kstar,max_iter,epsilon,"Lazy","Piece of Quantized"));
+      loggers.push_back(kmeans_bench(n,len_per_split,kstar,max_iter,epsilon,"Lazy","Piece of Quantized YY"));
     }
 
     parlay::sequence<float*> cx(split);
@@ -175,15 +179,17 @@ struct QuantizedKmeans {
       asgx[i] = new size_t[n];
     }
 
-    parlay::sequence<float> zero_filled_seq(0);
+    parlay::sequence<float> zero_filled_seq(k,0);
     logger.add_iteration(0,0,51,0,0,zero_filled_seq,t2.next_time());
 
     //new initialization, the previous initialization can't be copied?
     //TODO how to use previous init?
     LazyStart<T> init;
     parlay::parallel_for(0,split,[&] (size_t i) {
+    //for (size_t i = 0; i < split; i++) {
       init(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D);
-    });
+    //}
+    //});
 
     logger.add_iteration(0,0,52,0,0,zero_filled_seq,t2.next_time());
 
@@ -191,10 +197,15 @@ struct QuantizedKmeans {
 
     //Because printing in parallel a mess, suppresses internal yy logging
     parlay::parallel_for(0,split,[&] (size_t i) {
+    //for (size_t i = 0; i < split ; i++) {
       loggers[i].start_time();
       yy.cluster(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D,loggers[i],max_iter,epsilon,true);
       loggers[i].end_time();
+      std::cout << "Finished a split" << std::endl;
+   // }
     });
+
+    std::cout << "Finished split kmeans" << std::endl;
 
     logger.add_iteration(t2.next_time(),0,53,0,0,zero_filled_seq,0);
 
@@ -253,6 +264,9 @@ struct QuantizedKmeans {
         return D.distance(buf,c+k*d,d);
       });
       asg[i] = parlay::min_element(distances) - distances.begin();
+      if (asg[i] >= k || asg[i] < 0) {
+        std::cout << "seg fault leave" << std::endl;
+      }
       return distances[asg[i]];
       
     }))/n;

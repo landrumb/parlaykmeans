@@ -373,14 +373,14 @@ struct YyComputeCenters {
       
       
     });
-      t2.next("Multiplied3");
+    //  t2.next("Multiplied3");
 
 
     parlay::sequence<typename ys::point> changed_points = parlay::filter(pts,[&] (typename ys::point& p) {
       return p.best != p.old_best;
     });
 
-    t2.next("Filtered");
+   // t2.next("Filtered");
 
     parlay::parallel_for(0,k,[&] (size_t j) {
       if (centers[j].has_changed) {
@@ -403,7 +403,7 @@ struct YyComputeCenters {
       
     }); 
 
-    t2.next("Added/subbed changes");
+   // t2.next("Added/subbed changes");
 
     parlay::parallel_for(0,k,[&](size_t j) {
       
@@ -429,7 +429,7 @@ struct YyComputeCenters {
       }
     });
 
-    t2.next("Copied back");
+    //t2.next("Copied back");
 
 
     }

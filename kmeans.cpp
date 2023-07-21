@@ -97,11 +97,11 @@ size_t max_iter=1000, double epsilon=0) {
         asg3[i]=asg[i];
     }
 
-    // QuantizedKmeans<T> quant;
-    // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
-    // logger_quant.start_time();
-    // quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
-    // logger_quant.end_time();
+    QuantizedKmeans<T> quant;
+    kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
+    logger_quant.start_time();
+    quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
+    logger_quant.end_time();
 
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
@@ -117,12 +117,12 @@ size_t max_iter=1000, double epsilon=0) {
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    // YinyangSimp<T> yy;
-    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    // "Lazy","YY");
-    // logger_yy.start_time();
+    YinyangSimp<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "Lazy","YY");
+    logger_yy.start_time();
 
-    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
     logger_yy.end_time();
     // std::cout << "Cutting out after yy" << std::endl;
@@ -137,19 +137,19 @@ size_t max_iter=1000, double epsilon=0) {
     // logger.end_time();
 
     std::cout << "Printing out first 10 final centers, the first 100 dim: "  << std::endl;
-    for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
-        for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
-            std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    // for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
+    //     for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
+    //         std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    std::cout << "Printing out 100 final assignments: " << std::endl;
-    for (size_t i = 0; i < std::min(n,(size_t) 100); i++) {
-        std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
+    // std::cout << "Printing out 100 final assignments: " << std::endl;
+    // for (size_t i = 0; i < std::min(n,(size_t) 100); i++) {
+    //     std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
         
-    }
-    std::cout << std::endl << std::endl;
+    // }
+    // std::cout << std::endl << std::endl;
 
     delete[] c;
     delete[] asg;

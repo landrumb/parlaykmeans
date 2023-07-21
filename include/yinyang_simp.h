@@ -255,6 +255,7 @@ struct YinyangSimp {
     else {
       t = k/100;
     }
+    std::cout << "t is " << t << std::endl;
   
     parlay::sequence<typename ys::group> groups(t);
     //initialize the groups
@@ -267,7 +268,7 @@ struct YinyangSimp {
 
     //confirm group assignment happened properly
     //(checking a necessary not sufficient condition)
-    assert_proper_group_size(groups,t);
+    assert_proper_group_size(groups,t,false);
 
     //Init the point bounds:
 
@@ -379,7 +380,7 @@ struct YinyangSimp {
       parlay::sequence<double> best_dists = parlay::tabulate(n,[&] (size_t i) {
         return static_cast<double>(pts[i].ub * pts[i].ub);
       });
-      double squared_error = parlay::reduce(best_dists);
+      double squared_error = parlay::reduce(best_dists)/n; //divide by n for msse
 
       update_time = tim.next_time();
 

@@ -179,7 +179,7 @@ struct NaiveKmeans {
 //compute centers calculates the new centers
 void compute_centers(
   const parlay::sequence<point>& pts, size_t n, size_t d, size_t k, 
-  float* c) {
+  float* c, parlay::sequence<center>& centers) {
     //std::cout << "entered compute centers" << std::endl;
 
 
@@ -212,6 +212,9 @@ void compute_centers(
     (size_t ind) {return static_cast<double>(
     pts[ind].coordinates[coord]);})) / indices[i].size()); 
 
+        }
+        else {
+          c[icoord] = centers[i].coordinates[coord];
         }
       
     });
@@ -315,7 +318,7 @@ double epsilon,bool suppress_logging=false)
     float assignment_time = t.next_time();
 
     // Compute new centers
-    compute_centers(pts, n, d, k, c);
+    compute_centers(pts, n, d, k, c, centers);
     //t.next("Computed the centers");
     // Check convergence
 
