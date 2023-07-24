@@ -32,7 +32,8 @@ struct SklnKmeans {
     unsigned int new_num_members;
     //has_changed is true if the center has gained or lost any points
     bool has_changed;
-
+    float radius;
+    
     center(uint8_t id, unsigned short int ds) : id(id) {
       coordinates = parlay::sequence<float>(ds);
       tcoordinates = parlay::sequence<T>(ds);
@@ -217,6 +218,8 @@ struct SklnKmeans {
       centers[new_centers_dist[i].first].old_num_members = centers[new_centers_dist[i].first].new_num_members;
 
     }
+    
+    parlay::sequence<parlay::sequence<float>> dist_matrix;
     
 
     setup_time = t2.next_time();
