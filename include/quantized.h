@@ -197,13 +197,14 @@ struct QuantizedKmeans {
 
     //Because printing in parallel a mess, suppresses internal yy logging
     parlay::parallel_for(0,split,[&] (size_t i) {
-    //for (size_t i = 0; i < split ; i++) {
+   // for (size_t i = 0; i < split ; i++) {
+    
       loggers[i].start_time();
       yy.cluster(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D,loggers[i],max_iter,epsilon,true);
       loggers[i].end_time();
       std::cout << "Finished a split" << std::endl;
    // }
-    });
+   });
 
     std::cout << "Finished split kmeans" << std::endl;
 

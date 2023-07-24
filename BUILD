@@ -98,7 +98,8 @@ cc_library(
 "include/utils/union_find.h",
 "include/yy_structs.h",
 "include/yy_compute_centers.h",
-"include/quantized.h",],
+"include/quantized.h",
+"include/skln_kmeans.h"],
 
 linkopts=["-pthread"],
 #makes it known that include is an include library

@@ -25,6 +25,7 @@
 #include "include/naive.h"
 #include "yinyang_simp.h" //can switch to fast_center
 #include "quantized.h"
+#include "skln_kmeans.h"
 
 #define INITIALIZER MacQueen
 #define INITIALIZER_NAME "MacQueen"
@@ -71,9 +72,10 @@ size_t max_iter=1000, double epsilon=0) {
     std::cout << "n d " << n << " " << d << std::endl;
 
     std::cout << "printing 1st 10 points, first 10 dim of each" << std::endl;
+    std::cout << "int cast needed for uint8s" << std::endl;
     for (size_t i = 0; i < 10; i++) {
         for (size_t j = 0; j < std::min(d,(size_t) 10); j++) {
-            std::cout << v[i*d +j] << " ";
+            std::cout << static_cast<int>(v[i*d +j]) << " ";
         }
         std::cout << std::endl;
     }
@@ -107,6 +109,12 @@ size_t max_iter=1000, double epsilon=0) {
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
 
+    SklnKmeans<T> sk;
+    kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
+    logger_sk.start_time();
+    sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
+    logger_sk.end_time();
+
  
     // NaiveKmeans<T> nie;
     // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
@@ -118,14 +126,14 @@ size_t max_iter=1000, double epsilon=0) {
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    YinyangSimp<T> yy;
-    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    "Lazy","YY");
-    logger_yy.start_time();
+    // YinyangSimp<T> yy;
+    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    // "Lazy","YY");
+    // logger_yy.start_time();
 
-    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    logger_yy.end_time();
+    // logger_yy.end_time();
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
 
@@ -138,19 +146,19 @@ size_t max_iter=1000, double epsilon=0) {
     // logger.end_time();
 
     std::cout << "Printing out first 10 final centers, the first 100 dim: "  << std::endl;
-    // for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
-    //     for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
-    //         std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
+    for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
+        for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
+            std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
-    // std::cout << "Printing out 100 final assignments: " << std::endl;
-    // for (size_t i = 0; i < std::min(n,(size_t) 100); i++) {
-    //     std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
+    std::cout << "Printing out 100 final assignments: " << std::endl;
+    for (size_t i = 0; i < std::min(n,(size_t) 100); i++) {
+        std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
         
-    // }
-    // std::cout << std::endl << std::endl;
+    }
+    std::cout << std::endl << std::endl;
 
     delete[] c;
     delete[] asg;
