@@ -32,7 +32,10 @@ struct SklnKmeans {
     unsigned int new_num_members;
     //has_changed is true if the center has gained or lost any points
     bool has_changed;
+    bool stable;
     float radius;
+    parlay::sequence<uint8_t> neighbors;
+    parlay::sequence<uint8_t> old_neighbors;
     
     center(uint8_t id, unsigned short int ds) : id(id) {
       coordinates = parlay::sequence<float>(ds);
@@ -41,6 +44,7 @@ struct SklnKmeans {
       old_num_members = -1;
       new_num_members = -1;
       has_changed = true;
+      stable = false;
     }
 
 
@@ -136,6 +140,30 @@ struct SklnKmeans {
     });
 
     }
+    //sort neighbor id
+    void sort_neighbor(parlay::sequence<center>& centers, 
+    parlay::sequence<parlay::sequence<float>>& dist_matrix, uint8_t id) {
+
+      parlay::sequence<uint8_t>& neighbors = centers[id].neighbors;
+      int min_index;
+      float min_val;
+      for (int i = 0 ; i < neighbors.size()-1; i++) {
+        min_index = i;
+        min_val = dist_matrix[id][neighbors[i]];
+        for (int j = i+1; j < neighbors.size(); j++) {
+          if (dist_matrix[id][neighbors[j]] < min_val) {
+            min_val = dist_matrix[id][neighbors[j]];
+            min_index = j;
+          }
+          
+        }
+
+        int temp = neighbors[i];
+        neighbors[i] = neighbors[min_index];
+        neighbors[min_index] = temp;
+      }
+
+    }
 
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
   Distance& D, kmeans_bench& logger, size_t max_iter, double epsilon) {
@@ -219,8 +247,53 @@ struct SklnKmeans {
 
     }
     
-    parlay::sequence<parlay::sequence<float>> dist_matrix;
+    parlay::sequence<parlay::sequence<float>> dist_matrix(ks,parlay::sequence(ks,std::numeric_limits<float>::max()));
+
+    //initialize the radius, naive
+    // for (int i = 0; i < ns; i++) {
+    //   float init_dist = D.distance(v+i*ds,centers[asgs[i]].coordinates.begin(),ds);
+    //   centers[asgs[i]].radius = std::max(init_dist,centers[asgs[i]].radius);
+    // }
+
+    // //group_by faster?
+    // parlay::internal::timer t3;
+    // t3.start();
+
+    // auto pts_grouped_by_center = parlay::group_by_key(parlay::map(rang,[&] (int i) {
+    //   return std::pair(asgs[i],i);
+    // }));
+
+    // if (pts_grouped_by_center.size() != ks) {
+    //   std::cout << "not the right size pgbc " << pts_grouped_by_center.size()  << std::endl;
+    //   abort();
+    // }
+
+    // parlay::parallel_for(0,ks,[&] (uint8_t i) {
+    //   uint8_t picked_center_coord = pts_grouped_by_center[i].first;
+    //   auto list_of_dists = parlay::map(pts_grouped_by_center[i].second, [&] (int j) {
+    //     return D.distance(v+j*ds,centers[picked_center_coord].tcoordinates.begin(),ds);
+    //   });
+    //   centers[picked_center_coord].radius = *parlay::max_element(list_of_dists);
+    // } );
+
+    // for (uint8_t i = 0; i < ks; i++) {
+    //   std::cout << "radius of center " << static_cast<int>(i) << ": " << centers[i].radius << std::endl;
+    // }
+
+    // t3.next("time to group by");
+
+    //abort();
+
+    // parlay::internal::timer t3;
+    // t3.start();
+
     
+
+    // t3.next("mutual center distance calc");
+
+    // abort();
+
+
 
     setup_time = t2.next_time();
 
@@ -232,6 +305,130 @@ struct SklnKmeans {
     for (size_t iter = 0; iter < max_iter; iter++) {
 
       std::cout << "made it here7" << std::endl;
+
+      //update radii
+
+      auto pts_grouped_by_center = parlay::group_by_key(parlay::map(rang,[&] (int i) {
+        return std::pair(asgs[i],i);
+      }));
+
+      if (pts_grouped_by_center.size() != ks) {
+        std::cout << "not the right size pgbc " << pts_grouped_by_center.size()  << std::endl;
+        abort();
+      }
+
+      //TODO only do update centers for unstable centers *mix with stable
+      parlay::parallel_for(0,ks,[&] (uint8_t i) {
+        uint8_t picked_center_coord = pts_grouped_by_center[i].first;
+        if (centers[picked_center_coord].stable == false) {
+          auto list_of_dists = parlay::map(pts_grouped_by_center[i].second, [&] (int j) {
+          return D.distance(v+j*ds,centers[picked_center_coord].tcoordinates.begin(),ds);
+        });
+        centers[picked_center_coord].radius = *parlay::max_element(list_of_dists);
+
+        }
+        
+      } );
+
+    //TODO make parallel later
+    //TODO only compare for i < j 
+    //TODO for iter  >= 1, use Alg 2 to reduce center-center distance calc
+    for (uint8_t i = 0; i < ks; i++) {
+      for (uint8_t j = 0; j < ks; j++) {
+        dist_matrix[i][j] = D.distance(centers[i].coordinates.begin(),centers[j].coordinates.begin(),ds);
+      }
+    }
+    //set old neighbors to be the previous neighbors
+    for (uint8_t i = 0; i < ks; i++) {
+      centers[i].old_neighbors = parlay::sequence<uint8_t>(centers[i].neighbors.size());
+      for (uint8_t j = 0; j < centers[i].neighbors.size(); j++) {
+        centers[i].old_neighbors[j] = centers[i].neighbors[j];
+      }
+      //TODO is this a deep copy?
+      //old_neighbors = neighbors; //copy here OK
+    }
+
+    //init neighbor set
+    for (uint8_t i = 0; i < ks; i++) {
+      for (uint8_t j = 0; j < ks; j++) {
+        if (i == j) {
+          continue;
+        }
+
+        if (dist_matrix[i][j] < 2 * centers[i].radius) {
+          centers[i].neighbors.push_back(j);
+        }
+
+      }
+    }
+    //sort neighbors 
+    //TODO make sorting more efficient? (use parlay or a comparator?)
+    for (uint8_t i = 0; i < ks; i++) {
+      sort_neighbor(centers,dist_matrix,i);
+    }
+
+    //debugging test
+    //confirm neighbors are sorted
+    for (uint8_t i = 0; i < ks; i++) {
+      for (uint8_t j = 0; j < centers[i].neighbors.size(); j++) {
+        std::cout << "(neighbor id, dist): " << "(" << static_cast<int>(centers[i].neighbors[j]) <<
+        ", " << dist_matrix[i][centers[i].neighbors[j]] << ") " << std::endl;
+      }
+      std::cout << std::endl;
+
+    }
+
+    abort();
+    
+
+    //BALL ASSIGN
+
+    //TODO have array of tight bound from point to nearest center
+    for (uint8_t i = 0; i < ks; i++) {
+      
+      //help with debugging, make lines of code easier to read
+      center& main_center = centers[i];
+      parlay::sequence<uint8_t>& main_neighbors = centers[i].neighbors;
+
+      bool flag_neighbors_stable = true;
+      if (iter >= 1 && centers[i].neighbors == centers[i].old_neighbors && centers[i].stable) {
+        for (uint8_t j = 0; j < centers[i].neighbors.size(); j++) {
+          if (centers[centers[i].neighbors[j]].stable == false) {
+            flag_neighbors_stable = false;
+            break;
+          }
+        }
+        
+      }
+      else {
+        flag_neighbors_stable = false;
+      }
+
+      if (flag_neighbors_stable == false) {
+
+        //find min dist to any other center
+        //TODO use a map then min_element
+        float min_dist_to_other_neighbors = std::numeric_limits<float>::max();
+        for (int j = 0; j < centers[i].neighbors.size(); j++) {
+          //if (centers[main_neighbors[j]] )
+          continue;
+        }
+
+        //for each point belonging to that center
+        parlay::parallel_for(0,centers[i].old_num_members,[&] (size_t j) {
+          float dist_to_closest = D.distance(v+j*ds,centers[i].tcoordinates.begin(),ds);
+         // if (dist_to_closest < )
+
+
+        });
+      }
+
+
+
+
+    }
+
+
 
 
       //STEP 1: ASSIGN
