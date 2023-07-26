@@ -67,13 +67,13 @@ inline void bench(T* v, size_t n, size_t d, size_t k, Distance& D, size_t max_it
 //bench two kmeans methods on the same data
 template <typename T, typename Initializer, typename Runner1, typename Runner2>
 inline void bench_two(T* v, size_t n, size_t d, size_t k, Distance& D, 
-size_t max_iter=1000, double epsilon=0) {
+size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::string output_file_name1="data.csv", std::string output_file_name2="data2.csv") {
     std::cout << "Running bench two " << std::endl;
     std::cout << "n d " << n << " " << d << std::endl;
 
-    std::cout << "printing 1st 10 points, first 10 dim of each" << std::endl;
+    std::cout << "printing 1st 3 points, first 10 dim of each" << std::endl;
     std::cout << "int cast needed for uint8s" << std::endl;
-    for (size_t i = 0; i < 10; i++) {
+    for (size_t i = 0; i < 3; i++) {
         for (size_t j = 0; j < std::min(d,(size_t) 10); j++) {
             std::cout << static_cast<int>(v[i*d +j]) << " ";
         }
@@ -109,31 +109,35 @@ size_t max_iter=1000, double epsilon=0) {
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
 
-    SklnKmeans<T> sk;
-    kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
-    logger_sk.start_time();
-    sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
-    logger_sk.end_time();
+    // SklnKmeans<T> sk;
+    // kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
+    // logger_sk.start_time();
+    // sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
+    // logger_sk.end_time();
 
  
-    // NaiveKmeans<T> nie;
-    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    // epsilon,"Lazy","NaiveKmeans");
-    // logger_nie.start_time();
-    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    // logger_nie.end_time();
+    NaiveKmeans<T> nie;
+    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","NaiveKmeans");
+    logger_nie.start_time();
+    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    logger_nie.end_time();
+    logger_nie.output_to_csv(output_file_name1);
+
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    // YinyangSimp<T> yy;
-    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    // "Lazy","YY");
-    // logger_yy.start_time();
+    YinyangSimp<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "Lazy","YY");
+    logger_yy.start_time();
 
-    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    // logger_yy.end_time();
+    logger_yy.end_time();
+    logger_yy.output_to_csv(output_file_name2);
+
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
 
@@ -145,16 +149,16 @@ size_t max_iter=1000, double epsilon=0) {
     // ben_naive.cluster(v,n,d,k,c3,asg3,D,logger,max_iter,epsilon);
     // logger.end_time();
 
-    std::cout << "Printing out first 10 final centers, the first 100 dim: "  << std::endl;
-    for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
-        for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
-            std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << "Printing out first 10 final centers, the first 10 dim: "  << std::endl;
+    // for (size_t i = 0; i < std::min((size_t) 10,k); i++) {
+    //     for (size_t j = 0; j < std::min((size_t) 10,d); j++) {
+    //         std::cout << c[i*d + j] <<  "|" << c3[i*d+j] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    std::cout << "Printing out 100 final assignments: " << std::endl;
-    for (size_t i = 0; i < std::min(n,(size_t) 100); i++) {
+    std::cout << "Printing out 5 final assignments: " << std::endl;
+    for (size_t i = 0; i < std::min(n,(size_t) 5); i++) {
         std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
         
     }
@@ -176,6 +180,14 @@ int main(int argc, char* argv[]){
     std::string tp = std::string(P.getOptionValue("-t", "uint8")); // data type
     std::string dist = std::string(P.getOptionValue("-D", "Euclidian")); // distance choice
     std::string use_bench_two = std::string(P.getOptionValue("-two","no"));
+    bool output_log_to_csv = false;
+    std::string output_to_csv_str = std::string(P.getOptionValue("-csv_log","false"));
+    if (output_to_csv_str == "true") {
+        output_log_to_csv=true;
+    }
+    std::string output_log_file_name = std::string(P.getOptionValue("-csv_log_file_name","data.csv"));
+    std::string output_log_file_name2 = std::string(P.getOptionValue("-csv_log_file_name2","data2.csv"));
+
 
     if(input == ""){ // if no input file given, quit
         std::cout << "Error: input file not specified" << std::endl;
@@ -223,7 +235,7 @@ int main(int argc, char* argv[]){
         if (tp == "float") {
             auto [v, n, d] = parse_fbin(input.c_str());
             if (use_bench_two == "yes") {
-                bench_two<float,LazyStart<float>,NaiveKmeans<float>,YinyangSimp<float>>(v,n,d,k,*D,max_iterations,epsilon);
+                bench_two<float,LazyStart<float>,NaiveKmeans<float>,YinyangSimp<float>>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
 
             }
             else {
@@ -234,7 +246,7 @@ int main(int argc, char* argv[]){
         } else if (tp == "uint8") {
             auto [v, n, d] = parse_uint8bin(input.c_str());
             if (use_bench_two=="yes") {
-                bench_two<uint8_t,LazyStart<uint8_t>,NaiveKmeans<uint8_t>,YinyangSimp<uint8_t>>(v,n,d,k,*D,max_iterations,epsilon);
+                bench_two<uint8_t,LazyStart<uint8_t>,NaiveKmeans<uint8_t>,YinyangSimp<uint8_t>>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
             }
             else {
                 bench<uint8_t, INITIALIZER<uint8_t>, RUNNER<uint8_t>>(v, n, d, k, *D, max_iterations, epsilon);
@@ -244,7 +256,7 @@ int main(int argc, char* argv[]){
         } else if (tp == "int8") {
             auto [v, n, d] = parse_int8bin(input.c_str());
             if (use_bench_two == "yes") {
-                bench_two<int8_t,LazyStart<int8_t>,NaiveKmeans<int8_t>,YinyangSimp<int8_t>>(v,n,d,k,*D,max_iterations,epsilon);
+                bench_two<int8_t,LazyStart<int8_t>,NaiveKmeans<int8_t>,YinyangSimp<int8_t>>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
 
             }
             else {
