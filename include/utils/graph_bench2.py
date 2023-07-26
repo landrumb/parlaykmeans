@@ -12,7 +12,7 @@ from numpy.polynomial.polynomial import polyfit
 
 
 filename = input("Insert csv file name: ")
-log_object = LogObject(filename)
-log_object.iter_times_iter_nums_graphs(input("Iter graph file name? "))
-log_object.center_reasg_distance_calcs(input("Msse graph file name? "))
+my_log_obj = log_object.LogObject(filename)
+my_log_obj.iter_times_iter_nums_graphs(input("Iter graph file name? "))
+my_log_obj.center_reasg_distance_calcs(input("Msse graph file name? "))
 

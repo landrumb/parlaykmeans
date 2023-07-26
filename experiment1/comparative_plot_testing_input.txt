@@ -7,10 +7,10 @@ YY
 10
 50
 100
-experiment/test_lazy_naive_10.csv
-experiment/test_lazy_naive_50.csv
-experiment/test_lazy_naive_100.csv
-experiment/test_lazy_yy_10.csv
-experiment/test_lazy_yy_50.csv
-experiment/test_lazy_yy_100.csv
-experiment/test_plot_scalingk1.png
+experiment1/test_lazy_naive_10.csv
+experiment1/test_lazy_naive_50.csv
+experiment1/test_lazy_naive_100.csv
+experiment1/test_lazy_yy_10.csv
+experiment1/test_lazy_yy_50.csv
+experiment1/test_lazy_yy_100.csv
+experiment1/test_plot_scalingk1.png
