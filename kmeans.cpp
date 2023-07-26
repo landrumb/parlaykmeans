@@ -94,7 +94,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
    float* c3 = new float[k*d];
    size_t* asg3 = new size_t[n];
 
-  
+    std::cout << "made it hey 1" << std::endl;
     KmeansPlusPlus<T> init;
     init(v,n,d,k,c,asg,D);
 

@@ -150,7 +150,7 @@ struct KmeansPlusPlus {
         //need to copy point to float buffer first!
         float buf[2048];
         for (size_t i = 0; i < d; i++) {
-            buf[i] = v[pt_id*d+i];
+            buf[i] = static_cast<float>(v[pt_id*d+i]);
         }
 
         auto distances = parlay::map(center_rang, [&] (size_t i) {
@@ -172,15 +172,23 @@ struct KmeansPlusPlus {
             c[coord] = v[first_point_choice*d+coord];
         }
 
+        //std::cout << "made it hey 2" << std::endl;
+
         for (size_t i = 1 ; i < k; i++) {
 
             parlay::sequence<size_t> center_rang = parlay::tabulate(i,[&] (size_t j) {
                 return j;
             });
 
+           // std::cout << "made it hey 3" << std::endl;
+
+
             auto dist = parlay::map(rang, [&] (size_t j) {
                 return closest_dist(v,n,d,k,c,D,j,i, center_rang);
             });
+
+          //  std::cout << "made it hey 4" << std::endl;
+
 
             auto [sums, total] = parlay::scan(dist);
 
@@ -208,17 +216,21 @@ struct KmeansPlusPlus {
             return j;
         });
 
+        //std::cout << "made it hey 5" << std::endl;
+
         //set initial assignments in the naive way
         parlay::parallel_for(0,n,[&] (size_t i) {
             float buf[2048];
             for (size_t j = 0; j < d; j++) {
-                buf[j] = v[i*d+j];
+                buf[j] = static_cast<float>(v[i*d+j]);
             }
             auto distances = parlay::map(final_center_rang,[&] (size_t j) {
-                return D.distance(v+i*d,c+j*d,d);
+                return D.distance(buf,c+j*d,d);
             });
             asg[i] = parlay::min_element(distances)-distances.begin();
         });
+
+        //std::cout << "made it hey 6" << std::endl;
 
     }
 
