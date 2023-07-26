@@ -68,6 +68,11 @@ inline void bench(T* v, size_t n, size_t d, size_t k, Distance& D, size_t max_it
 template <typename T, typename Initializer, typename Runner1, typename Runner2>
 inline void bench_two(T* v, size_t n, size_t d, size_t k, Distance& D, 
 size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::string output_file_name1="data.csv", std::string output_file_name2="data2.csv") {
+
+
+    // std::cout << "shortening d for debugging" << std::endl;
+    // //d = 2;
+
     std::cout << "Running bench two " << std::endl;
     std::cout << "n d " << n << " " << d << std::endl;
 
@@ -89,16 +94,27 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
    float* c3 = new float[k*d];
    size_t* asg3 = new size_t[n];
 
-   KmeansPlusPlus<T> init;
+  
+    KmeansPlusPlus<T> init;
     init(v,n,d,k,c,asg,D);
-    for (size_t i = 0; i < k*d; i++) {
-        c2[i] = c[i];
-        c3[i]=c[i];
-    }
-    for (size_t i = 0; i < n; i++) {
-        asg2[i] = asg[i];
-        asg3[i]=asg[i];
-    }
+
+    LazyStart<T> lazy_init;
+    lazy_init(v,n,d,k,c2,asg2,D);
+
+     std::cout << "printing different initializations, first 50: " << std::endl;
+   for (size_t i = 0; i < 50; i++) {
+    std::cout << asg[i] << " " << asg2[i] << std::endl;
+   }
+
+
+    // for (size_t i = 0; i < k*d; i++) {
+    //     c2[i] = c[i];
+    //     c3[i]=c[i];
+    // }
+    // for (size_t i = 0; i < n; i++) {
+    //     asg2[i] = asg[i];
+    //     asg3[i]=asg[i];
+    // }
 
     // QuantizedKmeans<T> quant;
     // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
@@ -122,7 +138,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     logger_nie.start_time();
     nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
     logger_nie.end_time();
-    logger_nie.output_to_csv(output_file_name1);
+    //logger_nie.output_to_csv(output_file_name1);
+
+    NaiveKmeans<T> nie2;
+    kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","NaiveKmeans");
+    logger_nie2.start_time();
+    nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie,max_iter,epsilon);
+    logger_nie2.end_time();
+    //logger_nie.output_to_csv(output_file_name1);
 
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
