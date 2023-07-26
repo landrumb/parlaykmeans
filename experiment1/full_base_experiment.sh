@@ -12,6 +12,6 @@ bazel build kmeans_test_run
 
 python include/utils/comparative_time_graphs.py < experiment1/comparative_plot_testing_input.txt
 
-python include/utils/graph_bench2.py < experiment1/naive_iternum_input.txt
+python include/utils/graph_bench2.py < experiment1/naive_iter_input.txt
 
-python include/utils/graph_bench2.py < experiment1/yy_iternum_input.txt
+python include/utils/graph_bench2.py < experiment1/yy_iter_input.txt

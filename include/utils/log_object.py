@@ -22,7 +22,7 @@ class LogObject:
 
       #note that next removes the row from the csv reader
       overall_info_names = next(csv_reader)
-    
+
 
       overall_info = next(csv_reader)
       self.n = int(overall_info[0])
@@ -42,8 +42,8 @@ class LogObject:
       for row in csv_reader:
         self.iter_infos.append(row)
 
-    
-  def iter_times_iter_nums_graphs(self,graph_name):
+
+    def iter_times_iter_nums_graphs(self,graph_name):
     #first graph: iter time (y) to niter (n)
 
       iter_times = []
@@ -110,43 +110,43 @@ class LogObject:
       plt.clf()
 
 
-    #TODO use a dictionary to get which row is which stat, instead of hardcoding the #s
-    #this would be useful in case the stats change over time
-    def center_reasg_distance_calcs(self,graph_name):
-      iter_nums = [int(row[0]) for row in self.iter_infos]
-      distance_calcs = [int(row[5]) for row in self.iter_infos]
-      center_reasgs = [int(row[6]) for row in self.iter_infos]
+  #TODO use a dictionary to get which row is which stat, instead of hardcoding the #s
+  #this would be useful in case the stats change over time
+  def center_reasg_distance_calcs(self,graph_name):
+    iter_nums = [int(row[0]) for row in self.iter_infos]
+    distance_calcs = [int(row[5]) for row in self.iter_infos]
+    center_reasgs = [int(row[6]) for row in self.iter_infos]
 
-      fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots()
 
-      color1 = 'tab:red'
-      ax1.set_xlabel("iter#")
-      ax1.set_ylabel("distance calcs",color=color1)
-      p1 = ax1.plot(iter_nums,distance_calcs,color=color1,label = "distance calcs")
-      
-      ax2 = ax1.twinx()
-      color2 = 'tab:blue'
-      ax2.set_ylabel("center reasg", color=color2)
-      p2 = ax2.plot(iter_nums,center_reasgs,color=color2,label="center reasgs")
-      fig.tight_layout() #helps stuff show
+    color1 = 'tab:red'
+    ax1.set_xlabel("iter#")
+    ax1.set_ylabel("distance calcs",color=color1)
+    p1 = ax1.plot(iter_nums,distance_calcs,color=color1,label = "distance calcs")
 
-      center_move_means = [float(row[7]) for row in iter_infos]
-      ax3 = ax1.twinx()
-      color3 = 'tab:green'
-      ax3.set_ylabel("center move means", color=color3)
-      p3 = ax3.plot(iter_nums,center_move_means,color=color3,label="center mean moves")
-      ax3.spines['right'].set_position(('outward', 60))
+    ax2 = ax1.twinx()
+    color2 = 'tab:blue'
+    ax2.set_ylabel("center reasg", color=color2)
+    p2 = ax2.plot(iter_nums,center_reasgs,color=color2,label="center reasgs")
+    fig.tight_layout() #helps stuff show
 
-      msses = [float(row[4]) for row in iter_infos]
-      ax4 = ax1.twinx()
-      color4 = 'tab:orange'
-      ax4.set_ylabel("msse", color=color4)
-      p4 = ax4.plot(iter_nums,msses,color=color4,label="msses")
-      ax4.spines['right'].set_position(('outward', 120))
+    center_move_means = [float(row[7]) for row in iter_infos]
+    ax3 = ax1.twinx()
+    color3 = 'tab:green'
+    ax3.set_ylabel("center move means", color=color3)
+    p3 = ax3.plot(iter_nums,center_move_means,color=color3,label="center mean moves")
+    ax3.spines['right'].set_position(('outward', 60))
 
-      #plt.legend()
-      ax1.legend(handles=p1+p2+p3+p4,loc='best')
+    msses = [float(row[4]) for row in iter_infos]
+    ax4 = ax1.twinx()
+    color4 = 'tab:orange'
+    ax4.set_ylabel("msse", color=color4)
+    p4 = ax4.plot(iter_nums,msses,color=color4,label="msses")
+    ax4.spines['right'].set_position(('outward', 120))
 
-      plt.savefig(graph_name,bbox_inches='tight')
-      plt.cla()
-      plt.clf()
+    #plt.legend()
+    ax1.legend(handles=p1+p2+p3+p4,loc='best')
+
+    plt.savefig(graph_name,bbox_inches='tight')
+    plt.cla()
+    plt.clf()
