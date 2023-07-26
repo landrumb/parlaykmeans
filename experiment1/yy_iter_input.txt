@@ -1,0 +1,3 @@
+experiment1/test_lazy_yy_100.csv
+experiment1/plot_yy_iter_times.png
+experiment1/plot_yy_msse.png

@@ -1,0 +1,3 @@
+experiment1/test_lazy_naive_100.csv
+experiment1/plot_naive_iter_times.png
+experiment1/plot_naive_msse.png

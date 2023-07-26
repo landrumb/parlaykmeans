@@ -21,6 +21,7 @@
 #include "utils/kmeans_bench.h"
 
 #include <string>
+#include <stdlib.h>
 
 
 /* 
@@ -124,4 +125,116 @@ struct LazyStart {
     }
 };
 
+//Guy's kmeans++ code:
+//  // add k initial points by the kmeans++ rule
+//   // random initial center
+//   Points kpts({pts[rand()%k]});
+//   for (int i=1; i < k; i++) {
+//     // find the closest center for all points
+//     auto dist = parlay::map(pts, [&] (const Point& p) {
+//       return distance(p, kpts[closest_point(p, kpts, distance)]);});
+
+//     // pick with probability proportional do distance (squared)
+//     auto [sums, total] = scan(dist);
+//     auto pos = dis(rand) * total;
+//     auto j = std::upper_bound(sums.begin(), sums.end(), pos) - sums.begin()-1;
+
+//     // add to the k points
+//     kpts.push_back(pts[j]);
+//   }
+template<typename T>
+struct KmeansPlusPlus {
+
+    //given some number of centers, find the distance between the pt id and its the closest center 
+    float closest_dist(T* v, size_t n, size_t d, size_t k, float* c, Distance& D, size_t pt_id, size_t num_centers, parlay::sequence<size_t>& center_rang) {
+        //need to copy point to float buffer first!
+        float buf[2048];
+        for (size_t i = 0; i < d; i++) {
+            buf[i] = static_cast<float>(v[pt_id*d+i]);
+        }
+
+        auto distances = parlay::map(center_rang, [&] (size_t i) {
+            return D.distance(buf,c+i*d,d);
+        });
+        return *parlay::min_element(distances);
+
+    }
+
+    void operator()(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg, Distance& D) {
+        parlay::random_generator rand(time(0)); // time 0 a random seed
+        std::uniform_real_distribution<> dis(0.0,1.0);
+
+        //TODO do better this is inefficient! (need for the map)
+        parlay::sequence<size_t> rang = parlay::tabulate(n,[&] (size_t i) {return i;});
+
+        size_t first_point_choice = rand() % n;
+        for (size_t coord = 0; coord < d; coord++) {
+            c[coord] = v[first_point_choice*d+coord];
+        }
+
+        //std::cout << "made it hey 2" << std::endl;
+
+        for (size_t i = 1 ; i < k; i++) {
+
+            parlay::sequence<size_t> center_rang = parlay::tabulate(i,[&] (size_t j) {
+                return j;
+            });
+
+           // std::cout << "made it hey 3" << std::endl;
+
+
+            auto dist = parlay::map(rang, [&] (size_t j) {
+                return closest_dist(v,n,d,k,c,D,j,i, center_rang);
+            });
+
+          //  std::cout << "made it hey 4" << std::endl;
+
+
+            auto [sums, total] = parlay::scan(dist);
+
+            // std::cout << "dummy distance " << i << " " << D.distance(v,c,d) << std::endl;
+
+            // std::cout << "printing scan " << i << std::endl;
+            // std::cout << "total: " << total << std::endl;
+            // std::cout << "sums: ";
+            // for (size_t j = 0; j < sums.size(); j++) {
+            //     std::cout << sums[j] << " ";
+            // }
+            //std::cout << std::endl;
+            auto pos = dis(rand) * total;
+            auto chosen_point_index = std::upper_bound(sums.begin(),sums.end(),pos) - sums.begin() - 1;
+            // std::cout << "chosen index is " << chosen_point_index << std::endl;
+
+            for (size_t coord = 0; coord < d; coord++) {
+                c[i*d+coord] = v[chosen_point_index*d+coord];
+            }
+
+
+        }
+
+        parlay::sequence<size_t> final_center_rang = parlay::tabulate(k,[&] (size_t j) {
+            return j;
+        });
+
+        //std::cout << "made it hey 5" << std::endl;
+
+        //set initial assignments in the naive way
+        parlay::parallel_for(0,n,[&] (size_t i) {
+            float buf[2048];
+            for (size_t j = 0; j < d; j++) {
+                buf[j] = static_cast<float>(v[i*d+j]);
+            }
+            auto distances = parlay::map(final_center_rang,[&] (size_t j) {
+                return D.distance(buf,c+j*d,d);
+            });
+            asg[i] = parlay::min_element(distances)-distances.begin();
+        });
+
+        //std::cout << "made it hey 6" << std::endl;
+
+    }
+
+};
+
 #endif //INITERS
+

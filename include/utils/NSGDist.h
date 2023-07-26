@@ -483,6 +483,24 @@ struct EuclideanDistanceSmall : public Distance {
     return result;
   }
 
+  float distance(uint8_t *p, float *q, unsigned d){
+    std::cout << "Mixed distance call aborting1" << std::endl;
+    abort(); return 0;}
+  float distance(int8_t *p, float *q, unsigned d){
+    std::cout << "Mixed distance call aborting2" << std::endl;
+
+    abort();
+  return 0;}
+  float distance(float *p, uint8_t *q, unsigned d){
+    std::cout << "Mixed distance call aborting3" << std::endl;
+    abort();
+    return 0;}
+  float distance(float *p, int8_t *q, unsigned d){
+    std::cout << "Mixed distance call aborting4" << std::endl;
+    abort();
+
+    return 0;}
+
 
 
 };

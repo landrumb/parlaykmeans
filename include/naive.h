@@ -153,7 +153,7 @@ struct NaiveKmeans {
     //put the coordinates of p onto the stack (in buf) for the calculation
     size_t closest_point(const point& p, 
     parlay::sequence<center>& centers, Distance& D, size_t d, 
-    threadlocal::accumulator<double> squared_errors) {
+    threadlocal::accumulator<double>& squared_errors) {
    
         float buf[2048];
         T* it = p.coordinates.begin();
@@ -169,7 +169,7 @@ struct NaiveKmeans {
 
         auto min_elt = min_element(distances);
         //costly
-        //squared_errors.add(static_cast<double>(*min_elt));
+        squared_errors.add(static_cast<double>(*min_elt));
 
         return min_elt - distances.begin();
 
@@ -344,7 +344,7 @@ double epsilon,bool suppress_logging=false)
     float update_time = t.next_time();
     if (!suppress_logging) {
       logger.add_iteration(assignment_time,update_time,
-    squared_errors.total(), 0, 0, deltas);
+    squared_errors.total()/n, 0, 0, deltas);
 
     }
   

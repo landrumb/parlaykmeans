@@ -138,6 +138,85 @@ struct kmeans_bench {
         // std::cout << "total update time:\t" << parlay::reduce(iterations, parlay::addm<double>(), [](iteration_bench b) {return b.update_time;}) << std::endl;
     }
 
+
+    //take logging info and put it into a CSV
+    //first line: outputs
+    //n, d, k, max_iter, epsilon, n-iter, msse, total_time
+    //then on each line:
+    //iter#, assign time, update time, setup time, 
+    //msse, distance_cals, center reassgs, mean center movement, 
+    //min center movement, max center movement
+    void output_to_csv(std::string fname) {
+        std::cout << "outputting to CSV " << fname << std::endl;
+        std::ofstream file(fname);
+        // file << "n, d, k, max_iter, epsilon, n_iter, msse, total_time" << std::endl;
+        
+        file  << "n" 
+        << ", " << 
+        "d"
+        << ", " << 
+        "k"
+        << ", " << 
+        "max_iter"
+        << ", " << 
+        "epsilon"
+        << ", " << 
+        "n_iter"
+        << ", " << 
+        "msse"
+        << ", " << 
+        "total_time" << 
+        "init name" 
+        << ", " << 
+        "runner name" << std::endl;
+       
+
+
+
+
+        file << n << ", " << d << ", " << k << ", "<<
+       max_iter << ", " << epsilon << ", " << n_iterations <<
+       "," << iterations[iterations.size()-1].msse << ", " << total_time 
+        << ", " << 
+        initializer 
+        << ", " << 
+        runner << std::endl;
+
+
+        file << "iter#" << "," << "asg time" << ", " << "update time" 
+        << ", " << 
+        "setup_time" <<
+        ", " << 
+        "msse"
+        << ", " << 
+        "dist calcs" 
+        << ", " << 
+        "center reasg"
+        << ", " << 
+        "mean center move"
+        << ", " << 
+        "min center move"
+        << ", " << 
+        "max center move" << std::endl;
+        
+        // setup time, msse, dist calcs, center reasg, mean center move, min center move, max center move" << std::endl;
+
+       for (size_t i = 0; i < n_iterations; i++) {
+        file<< i << ", " << iterations[i].assign_time << ", " << iterations[i].update_time
+         << ", " << iterations[i].setup_time << ", " << iterations[i].msse << ", " << 
+         iterations[i].distance_calculations << ", " << iterations[i].center_reassignments
+         << ", " << parlay::reduce(iterations[i].center_movements) / iterations[i].center_movements.size() << ", " << 
+         parlay::reduce(iterations[i].center_movements, parlay::minm<float>()) 
+          << ", " <<
+          parlay::reduce(iterations[i].center_movements, parlay::maxm<float>()) 
+          << std::endl;
+       }
+
+
+
+        
+    }
+
 };
 
 #endif
