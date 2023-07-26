@@ -89,7 +89,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
    float* c3 = new float[k*d];
    size_t* asg3 = new size_t[n];
 
-    LazyStart<T> init;
+   KmeansPlusPlus<T> init;
     init(v,n,d,k,c,asg,D);
     for (size_t i = 0; i < k*d; i++) {
         c2[i] = c[i];
@@ -118,7 +118,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
  
     NaiveKmeans<T> nie;
     kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    epsilon,"Lazy","NaiveKmeans");
+    epsilon,"K++","NaiveKmeans");
     logger_nie.start_time();
     nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
     logger_nie.end_time();
@@ -128,15 +128,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    YinyangSimp<T> yy;
-    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    "Lazy","YY");
-    logger_yy.start_time();
+    // YinyangSimp<T> yy;
+    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    // "Lazy","YY");
+    // logger_yy.start_time();
 
-    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    logger_yy.end_time();
-    logger_yy.output_to_csv(output_file_name2);
+    // logger_yy.end_time();
+    // logger_yy.output_to_csv(output_file_name2);
 
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
