@@ -142,3 +142,19 @@ cc_test(
 
 
 
+#Testing the tester
+cc_test(
+  name = "kmeans_plus_plus_google_test",
+  size = "small",
+  srcs = ["kmeans_plus_plus_tests.cpp"],
+  deps = ["@googletest//:gtest_main",
+    "kmeans_headers"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  
+)
+
+
+
+
