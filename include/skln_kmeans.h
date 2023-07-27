@@ -50,6 +50,64 @@ struct SklnKmeans {
 
   };
 
+  //the first iter needs its own compute center because
+  //we can't compare if the assignments are random like Lazy init does
+  //compute centers calculates the new centers
+  //puts the new values into the float* center_calc
+  //TODO make a different run (no casting) if T is a float
+  //typename needed because point a dependent type
+  static void compute_centers_filter(
+  T* v, int ns, unsigned short int ds, uint8_t ks, uint8_t* asgs, parlay::sequence<center>& centers, float* center_calc_float, double* center_calc, parlay::sequence<int>& rang) {
+
+    //update centers timer
+    //commenting out timer prints because too much printing
+    parlay::internal::timer t2;
+    t2.start();
+
+    //TODO pass this in to save time?
+     auto pts_grouped_by_center = parlay::group_by_key(parlay::map(rang,[&] (int i) {
+        return std::pair(asgs[i],i);
+      }));
+
+
+    //t2.next("Got indices");
+
+    parlay::parallel_for (0, ks, [&] (size_t j){
+      size_t picked_center = pts_grouped_by_center[j].first;
+      
+   
+
+    //if there are no values in a certain center, just keep the center 
+    //where it is
+    if (pts_grouped_by_center[j].second.size() > 0) { 
+      for (size_t coord = 0; coord < ds; coord++) {
+        center_calc[picked_center*ds+coord] = static_cast<double>(parlay::reduce(parlay::map(pts_grouped_by_center[j].second, [&]
+        (size_t ind) {
+          return v[ind*ds+coord];
+        })))/pts_grouped_by_center[j].second.size();
+      }
+  
+    }
+    else { 
+      for (size_t coord = 0; coord < ds; coord++) {
+        center_calc[picked_center*ds + coord] = centers[picked_center].coordinates[coord];
+
+      }
+    }
+
+    }); 
+
+  
+
+    //t2.next("Done with adding");
+
+    parlay::parallel_for(0,ks*ds,[&] (size_t i) {
+      center_calc_float[i] = center_calc[i];
+    });
+
+    //t2.next("Done with copying");
+  }
+
 
   //compute centers 5
 
@@ -59,7 +117,7 @@ struct SklnKmeans {
   parlay::sequence<int>& rang) {
 
     // Compute new centers
-    parlay::parallel_for(0,ks,[&](uint8_t j) {
+    parlay::parallel_for(0,ks,[&](size_t j) {
       if (centers[j].has_changed) {
         for (unsigned short int dim = 0; dim < ds; dim++) {
           center_calc[j*ds+dim] = static_cast<double>(centers[j].coordinates[dim]) * centers[j].old_num_members;
@@ -89,7 +147,7 @@ struct SklnKmeans {
 
       //use a reduce not a sequential for
       for (unsigned short int coord = 0; coord < ds; coord++) {
-        center_calc[j*ds+coord] += parlay::reduce(parlay::map(add_these, [&] (int a) {return static_cast<double>(v[a*ds+coord]);})) - 
+        center_calc[j*ds+coord] = center_calc[j*ds+coord] + parlay::reduce(parlay::map(add_these, [&] (int a) {return static_cast<double>(v[a*ds+coord]);})) - 
       parlay::reduce(parlay::map(sub_these, [&] (int a) {return static_cast<double>(v[a*ds+coord]);}));
 
       }
@@ -130,7 +188,7 @@ struct SklnKmeans {
     parlay::sequence<parlay::sequence<float>>& dist_matrix, uint8_t id) {
 
       parlay::sequence<uint8_t>& neighbors = centers[id].neighbors;
-      std::cout << centers[id].neighbors.size() << std::endl;
+      std::cout << "# of neighbors of center " << id << ": " << centers[id].neighbors.size() << std::endl;
       int min_index;
       float min_val;
       if(neighbors.size() == 0){
@@ -152,7 +210,7 @@ struct SklnKmeans {
         neighbors[i] = neighbors[min_index];
         neighbors[min_index] = temp;
       }
-      std::cout << "done" << std::endl;
+      std::cout << "done with sort neighbor" << std::endl;
     }
 
   void cluster(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
@@ -213,7 +271,7 @@ struct SklnKmeans {
     //std::cout << "made it here4" << std::endl;
 
     //fill in the centers with the coordinates given in c
-    for (uint8_t i = 0; i < ks; i++) {
+    for (size_t i = 0; i < ks; i++) {
       for (unsigned short int j = 0; j < ds; j++) {
         centers[i].coordinates[j] = *(c + i*ds + j);
         centers[i].tcoordinates[j] = centers[i].coordinates[j];
@@ -236,8 +294,14 @@ struct SklnKmeans {
     //use a histogram to get new num members info, this is faster
     //this is the initial members dist
     auto new_centers_dist0 = histogram_by_key(parlay::map(rang,[&] (int i) {
-      return asg[i];
+      return asgs[i];
     }));
+
+    if (new_centers_dist0.size() != ks) {
+      std::cout << "center lost all points, aborting" << std::endl;
+      abort();
+    }
+
     for (uint8_t i = 0; i < ks; i++) {
       centers[new_centers_dist0[i].first].new_num_members = new_centers_dist0[i].second; //I think this is how it is used? 
       centers[new_centers_dist0[i].first].old_num_members = centers[new_centers_dist0[i].first].new_num_members;
@@ -257,6 +321,13 @@ struct SklnKmeans {
     ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
   
+    std::cout << "printing first 10 coords of each center: " << std::endl;
+      for (uint8_t i = 0; i < ks; i++) {
+        for (int j = 0; j < 10; j++) {
+          std::cout << centers[i].coordinates[j] << " ";
+        }
+        std::cout << std::endl;
+      }
     //STEP 1: ASSIGN
     parlay::parallel_for(0, ns, [&](int i) {
       asgs_old[i] = asgs[i]; //set old the number from the previous iter
@@ -275,13 +346,20 @@ struct SklnKmeans {
 
 
     //use a histogram to get new num members info, this is faster
-    auto new_centers_dist = histogram_by_key(parlay::map(rang,[&] (size_t i) {
+    auto new_centers_dist = histogram_by_key(parlay::map(rang,[&] (int i) {
       return asgs[i];
     }));
 
+    //instead of catching error down the line catch it here
+    if (new_centers_dist.size() != ks) {
+      std::cout << "center not represented aborting" << std::endl;
+      abort();
+    }
+
     //update centers new_num_members and old_num_members
     for (uint8_t i = 0; i < ks; i++) {
-      centers[new_centers_dist[i].first].old_num_members = centers[new_centers_dist[i].first].new_num_members;
+
+ 
       centers[new_centers_dist[i].first].new_num_members = new_centers_dist[i].second; //I think this is how it is used? 
       //centers[new_centers_dist[i].first].old_num_members = centers[new_centers_dist[i].first].new_num_members;
 
@@ -316,22 +394,23 @@ struct SklnKmeans {
 
     //STEP 2.2: Actually calculate new centers
 
-    compute_centers_compare(v,ns,ds,ks,asgs,asgs_old,centers,center_calc_float,center_calc,rang);
+    compute_centers_filter(v,ns,ds,ks,asgs,centers,center_calc_float,center_calc,rang);
 
     //STEP 2.3: Calculate info for next iter, copy over centers
     //calculate how much each center moved
-    parlay::sequence<float> deltas = parlay::tabulate(k,[&] (uint8_t i) {
+    parlay::sequence<float> deltas = parlay::tabulate(k,[&] (size_t i) {
         centers[i].delta = D.distance(centers[i].coordinates.begin(),center_calc_float + i*ds,ds);
         return centers[i].delta;
       });
     float total_diff = *parlay::max_element(deltas); //does max work like this?
 
     //copy back over centers
-    parlay::parallel_for(0,ks,[&](uint8_t i) {
+    parlay::parallel_for(0,ks,[&](size_t i) {
       for (unsigned short int j = 0; j < ds; j++) {
         centers[i].coordinates[j] = center_calc_float[i*ds+j];
         centers[i].tcoordinates[j] = centers[i].coordinates[j];
       }
+      centers[i].old_num_members = centers[i].new_num_members; //do need this set afterwards
     });
 
     update_time=t2.next_time();
@@ -361,12 +440,26 @@ struct SklnKmeans {
       parlay::parallel_for(0,ns,[&] (int i) {
         asg[i] = asgs[i];
       });
-      parlay::parallel_for(0,ks,[&] (uint8_t i) {
+      parlay::parallel_for(0,ks,[&] (size_t i) {
         for (unsigned short int coord = 0; coord < ds; coord++) {
           c[i*d+coord] = centers[i].coordinates[coord];
         }
       });
       return; //leave
+    }
+    //DEBUGGING
+    std::cout << "after iter 0: " << std::endl;
+    int debug_num_members = 0;
+    int debug_num_members_new = 0;
+    for (uint8_t i = 0; i < ks; i++) {
+      std::cout << "center " << static_cast<int>(i) << "has " << centers[i].old_num_members << std::endl;
+      debug_num_members += centers[i].old_num_members;
+      debug_num_members_new += centers[i].new_num_members;
+    }
+    if (debug_num_members != ns || debug_num_members_new != ns) {
+      std::cout << "members don't add up, aborting" << std::endl;
+      std::cout << debug_num_members << " " << debug_num_members_new << std::endl;
+      abort();
     }
 
   
@@ -379,6 +472,14 @@ struct SklnKmeans {
     for (size_t iter = 1; iter < max_iter; iter++) {
 
       std::cout << "Starting iter " << iter << std::endl;
+
+      std::cout << "printing first 10 coords of each center: " << std::endl;
+      for (uint8_t i = 0; i < ks; i++) {
+        for (int j = 0; j < 10; j++) {
+          std::cout << centers[i].coordinates[j] << " ";
+        }
+        std::cout << std::endl;
+      }
 
       //DEBUG TEST ASGS
       // std::cout << "printing 100 asgs:" << std::endl;
@@ -399,6 +500,15 @@ struct SklnKmeans {
       if (pts_grouped_by_center.size() != ks) {
         std::cout << "not the right size pgbc " << pts_grouped_by_center.size()  << std::endl;
         abort();
+      }
+
+      int debug_gbc = 0;
+      for (size_t i = 0; i < pts_grouped_by_center.size(); i++) {
+        debug_gbc += pts_grouped_by_center[i].second.size();
+      }
+      if (debug_gbc != ns) {
+        std::cout << "pts grouped by center does not add to n, aborting " << std::endl;
+  
       }
 
       std::cout << "made it here9" << std::endl;
@@ -565,7 +675,7 @@ struct SklnKmeans {
         abort();
        }
         float min_dist_to_other_neighbors = dist_matrix[i][centers[i].neighbors[0]];
-        std::cout << min_dist_to_other_neighbors << std::endl;
+        std::cout << "min dist to other neighbors: " <<  min_dist_to_other_neighbors << std::endl;
         std::cout << "REACHED BALL ASSIGN" << std::endl;
 
         if (pts_grouped_by_center[indices[i]].first != i) {
@@ -575,6 +685,11 @@ struct SklnKmeans {
 
         //for each point belonging to that center
         parlay::sequence<int>& pts = pts_grouped_by_center[indices[i]].second;
+
+        if (pts.size() != centers[i].old_num_members) {
+          std::cout << "size old num members mismatch " << pts.size() << " " << centers[i].old_num_members << std::endl;
+          abort();
+        }
         std::cout << "Center: " << static_cast<int>(i) << std::endl;
         /*
         for(int y = 0; y < pts.size(); y++){
@@ -582,9 +697,12 @@ struct SklnKmeans {
         }
         */
       //  std::cout << pts_grouped_by_center[indices[i]].second.size() << ", " << centers[i].old_num_members << std::endl; 
-        parlay::parallel_for(0,centers[i].old_num_members,[&] (size_t j) {
+      //for each point belonging to the center i, find its closest center
+       // parlay::parallel_for(0,pts.size(),[&] (size_t j) {
+      for (size_t j = 0; j < pts.size(); j++) {
 
             size_t ind = pts[j];
+            
           //  std::cout << ind << std::endl;
 
             float dist_to_closest = D.distance(v+ind*ds,centers[i].tcoordinates.begin(),ds);
@@ -604,10 +722,11 @@ struct SklnKmeans {
                 }
                 
               }
+              //std::cout << "min dist: " << min_dist << std::endl;
               asgs[ind] = new_center;
             }
 
-        });
+        }//);
       
       }
 
@@ -638,14 +757,32 @@ struct SklnKmeans {
 
       //STEP 2.1: PREPROCESSING
 
+      //printing out all of asgs
+      //specific for n=100
+      std::cout << "printing all of asgs" << std::endl;
+      for (int i = 0; i < 50; i++) {
+        for (int j = 0; j < 20; j++) {
+          std::cout << static_cast<int>(asgs[i*20 + j]) << " " ;
+
+        }
+        std::cout << std::endl;
+      }
+
       //use a histogram to get new num members info, this is faster
-      auto new_centers_dist = histogram_by_key(parlay::map(rang,[&] (size_t i) {
+      auto new_centers_dist = histogram_by_key(parlay::map(rang,[&] (int i) {
         return asgs[i];
       }));
 
+      if (new_centers_dist.size() != ks) {
+      std::cout << "center not represented aborting " << new_centers_dist.size() << std::endl;
+      abort();
+    }
+
 
       for (uint8_t i = 0; i < ks; i++) {
+        //LOL .size() to get the # of members!
         centers[new_centers_dist[i].first].new_num_members = new_centers_dist[i].second; //I think this is how it is used? 
+        
         
       }
 
@@ -684,13 +821,13 @@ struct SklnKmeans {
 
       //STEP 2.3: Calculate info for next iter, copy over centers
 
-      parlay::sequence<float> deltas = parlay::tabulate(k,[&] (uint8_t i) {
+      parlay::sequence<float> deltas = parlay::tabulate(ks,[&] (size_t i) {
         return D.distance(centers[i].coordinates.begin(),center_calc_float + i*ds,ds);
       });
       float total_diff = *parlay::max_element(deltas); //does max work like this?
 
       //copy back over centers
-      parlay::parallel_for(0,ks,[&](uint8_t i) {
+      parlay::parallel_for(0,ks,[&](size_t i) {
         for (unsigned short int j = 0; j < ds; j++) {
           centers[i].coordinates[j] = center_calc_float[i*ds+j];
           centers[i].tcoordinates[j] = centers[i].coordinates[j];
@@ -730,14 +867,27 @@ struct SklnKmeans {
         break;
       }
 
-    
+      debug_num_members = 0;
+      debug_num_members_new = 0;
+      std::cout << "after iter "<< iter << std::endl;
+      for (uint8_t i = 0; i < ks; i++) {
+        std::cout << "center " << static_cast<int>(i) << "has " << centers[i].old_num_members << std::endl;
+        debug_num_members += centers[i].old_num_members;
+        debug_num_members_new += centers[i].new_num_members;
+      }
+      if (debug_num_members != ns || debug_num_members_new != ns) {
+        std::cout << "members don't add up, aborting" << std::endl;
+        std::cout << debug_num_members << " " << debug_num_members_new << std::endl;
+        abort();
+       }
+
 
 
     }
     parlay::parallel_for(0,ns,[&] (int i) {
       asg[i] = asgs[i];
     });
-    parlay::parallel_for(0,ks,[&] (uint8_t i) {
+    parlay::parallel_for(0,ks,[&] (size_t i) {
       for (unsigned short int coord = 0; coord < ds; coord++) {
         c[i*d+coord] = centers[i].coordinates[coord];
       }
