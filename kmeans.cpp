@@ -95,16 +95,16 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
    size_t* asg3 = new size_t[n];
 
     std::cout << "made it hey 1" << std::endl;
-    KmeansPlusPlus<T> init;
-    init(v,n,d,k,c,asg,D);
+    // KmeansPlusPlus<T> init;
+    // init(v,n,d,k,c,asg,D);
 
     LazyStart<T> lazy_init;
-    lazy_init(v,n,d,k,c2,asg2,D);
+    lazy_init(v,n,d,k,c,asg,D);
 
-     std::cout << "printing different initializations, first 50: " << std::endl;
-   for (size_t i = 0; i < 50; i++) {
-    std::cout << asg[i] << " " << asg2[i] << std::endl;
-   }
+//      std::cout << "printing different initializations, first 50: " << std::endl;
+//    for (size_t i = 0; i < 50; i++) {
+//     std::cout << asg[i] << " " << asg2[i] << std::endl;
+//    }
 
 
     // for (size_t i = 0; i < k*d; i++) {
@@ -125,27 +125,27 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
 
-    // SklnKmeans<T> sk;
-    // kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
-    // logger_sk.start_time();
-    // sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
-    // logger_sk.end_time();
+    SklnKmeans<T> sk;
+    kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
+    logger_sk.start_time();
+    sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
+    logger_sk.end_time();
 
  
-    NaiveKmeans<T> nie;
-    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    epsilon,"K++","NaiveKmeans");
-    logger_nie.start_time();
-    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    logger_nie.end_time();
-    //logger_nie.output_to_csv(output_file_name1);
+    // NaiveKmeans<T> nie;
+    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    // epsilon,"K++","NaiveKmeans");
+    // logger_nie.start_time();
+    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    // logger_nie.end_time();
+    // //logger_nie.output_to_csv(output_file_name1);
 
-    NaiveKmeans<T> nie2;
-    kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
-    epsilon,"Lazy","NaiveKmeans");
-    logger_nie2.start_time();
-    nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie,max_iter,epsilon);
-    logger_nie2.end_time();
+    // NaiveKmeans<T> nie2;
+    // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
+    // epsilon,"Lazy","NaiveKmeans");
+    // logger_nie2.start_time();
+    // nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie,max_iter,epsilon);
+    // logger_nie2.end_time();
     //logger_nie.output_to_csv(output_file_name1);
 
     // std::cout << "cutting out after my naive" << std::endl;
