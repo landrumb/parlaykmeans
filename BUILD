@@ -99,7 +99,7 @@ cc_library(
 "include/yy_structs.h",
 "include/yy_compute_centers.h",
 "include/quantized.h",
-"include/skln_kmeans.h"],
+"include/nisk_kmeans.h",],
 
 linkopts=["-pthread"],
 #makes it known that include is an include library
@@ -126,4 +126,19 @@ cc_test(
   copts = ["-Iinclude"],
   
 )
+
+#Testing the tester
+cc_test(
+  name = "nisk_google_test",
+  size = "small",
+  srcs = ["nisk_tests.cpp"],
+  deps = ["@googletest//:gtest_main",
+    "kmeans_headers"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  
+)
+
+
 

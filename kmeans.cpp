@@ -25,7 +25,7 @@
 #include "include/naive.h"
 #include "yinyang_simp.h" //can switch to fast_center
 #include "quantized.h"
-#include "skln_kmeans.h"
+#include "nisk_kmeans.h"
 
 #define INITIALIZER MacQueen
 #define INITIALIZER_NAME "MacQueen"
@@ -125,7 +125,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
 
-    SklnKmeans<T> sk;
+    NiskKmeans<T> sk;
     kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
     logger_sk.start_time();
     sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);

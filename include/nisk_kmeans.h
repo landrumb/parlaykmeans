@@ -20,7 +20,7 @@
 
 
 template <typename T>
-struct SklnKmeans {
+struct NiskKmeans {
 
         struct center {
     
