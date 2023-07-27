@@ -107,14 +107,14 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
 //    }
 
 
-    // for (size_t i = 0; i < k*d; i++) {
-    //     c2[i] = c[i];
-    //     c3[i]=c[i];
-    // }
-    // for (size_t i = 0; i < n; i++) {
-    //     asg2[i] = asg[i];
-    //     asg3[i]=asg[i];
-    // }
+    for (size_t i = 0; i < k*d; i++) {
+        c2[i] = c[i];
+        c3[i]=c[i];
+    }
+    for (size_t i = 0; i < n; i++) {
+        asg2[i] = asg[i];
+        asg3[i]=asg[i];
+    }
 
     // QuantizedKmeans<T> quant;
     // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
@@ -152,14 +152,14 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    // YinyangSimp<T> yy;
-    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    // "Lazy","YY");
-    // logger_yy.start_time();
+    YinyangSimp<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "Lazy","YY");
+    logger_yy.start_time();
 
-    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    // logger_yy.end_time();
+    logger_yy.end_time();
     // logger_yy.output_to_csv(output_file_name2);
 
     // std::cout << "Cutting out after yy" << std::endl;
@@ -182,7 +182,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // }
 
     std::cout << "Printing out 5 final assignments: " << std::endl;
-    for (size_t i = 0; i < std::min(n,(size_t) 5); i++) {
+    for (size_t i = 0; i < std::min(n,(size_t) 50); i++) {
         std::cout << asg[i] << " " << asg2[i] << " " << asg3[i] << std::endl;
         
     }
