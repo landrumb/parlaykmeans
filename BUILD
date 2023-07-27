@@ -41,6 +41,7 @@ cc_library(
 
 
 #comparing a yinyang and naive run
+# TODO: this does not seem to build
 cc_binary(
   name="kmeans_test_yy_naive",
   srcs=["kmeans_old.cpp"],
@@ -57,6 +58,7 @@ cc_binary(
 
 #comparing a yinyang and naive run
 #but the yy version that doesn't local filter
+# TODO: this does not seem to build
 cc_binary(
   name="kmeans_test_yy_simp_naive",
   srcs=["kmeans_old.cpp"],
