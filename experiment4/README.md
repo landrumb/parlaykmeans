@@ -16,3 +16,7 @@ sh experiment3/full_base_experiment.sh
 from parlaykmeans's main directory.
 
 Then you will need to type in Y to confirm the experiment run.
+
+***Caution: in yy there are a couple iterations 'added' in the setup stage (in which logger.add_iter is called)
+-- yy still runs 20 true iterations, but the graphs should be shifted leftward by ~3 (should fix in future experiments)
+-- the point of this was to show different stages of setup time of yy by itself

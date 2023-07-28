@@ -43,7 +43,7 @@ def compare_msses(log_objects_list,num_diff_methods,klist,num_ks):
   for i in range(num_diff_methods):
     ys.append([log_objects_list[i][j].msse for j in range(num_ks)])
     plt.scatter(klist,ys[i],label=log_objects_list[i][0].runner_name)
-  plt.title(f"Time comparison with scaling k, num iters {log_objects_list[0][0].max_iter}")
+  plt.title(f"Msse comparison with scaling k, num iters {log_objects_list[0][0].max_iter}")
   plt.xlabel("k")
   plt.ylabel("msse")
 
@@ -99,4 +99,4 @@ for i in range(num_diff_methods):
 
 compare_runtimes(log_objects_list,num_diff_methods,klist,num_ks)
 
-compare_msses(log_objects_list,num_diff_methods,num_ks)
+compare_msses(log_objects_list,num_diff_methods,klist,num_ks)
