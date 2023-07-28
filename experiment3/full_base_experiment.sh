@@ -16,11 +16,11 @@ then
 
   # ./bazel-bin/kmeans_test_run -k 10000 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_10000.csv -csv_log_file_name2 experiment3/test_lazy_yy_10000.csv
 
-  python3 include/utils/comparative_time_graphs.py < experiment3/comparative_plot_testing_input.txt
+  # python3 include/utils/comparative_time_graphs.py < experiment3/comparative_plot_testing_input.txt
 
-  python3 include/utils/graph_bench2.py < experiment3/naive_iter_input.txt
+  # python3 include/utils/graph_bench2.py < experiment3/naive_iter_input.txt
 
-  python3 include/utils/graph_bench2.py < experiment3/yy_iter_input.txt
+  # python3 include/utils/graph_bench2.py < experiment3/yy_iter_input.txt
 
 else
   echo "Not running the experiment3"

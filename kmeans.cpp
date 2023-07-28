@@ -138,7 +138,9 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     logger_nie.start_time();
     nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
     logger_nie.end_time();
-    //logger_nie.output_to_csv(output_file_name1);
+    if (output_log_to_csv) {
+        logger_nie.output_to_csv(output_file_name1);
+    }
 
     // NaiveKmeans<T> nie2;
     // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
@@ -160,7 +162,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
     logger_yy.end_time();
-    // logger_yy.output_to_csv(output_file_name2);
+    if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
 
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
