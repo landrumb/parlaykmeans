@@ -4,7 +4,8 @@
 echo "Make sure you move any previous experiments out of the output folder first."
 echo "Run experiment? [Y/n]"
 read input 
-if [[ $input == "Y" ]]; then 
+if [ $input = "Y" ] 
+then 
   bazel build kmeans_test_run
 
   ./bazel-bin/kmeans_test_run -k 10 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_10.csv -csv_log_file_name2 experiment3/test_lazy_yy_10.csv
