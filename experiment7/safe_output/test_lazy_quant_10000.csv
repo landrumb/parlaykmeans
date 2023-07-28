@@ -1,0 +1,7 @@
+n, d, k, max_iter, epsilon, n_iter, msse, total_timeinit name, runner name
+1000000, 128, 10000, 20, 0, 4,126736, 24.264, Lazy, Quant
+iter#,asg time, update time, setup_time, msse, dist calcs, center reasg, mean center move, min center move, max center move
+0, 0, 0, 0.052787, 51, 0, 0, 0, 0, 0
+1, 0, 0, 0.032458, 52, 0, 0, 0, 0, 0
+2, 1.6836, 0, 0, 53, 0, 0, 0, 0, 0
+3, 0, 22.4937, 0, 126736, 0, 0, 0, 0, 0

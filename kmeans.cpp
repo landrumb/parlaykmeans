@@ -122,6 +122,11 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
     logger_quant.end_time();
 
+     if (output_log_to_csv) {
+        logger_quant.output_to_csv(output_file_name1);
+    }
+
+
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
 

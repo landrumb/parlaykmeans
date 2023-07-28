@@ -229,6 +229,9 @@ struct QuantizedKmeans {
 
     }
 
+    logger.add_iteration(0,t2.next_time(),54,0,0,zero_filled_seq,0);
+
+
     //perhaps we ought to do one final assign step here
     //but for now just copying in whatever the 0th index has
     //alternatively could do a majority vote scheme

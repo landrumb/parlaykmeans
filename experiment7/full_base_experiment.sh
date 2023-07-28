@@ -6,7 +6,7 @@ echo "Run experiment? [Y/n]"
 read input 
 if [ $input = "Y" ] 
 then 
-  echo "Running the experiment6" 
+  echo "Running the experiment7" 
   bazel build kmeans_test_run
   echo "Finishing compiling"
 
@@ -27,6 +27,6 @@ then
   # python3 include/utils/graph_bench2.py < experiment3/yy_iter_input.txt
 
 else
-  echo "Not running the experiment6"
+  echo "Not running the experiment7"
 
 fi
