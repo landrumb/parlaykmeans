@@ -6,7 +6,9 @@ echo "Run experiment? [Y/n]"
 read input 
 if [ $input = "Y" ] 
 then 
+  echo "Running the experiment4" 
   bazel build kmeans_test_run
+  echo "Finishing compiling"
 
   ./bazel-bin/kmeans_test_run -k 10 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment4/output/test_lazy_naive_10.csv -csv_log_file_name2 experiment4/output/test_lazy_yy_10.csv
 
@@ -25,6 +27,6 @@ then
   # python3 include/utils/graph_bench2.py < experiment3/yy_iter_input.txt
 
 else
-  echo "Not running the experiment3"
+  echo "Not running the experiment4"
 
 fi

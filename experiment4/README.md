@@ -1,6 +1,10 @@
-This is the description of experiment3.
+This is the description of experiment4.
 
 on fern.
+
+Run on this commit:
+
+23d980412f3a45703d27ff08512f9ee6378aaf04
 
 The point of this experiment is to compare the performance of naive and yy, on a bigann slice of 1'000'000 points. \
 
