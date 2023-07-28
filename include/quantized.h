@@ -13,6 +13,7 @@
 #include "naive.h"
 #include "include/utils/kmeans_bench.h"
 #include "yinyang_simp.h"
+#include "include/nisk_kmeans.h"
 //#include "include/utils/union_find.h"
 
 //use quantized version to reduce runtimes
@@ -193,14 +194,14 @@ struct QuantizedKmeans {
 
     logger.add_iteration(0,0,52,0,0,zero_filled_seq,t2.next_time());
 
-    YinyangSimp<T> yy;
+    NiskKmeans<T> nisk;
 
     //Because printing in parallel a mess, suppresses internal yy logging
     parlay::parallel_for(0,split,[&] (size_t i) {
    // for (size_t i = 0; i < split ; i++) {
     
       loggers[i].start_time();
-      yy.cluster(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D,loggers[i],max_iter,epsilon,true);
+      nisk.cluster(vx[i],n,len_per_split,kstar,cx[i],asgx[i],D,loggers[i],max_iter,epsilon);
       loggers[i].end_time();
       std::cout << "Finished a split" << std::endl;
    // }
