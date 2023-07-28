@@ -1,7 +1,7 @@
 2
-KmeansPlusPlus
+Lazy
 NaiveKmeans
-KmeansPlusPlus
+Lazy
 YY
 4
 10

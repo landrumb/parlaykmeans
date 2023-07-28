@@ -10,11 +10,11 @@ then
 
   ./bazel-bin/kmeans_test_run -k 10 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_10.csv -csv_log_file_name2 experiment3/test_lazy_yy_10.csv
 
-  ./bazel-bin/kmeans_test_run -k 10 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_100.csv -csv_log_file_name2 experiment3/test_lazy_yy_100.csv
+  ./bazel-bin/kmeans_test_run -k 100 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_100.csv -csv_log_file_name2 experiment3/test_lazy_yy_100.csv
 
   ./bazel-bin/kmeans_test_run -k 1000 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_1000.csv -csv_log_file_name2 experiment3/test_lazy_yy_1000.csv
 
-  ./bazel-bin/kmeans_test_run -k 10000 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_10000.csv -csv_log_file_name2 experiment3/test_lazy_yy_10000.csv
+  # ./bazel-bin/kmeans_test_run -k 10000 -i ../my_data/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 20 -two yes -csv_log true -csv_log_file_name experiment3/test_lazy_naive_10000.csv -csv_log_file_name2 experiment3/test_lazy_yy_10000.csv
 
   python include/utils/comparative_time_graphs.py < experiment3/comparative_plot_testing_input.txt
 
