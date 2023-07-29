@@ -39,6 +39,34 @@ cc_library(
  
 )
 
+#for benching initializers
+cc_binary(
+  name="init_test_run",
+  srcs=["bench_initializers.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":kmeans_headers",
+
+  ],
+ 
+)
+
+
+cc_binary(
+  name="debug",
+  srcs=["debug.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":kmeans_headers",
+
+  ],
+ 
+)
+
 
 #comparing a yinyang and naive run
 # TODO: this does not seem to build
@@ -101,7 +129,8 @@ cc_library(
 "include/yy_structs.h",
 "include/yy_compute_centers.h",
 "include/quantized.h",
-"include/nisk_kmeans.h",],
+"include/nisk_kmeans.h",
+"include/lsh.h",],
 
 linkopts=["-pthread"],
 #makes it known that include is an include library

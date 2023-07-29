@@ -1,3 +1,6 @@
+#ifndef PARSING
+#define PARSING
+
 #include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
@@ -165,3 +168,5 @@ auto parse_bvecs(const char* filename) {
 
   return points;
 } */
+
+#endif //PARSING

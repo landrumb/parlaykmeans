@@ -1,3 +1,6 @@
+#ifndef QUANT
+#define QUANT
+
 #include <cmath>
 #include <tuple>
 #include "parlay/random.h"
@@ -236,45 +239,52 @@ struct QuantizedKmeans {
     //but for now just copying in whatever the 0th index has
     //alternatively could do a majority vote scheme
     //did this translation occur correctly?
-    
-    // parlay::parallel_for(0,n,[&] (size_t i) {
-    //   asg[i] = 0;
-    //   for (size_t j = 0; j < split; j++) {
-    //     asg[i] += asgx[j][i] * std::pow(kstar,j);
-    //   }
-    // });
+    //TODO FIXME
+    parlay::parallel_for(0,n,[&] (size_t i) {
+      asg[i] = 0;
+      for (size_t j = 0; j < split; j++) {
+        asg[i] += asgx[j][i] * std::pow(kstar,j);
+      }
+    });
 
 
     //Check msse
-    // double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
-    //   return D.distance(v+i*d,c+asg[i]*d,d);
-    // }));
-    // msse /= n; //divide by n because mean msse
-
-
-    //rang is range from [0,k)
-    parlay::sequence<size_t> rang = parlay::tabulate(k,[&] (size_t i) {
-      return i;
-    });
-
-    //calculate msse and do assignments together
+    //Whoops need to copy point to float for calc?
     double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
+      T* it2 = v+i*d;
       float buf[2048];
-      T* it = v+i*d;
-      for (size_t j = 0; j < d; j++) {
-          buf[j]=*it;
-          it += 1; //increment the pointer
+      for (unsigned short int j = 0; j < d; j++) {
+        buf[j] = *it2;
+        it2+=1;
       }
-      auto distances = parlay::delayed::map(rang, [&] (size_t k) {
-        return D.distance(buf,c+k*d,d);
-      });
-      asg[i] = parlay::min_element(distances) - distances.begin();
-      if (asg[i] >= k || asg[i] < 0) {
-        std::cout << "seg fault leave" << std::endl;
-      }
-      return distances[asg[i]];
+      return D.distance(buf,c+asg[i]*d,d);
+    }));
+    msse /= n; //divide by n because mean msse
+
+    //This msse calculate version takes a really long time
+    // //rang is range from [0,k)
+    // parlay::sequence<size_t> rang = parlay::tabulate(k,[&] (size_t i) {
+    //   return i;
+    // });
+
+    // //calculate msse and do assignments together
+    // double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
+    //   float buf[2048];
+    //   T* it = v+i*d;
+    //   for (size_t j = 0; j < d; j++) {
+    //       buf[j]=*it;
+    //       it += 1; //increment the pointer
+    //   }
+    //   auto distances = parlay::delayed::map(rang, [&] (size_t k) {
+    //     return D.distance(buf,c+k*d,d);
+    //   });
+    //   asg[i] = parlay::min_element(distances) - distances.begin();
+    //   if (asg[i] >= k || asg[i] < 0) {
+    //     std::cout << "seg fault leave" << std::endl;
+    //   }
+    //   return distances[asg[i]];
       
-    }))/n;
+    // }))/n;
 
     logger.add_iteration(0,t2.next_time(),msse,0,0,zero_filled_seq,0);
 
@@ -283,3 +293,5 @@ struct QuantizedKmeans {
 
 
 };
+
+#endif //QUANT

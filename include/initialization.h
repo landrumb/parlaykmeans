@@ -123,6 +123,10 @@ struct LazyStart {
             asg[i] = i % k;
         }
     }
+
+    std::string name() {
+        return "Lazy";
+    }
 };
 
 //Guy's kmeans++ code:
@@ -232,6 +236,10 @@ struct KmeansPlusPlus {
 
         //std::cout << "made it hey 6" << std::endl;
 
+    }
+
+     std::string name() {
+        return "Kmeans++";
     }
 
 };
