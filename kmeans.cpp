@@ -116,15 +116,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     //     //asg3[i]=asg[i];
     // }
 
-    QuantizedKmeans<T> quant;
-    kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
-    logger_quant.start_time();
-    quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
-    logger_quant.end_time();
+    // QuantizedKmeans<T> quant;
+    // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
+    // logger_quant.start_time();
+    // quant.cluster(v,n,d,k,c,asg,D,logger_quant,max_iter,epsilon);
+    // logger_quant.end_time();
 
-     if (output_log_to_csv) {
-        logger_quant.output_to_csv(output_file_name1);
-    }
+    //  if (output_log_to_csv) {
+    //     logger_quant.output_to_csv(output_file_name1);
+    // }
 
 
     // std::cout << "cutting out after quant" << std::endl;
@@ -137,15 +137,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // logger_sk.end_time();
 
  
-    // NaiveKmeans<T> nie;
-    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    // epsilon,"Lazy","NaiveKmeans");
-    // logger_nie.start_time();
-    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    // logger_nie.end_time();
-    // if (output_log_to_csv) {
-    //     logger_nie.output_to_csv(output_file_name1);
-    // }
+    NaiveKmeans<T> nie;
+    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","NaiveKmeans");
+    logger_nie.start_time();
+    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    logger_nie.end_time();
+    if (output_log_to_csv) {
+        logger_nie.output_to_csv(output_file_name1);
+    }
 
     // NaiveKmeans<T> nie2;
     // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
@@ -153,7 +153,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // logger_nie2.start_time();
     // nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie,max_iter,epsilon);
     // logger_nie2.end_time();
-    //logger_nie.output_to_csv(output_file_name1);
+    // logger_nie.output_to_csv(output_file_name1);
 
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
