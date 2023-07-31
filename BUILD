@@ -130,7 +130,8 @@ cc_library(
 "include/yy_compute_centers.h",
 "include/quantized.h",
 "include/nisk_kmeans.h",
-"include/lsh.h",],
+"include/lsh.h",
+"include/lsh_quantized.h",],
 
 linkopts=["-pthread"],
 #makes it known that include is an include library

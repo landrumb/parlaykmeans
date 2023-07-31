@@ -168,11 +168,11 @@ struct LSH {
 
   }
 
-  void generate_hps(parlay::sequence<parlay::sequence<float>>& hps, size_t d) {
+  void generate_hps(parlay::sequence<parlay::sequence<float>>& hps, size_t d, size_t num_hp=BITSET_MAX) {
     std::random_device r;
     std::default_random_engine rng{r()};
     std::normal_distribution<float> gaussian_dist;
-    for (size_t i = 0; i < BITSET_MAX; i++) {
+    for (size_t i = 0; i < num_hp; i++) {
       hps[i] = parlay::sequence<float>(d);
       for (size_t j = 0; j < d; j++) {
         hps[i][j] = gaussian_dist(rng);
@@ -181,16 +181,54 @@ struct LSH {
 
   }
 
-  //given a point and the hyperplanes, get the hash id of the pt
-  size_t get_hash(T* pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t n, size_t d) {
+  //given hyperplanes and a pt, return a pt in uint8_t land based on the hyperplane results
+  void get_uint8_reduced_pt(T* pt, uint8_t* final_pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t d, size_t num_hp=BITSET_MAX) {
+    if (num_hp % 8 != 0) {
+      std::cout << "number of hyperplanes must be divisible by 8 aborting" << std::endl;
+      abort();
+    }
+
+    //rang gives 0-7
+    parlay::sequence<size_t> rangd = parlay::tabulate(d, [&] (size_t i) {return i;});
+
+    parlay::sequence<std::bitset<8>> bin_list = parlay::tabulate(num_hp / 8,
+    [&] (size_t i) {
+       for (size_t j = 0; j < 8; j++) {
+      //TODO does the float cast on pt happen automatically? if so remove
+      //the manual cast
+      float dot_p = parlay::reduce(parlay::map(rangd, [&] (size_t m) {return hps[i*8+j][m] * static_cast<float>(pt[m]);}));
+      if (dot_p > 0) {
+        bin_list[i][j] = 1;
+      }
+      else {
+        bin_list[i][j] = 0;
+      }
+    }
+
+    });
+
+    for (size_t i = 0; i < d; i++) {
+      final_pt[i] = static_cast<uint8_t>(bin_list[i].to_ulong());
+    }
+
+
+  
+
+  }
+  //TODO compiler yells if I try to make the bitset length num_hp
+  //so not actually using that function arg
+  size_t get_hash(T* pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t n, size_t d, const size_t num_hp=BITSET_MAX) {
+
     std::bitset<BITSET_MAX> bin_list; 
     //rang gives 0-31
     parlay::sequence<size_t> rang = parlay::tabulate(BITSET_MAX, [&] (size_t i) {return i;});
+    parlay::sequence<size_t> rangd = parlay::tabulate(d, [&] (size_t i) {return i;});
 
     for (size_t i = 0; i < BITSET_MAX; i++) {
       //TODO does the float cast on pt happen automatically? if so remove
       //the manual cast
-      float dot_p = parlay::reduce(parlay::map(rang, [&] (size_t j) {return hps[i][j] * static_cast<float>(pt[j]);}));
+      //TODO dot_p should map over d not over BITSET_MAX! 
+      float dot_p = parlay::reduce(parlay::map(rangd, [&] (size_t j) {return hps[i][j] * static_cast<float>(pt[j]);}));
       if (dot_p > 0) {
         bin_list[i] = 1;
       }
@@ -198,9 +236,9 @@ struct LSH {
         bin_list[i] = 0;
       }
     }
+
     //to_ulong a bitset method to get a long out of a bitset
     return bin_list.to_ulong();
-
   }
 
 };
