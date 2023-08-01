@@ -67,13 +67,21 @@ struct LSH {
   void operator()(T* v, size_t n,size_t d,size_t k, float* c, size_t* asg, Distance& D) {
 
     std::cout << "starting lsh" << std::endl;
+    parlay::internal::timer t2;
+    t2.start();
+
      parlay::sequence<parlay::sequence<float>> hps(BITSET_MAX,parlay::sequence<float>(d));
      generate_hps(hps,d);
+
+     t2.next("Generated the hps");
      
      //<hash value, point id> pair
      parlay::sequence<std::pair<size_t, size_t>> pts_with_hash = parlay::tabulate(n, [&] (size_t i) {
       return std::make_pair(get_hash(v+i*d,hps,n,d),i);
      });
+
+      t2.next("got the hashes");
+
 
          std::cout << "boutaa sort" << std::endl;
 
@@ -84,6 +92,8 @@ struct LSH {
    //oh need to pass an object not a type**
       parlay::sort_inplace(pts_with_hash,less_pair());
       //std::sort(pts_with_hash.begin(),pts_with_hash.end(),less_pair());
+      t2.next("Just sorted");
+
 
      if (n%k != 0) {
       std::cout << "uneven bucketing, aborting " << std::endl;
@@ -158,11 +168,17 @@ struct LSH {
 
     //  }); 
 
+    t2.next("Calculated the centers");
+
+
      parlay::parallel_for(0,n,[&] (size_t i) {
       size_t chosen_center = i / noverk;
       asg[pts_with_hash[i].second] = chosen_center;
 
      });
+
+      t2.next("Got the asg too");
+
 
      std::cout << "left lsh code " << std::endl;
 
@@ -221,10 +237,11 @@ struct LSH {
 
     std::bitset<BITSET_MAX> bin_list; 
     //rang gives 0-31
-    parlay::sequence<size_t> rang = parlay::tabulate(BITSET_MAX, [&] (size_t i) {return i;});
+    // parlay::sequence<size_t> rang = parlay::tabulate(BITSET_MAX, [&] (size_t i) {return i;});
     parlay::sequence<size_t> rangd = parlay::tabulate(d, [&] (size_t i) {return i;});
 
-    for (size_t i = 0; i < BITSET_MAX; i++) {
+    //calculation of quantized point can be done in parallel
+    parlay::parallel_for(0,BITSET_MAX,[&] (size_t i) {//) (size_t i = 0; i < //BITSET_MAX; i++) {
       //TODO does the float cast on pt happen automatically? if so remove
       //the manual cast
       //TODO dot_p should map over d not over BITSET_MAX! 
@@ -235,7 +252,7 @@ struct LSH {
       else {
         bin_list[i] = 0;
       }
-    }
+    }); //force set gran to 1?
 
     //to_ulong a bitset method to get a long out of a bitset
     return bin_list.to_ulong();

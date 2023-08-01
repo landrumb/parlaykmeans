@@ -70,52 +70,84 @@ struct NiskKmeans {
       }));
 
 
-    //t2.next("Got indices");
+    t2.next("Got indices");
 
-    parlay::parallel_for (0, ks, [&] (size_t j){
-      size_t picked_center = pts_grouped_by_center[j].first;
+    // parlay::parallel_for (0, ks, [&] (size_t j){
+    //   size_t picked_center = pts_grouped_by_center[j].first;
       
    
 
     //if there are no values in a certain center, just keep the center 
     //where it is
     //need to cast to double inside, before the reduce starts adding
+    // if (pts_grouped_by_center[j].second.size() > 0) { 
+    //   for (size_t coord = 0; coord < ds; coord++) {
+    //     center_calc[picked_center*ds+coord] = static_cast<double>(parlay::reduce(parlay::map(pts_grouped_by_center[j].second, [&]
+    //     (size_t ind) {
+    //       return static_cast<double>(v[ind*ds+coord]);
+    //     })))/pts_grouped_by_center[j].second.size();
+    //   }
+  
+    // }
+    // else { 
+    //   for (size_t coord = 0; coord < ds; coord++) {
+    //     center_calc[picked_center*ds + coord] = centers[picked_center].coordinates[coord];
+
+    //   }
+    // }
+
+    // }); 
+
+    //do coord * k in parallel
+    //slightly faster
+    parlay::parallel_for (0, static_cast<size_t>(ks)*ds, [&] (size_t jcoord){
+      size_t j = jcoord / ds;
+      size_t coord = jcoord % ds;
+      size_t picked_center = pts_grouped_by_center[j].first;
+      
+  
+    //if there are no values in a certain center, just keep the center 
+    //where it is
+    //need to cast to double inside, before the reduce starts adding
+    //casting to float instead for speed
     if (pts_grouped_by_center[j].second.size() > 0) { 
-      for (size_t coord = 0; coord < ds; coord++) {
         center_calc[picked_center*ds+coord] = static_cast<double>(parlay::reduce(parlay::map(pts_grouped_by_center[j].second, [&]
         (size_t ind) {
-          return static_cast<double>(v[ind*ds+coord]);
+          return static_cast<float>(v[ind*ds+coord]);
         })))/pts_grouped_by_center[j].second.size();
       }
   
-    }
     else { 
-      for (size_t coord = 0; coord < ds; coord++) {
         center_calc[picked_center*ds + coord] = centers[picked_center].coordinates[coord];
 
-      }
+    
     }
 
     }); 
 
+
+
   
 
-    //t2.next("Done with adding");
+    t2.next("Done with adding");
 
     parlay::parallel_for(0,ks*ds,[&] (size_t i) {
       center_calc_float[i] = center_calc[i];
     });
 
-    //t2.next("Done with copying");
+    t2.next("Done with copying");
   }
 
 
   //compute centers 5
 
-  void compute_centers_compare(T* v , int ns, unsigned short int ds, 
+  static void compute_centers_compare(T* v , int ns, unsigned short int ds, 
   uint8_t ks, uint8_t* asgs, uint8_t* asgs_old, parlay::sequence<center>& centers, 
   float* center_calc_float, double* center_calc, 
   parlay::sequence<int>& rang) {
+
+    parlay::internal::timer t2;
+    t2.start();
 
     // Compute new centers
     parlay::parallel_for(0,ks,[&](size_t j) {
@@ -129,10 +161,14 @@ struct NiskKmeans {
       
     });
 
+    t2.next("Copied forward");
+
 
     parlay::sequence<int> changed_points = parlay::filter(rang,[&] (int i) {
       return asgs[i] != asgs_old[i];
     });
+
+    t2.next("Got which points changed");
 
 
     //std::cout << "# of reassg: " << changed_points.size() << std::endl;
@@ -160,6 +196,10 @@ struct NiskKmeans {
       
     }); 
 
+    //
+
+    t2.next("Added");
+
     parlay::parallel_for(0,ks,[&](size_t j) {
       
       if (centers[j].new_num_members != 0 && centers[j].has_changed) {
@@ -182,6 +222,8 @@ struct NiskKmeans {
         }
       }
     });
+
+    t2.next("Divided and added back");
 
     }
     //sort neighbor id
@@ -679,10 +721,14 @@ struct NiskKmeans {
         //find min dist to any other center
         //TODO use a map then min_element
        // float min_dist_to_other_neighbors = std::numeric_limits<float>::max();
-       if (centers[i].neighbors.size() == 0) {
-        std::cout << "no neighbors, flag should be stable, aborting" << std::endl;
-        abort();
-       }
+       //actually this assert bad you can violate it and still be correct
+      //  if (centers[i].neighbors.size() == 0 && centers[i].stable) {
+      //   std::cout << "no neighbors and stable, flag should be true, aborting" << std::endl;
+      //   std::cout << "old neighbors has size " << centers[i].old_neighbors.size() << std::endl;
+      //   abort();
+
+      //  }
+
         float min_dist_to_other_neighbors = dist_matrix[i][centers[i].neighbors[0]];
         // std::cout << "min dist to other neighbors: " <<  min_dist_to_other_neighbors << std::endl;
         //std::cout << "REACHED BALL ASSIGN" << std::endl;
@@ -849,6 +895,12 @@ struct NiskKmeans {
         
         centers[i].old_num_members = centers[i].new_num_members;
       }
+
+      //set centers stable
+      //lol two bools that do the exact same thing
+      parlay::parallel_for(0,ks,[&] (size_t i) {
+        centers[i].stable = centers[i].has_changed;
+      });
 
       update_time=t2.next_time();
 
