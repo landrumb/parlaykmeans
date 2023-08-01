@@ -3,6 +3,9 @@ This is the description of experiment5.
 on aware.
 
 Run on this commit:
+1bfe69f9ac0cbf2e2c5fa1ea6fa56d3e19126b44
+
+
 
 
 The point of this experiment is to compare the performance of aware to fern to naive and yy, on a bigann slice of 1'000'000 points.
