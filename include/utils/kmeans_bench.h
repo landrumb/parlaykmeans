@@ -288,7 +288,9 @@ struct initialization_bench {
         << ", " << 
         "init_name"
         << ", " << 
-        "time" << std::endl;
+        "time" <<
+        ", " << 
+         "msse" << std::endl;
 
         file << n
         << ", " << 
@@ -298,7 +300,8 @@ struct initialization_bench {
         << ", " << 
         name 
         << ", " << 
-        total_time << std::endl;
+        total_time << 
+        ", " << msse << std::endl;
 
         for (size_t i = 0; i < labeled_times.size(); i++) {
             file << labeled_times[i].first << ", " << labeled_times[i].second << std::endl;
