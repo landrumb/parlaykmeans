@@ -59,10 +59,12 @@ struct LSHQuantizedKmeans {
 
 
     uint8_t* pqv = new uint8_t[n*new_d];
-    uint8_t* pqc = new uint8_t[k*new_d];
+    float* pqc_float = new float[k*new_d];
+
+
 
    parlay::parallel_for(0,n,[&] (size_t i) {
-    lsh_runner.get_uint8_reduced_pt(v+i*d,pqv+i*new_d,hps,d,num_hp);
+    lsh_runner.template get_uint8_reduced_pt<T,uint8_t>(v+i*d,pqv+i*new_d,hps,d,num_hp);
 
    });
 
@@ -70,8 +72,16 @@ struct LSHQuantizedKmeans {
   //knowing they'll be cast to floats
   //think so?
    parlay::parallel_for(0,k,[&] (size_t i) {
-    lsh_runner.get_uint8_reduced_pt(c+i*d,pqc+i*new_d,hps,d,num_hp);
+    lsh_runner.template get_uint8_reduced_pt<float,float>(c+i*d,pqc_float+i*new_d,hps,d,num_hp);
    });
+
+   std::cout << "Debugging, printing new centers "<< std::endl;
+   for (int i = 0; i < 10; i++) {
+    for (int j = 0; j < 10; j++) {
+      std::cout << pqc_float[i*new_d+j] << " ";
+    }
+    std::cout << std::endl;
+   }
 
   //concerned about distance function for d=36 or smaller
   Distance* D2 = new EuclideanDistanceSmall();
@@ -79,7 +89,8 @@ struct LSHQuantizedKmeans {
   kmeans_bench other_logger = kmeans_bench(n,new_d,k,max_iter, epsilon,"Lazy","Internal YY to LSHQ");
 
   //use yy as a subroutine
-   yy.cluster(pqv,n,new_d,k,pqc,asg,D2,logger,max_iter,epsilon);
+  YinyangSimp<uint8_t> yy;
+   yy.cluster(pqv,n,new_d,k,pqc_float,asg,*D2,logger,max_iter,epsilon);
 
    //from the assignments, build the centers
    //
@@ -94,13 +105,13 @@ struct LSHQuantizedKmeans {
 
    parlay::parallel_for(0,k*d,[&] (size_t icoord) {
 
-    if (pts_grouped_by_center[i].size() > 0) {
-
-      size_t i = icoord/d; //the center we are looking at
-      size_t coord = icoord % d;
+    size_t i = icoord/d; //the center we are looking at
+    size_t coord = icoord % d; //coord we are looking at
+    if (pts_grouped_by_center[i].second.size() > 0) {
+      
       c[pts_grouped_by_center[i].first*d+coord] = parlay::reduce(parlay::map(pts_grouped_by_center[i].second,
       [&] (size_t ind) {
-        return static_cast<float>(v[pts_grouped_by_center[i][ind]*d+coord]);
+        return static_cast<float>(v[pts_grouped_by_center[i].second[ind]*d+coord]);
       }))/pts_grouped_by_center[i].second.size();
 
     }

@@ -198,7 +198,10 @@ struct LSH {
   }
 
   //given hyperplanes and a pt, return a pt in uint8_t land based on the hyperplane results
-  void get_uint8_reduced_pt(T* pt, uint8_t* final_pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t d, size_t num_hp=BITSET_MAX) {
+  //F is original type of point
+  //G is final type
+  template <typename F, typename G>
+  void get_uint8_reduced_pt(F* pt, G* final_pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t d, size_t num_hp=BITSET_MAX) {
     if (num_hp % 8 != 0) {
       std::cout << "number of hyperplanes must be divisible by 8 aborting" << std::endl;
       abort();
@@ -209,28 +212,64 @@ struct LSH {
 
     parlay::sequence<std::bitset<8>> bin_list = parlay::tabulate(num_hp / 8,
     [&] (size_t i) {
+
+      std::bitset<8> a;
+      
        for (size_t j = 0; j < 8; j++) {
       //TODO does the float cast on pt happen automatically? if so remove
       //the manual cast
       float dot_p = parlay::reduce(parlay::map(rangd, [&] (size_t m) {return hps[i*8+j][m] * static_cast<float>(pt[m]);}));
       if (dot_p > 0) {
-        bin_list[i][j] = 1;
+        a[j] = 1;
       }
       else {
-        bin_list[i][j] = 0;
+        a[j] = 0;
       }
     }
+    return a;
 
     });
 
     for (size_t i = 0; i < d; i++) {
-      final_pt[i] = static_cast<uint8_t>(bin_list[i].to_ulong());
+      final_pt[i] = static_cast<G>(bin_list[i].to_ulong());
     }
-
-
-  
-
   }
+  
+  // }
+  // //TODO combine these two functions into one with templatting
+  // void get_float_reduced_pt(float* pt, float* final_pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t d, size_t num_hp=BITSET_MAX) {
+  //   if (num_hp % 8 != 0) {
+  //     std::cout << "number of hyperplanes must be divisible by 8 aborting" << std::endl;
+  //     abort();
+  //   }
+
+  //   //rang gives 0-7
+  //   parlay::sequence<size_t> rangd = parlay::tabulate(d, [&] (size_t i) {return i;});
+
+  //   parlay::sequence<std::bitset<8>> bin_list = parlay::tabulate(num_hp / 8,
+  //   [&] (size_t i) {
+  //      for (size_t j = 0; j < 8; j++) {
+  //     //TODO does the float cast on pt happen automatically? if so remove
+  //     //the manual cast
+  //     float dot_p = parlay::reduce(parlay::map(rangd, [&] (size_t m) {return hps[i*8+j][m] * pt[m];}));
+  //     if (dot_p > 0) {
+  //       bin_list[i][j] = 1;
+  //     }
+  //     else {
+  //       bin_list[i][j] = 0;
+  //     }
+  //   }
+
+  //   });
+
+  //   for (size_t i = 0; i < d; i++) {
+  //     final_pt[i] = static_cast<float>(bin_list[i].to_ulong());
+  //   }
+  // }
+
+
+
+
   //TODO compiler yells if I try to make the bitset length num_hp
   //so not actually using that function arg
   size_t get_hash(T* pt, const parlay::sequence<parlay::sequence<float>>& hps, size_t n, size_t d, const size_t num_hp=BITSET_MAX) {
