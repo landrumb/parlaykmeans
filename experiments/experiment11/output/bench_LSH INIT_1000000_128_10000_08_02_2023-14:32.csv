@@ -1,0 +1,2 @@
+n, d, k, init_name, time, msse
+1000000, 128, 10000, LSH INIT, 0.308162, 97733.4
