@@ -219,4 +219,95 @@ struct kmeans_bench {
 
 };
 
+//struct to hold initialization info
+//mainly to help contain output to csv
+struct initialization_bench {
+    size_t n;
+    size_t d;
+    size_t k;
+    
+    std::string name;
+    parlay::internal::timer t;
+    // parlay::internal::timer t_assign;
+    // parlay::internal::timer t_update;
+    // parlay::internal::timer t_setup;
+
+    double total_time;
+    double msse;
+    // double center_update_time;
+    // double assign_time;
+    // double setup_time;
+    parlay::sequence<std::pair<std::string, double>> labeled_times;
+
+    initialization_bench(size_t n, size_t d, size_t k, std::string initializer) : n(n), d(d), k(k), name(initializer) {
+    }
+
+    void start_time() {
+        std::cout << " initialization with " << name << std::endl;
+        std::cout << "n:         \t" << n << std::endl;
+        std::cout << "d:         \t" << d << std::endl;
+        std::cout << "k:         \t" << k << std::endl;
+     
+        t.start();
+    }
+
+    void end_time() {
+        total_time = t.stop();
+
+        std::cout << "total time:\t" << total_time << std::endl;
+       
+    }
+
+    void set_msse(double msse) {
+        this->msse = msse;
+    }
+   
+
+    void add_labeled_time(std::string label, double labels_time) {
+        labeled_times.push_back(std::make_pair(label,labels_time));
+
+    }
+
+    void output_to_csv(std::string output_folder) {
+        //https://stackoverflow.com/questions/16357999/current-date-and-time-as-string
+
+         auto c_t = std::time(nullptr);
+        auto tm = *std::localtime(&c_t);
+        std::ostringstream oss;
+        oss << std::put_time(&tm, "%m_%d_%Y-%H:%M");
+        auto date_str = oss.str();
+
+        std::string fname = output_folder+"bench_"+name+"_"+std::to_string(n)+"_"+std::to_string(d)+"_"+std::to_string(k)+"_"+date_str + ".csv";
+        std::cout << "outputting to CSV: " << fname << std::endl;
+        std::ofstream file(fname);
+        file << "n"
+        << ", " << 
+        "d"
+        << ", " << 
+        "k"
+        << ", " << 
+        "init_name"
+        << ", " << 
+        "time" << std::endl;
+
+        file << n
+        << ", " << 
+        d
+        << ", " << 
+        k
+        << ", " << 
+        name 
+        << ", " << 
+        total_time << std::endl;
+
+        for (size_t i = 0; i < labeled_times.size(); i++) {
+            file << labeled_times[i].first << ", " << labeled_times[i].second << std::endl;
+        }
+
+
+    }
+
+
+};
+
 #endif

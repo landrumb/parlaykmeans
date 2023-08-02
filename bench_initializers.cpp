@@ -24,6 +24,9 @@
 #include <utility>
 #include <type_traits>
 #include <cmath>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 #include "include/initialization.h"
 #include "include/lazy.h"
@@ -36,64 +39,73 @@
 //bench a given initialization method
 //returns pair<double,double>: the time of the initialization method and the msse afterward
 template<typename T, typename Initializer>         
-std::pair<double,double> bench_init(T* v, size_t n, size_t d, size_t k, Distance& D) {
+void bench_init(T* v, size_t n, size_t d, size_t k, Distance& D, std::string output_folder) {
 
-  parlay::internal::timer t;
 
   float* c = new float[k*d];
   size_t* asg = new size_t[n];
 
-  std::cout << "starting bench" << std::endl;
+  Initializer dummy; //just to get the name
   
-  t.start();
+  initialization_bench bencher(n,d,k,dummy.name());
 
+  bencher.start_time();
   Initializer init;
+
+
   init(v,n,d,k,c,asg,D);
 
-  double init_time = t.next_time();
+  bencher.end_time();  
 
-  
-
-  //Check msse
   double msse = parlay::reduce(parlay::tabulate(n,[&] (size_t i) {
-    T* it2 = v+i*d;
-    float buf[2048];
-    for (unsigned short int j = 0; j < d; j++) {
-      buf[j] = *it2;
-      it2+=1;
-    }
-    return D.distance(buf,c+asg[i]*d,d);
-  }));
-  msse /= n; //divide by n because mean sse
+  T* it2 = v+i*d;
+  float buf[2048];
+  for (unsigned short int j = 0; j < d; j++) {
+  buf[j] = *it2;
+  it2+=1;
+  }
+  return D.distance(buf,c+asg[i]*d,d);
+  }))/n;//divide by n because mean sse
+
+  bencher.set_msse(msse);
+  
+  if (output_folder != "") {
+    
+    bencher.output_to_csv(output_folder);
+
+  }
+  
 
   delete[] c;
   delete[] asg;
 
-  std::cout << init.name() << ": time-- " << init_time << ", msse-- " << msse << std::endl;
-  std::cout << "n: " << n << ", d: " << d << ", k: " << k << ", Distance : " << D.id() << std::endl;
-  return std::make_pair(init_time,msse);
-}
+  // std::cout << init.name() << ": time-- " << init_time << ", msse-- " << msse << std::endl;
+  // std::cout << "n: " << n << ", d: " << d << ", k: " << k << ", Distance : " << D.id() << std::endl;
+  //return std::make_pair(init_time,msse);
+
+  }
+
 template <typename T>
-void pick_init(T* v, size_t n, size_t d, size_t k, Distance& D, std::string init_choice) {
+void pick_init(T* v, size_t n, size_t d, size_t k, Distance& D, std::string init_choice, std::string output_folder) {
   if (init_choice == "None") {
     std::cout << "None picked aborting" << std::endl;
     abort();
   }
   else if (init_choice == "Lazy") {
-    bench_init<T,LazyStart<T>>(v,n,d,k,D);
+    bench_init<T,LazyStart<T>>(v,n,d,k,D,output_folder);
   }
   else if (init_choice == "MacQueen") {
-    bench_init<T,MacQueen<T>>(v,n,d,k,D);
+    bench_init<T,MacQueen<T>>(v,n,d,k,D,output_folder);
   }
   else if (init_choice == "Forgy") {
-    bench_init<T,Forgy<T>>(v,n,d,k,D);
+    bench_init<T,Forgy<T>>(v,n,d,k,D,output_folder);
 
   }
   else if (init_choice == "KmeansPlusPlus") {
-    bench_init<T,KmeansPlusPlus<T>>(v,n,d,k,D);
+    bench_init<T,KmeansPlusPlus<T>>(v,n,d,k,D,output_folder);
   }
   else if (init_choice == "LSH") {
-    bench_init<T,LSH<T>>(v,n,d,k,D);
+    bench_init<T,LSH<T>>(v,n,d,k,D,output_folder);
   }
   else {
     std::cout << "aborting, wrong spelling " << init_choice << std::endl;
@@ -113,7 +125,8 @@ int main(int argc, char* argv[]){
     std::string dist = std::string(P.getOptionValue("-D", "Euclidian")); // distance choice
 
     std::string init_choice = std::string(P.getOptionValue("-c", "None"));
-   
+
+    std::string output_folder = std::string(P.getOptionValue("-o",""));
 
     if(input == ""){ // if no input file given, quit
         std::cout << "Error: input file not specified" << std::endl;
@@ -161,16 +174,16 @@ int main(int argc, char* argv[]){
         if (tp == "float") {
             auto [v, n, d] = parse_fbin(input.c_str());
 
-            pick_init<float>(v,n,d,k,*D,init_choice);
+            pick_init<float>(v,n,d,k,*D,init_choice,output_folder);
           
         } else if (tp == "uint8") {
             auto [v, n, d] = parse_uint8bin(input.c_str());
             
-            pick_init<uint8_t>(v,n,d,k,*D,init_choice);
+            pick_init<uint8_t>(v,n,d,k,*D,init_choice,output_folder);
             
         } else if (tp == "int8") {
             auto [v, n, d] = parse_int8bin(input.c_str());
-            pick_init<int8_t>(v,n,d,k,*D,init_choice);
+            pick_init<int8_t>(v,n,d,k,*D,init_choice,output_folder);
             
         } else {
             //  this should actually be unreachable
