@@ -53,6 +53,20 @@ cc_binary(
  
 )
 
+#for benching initializers
+cc_binary(
+  name="assign_bench_run",
+  srcs=["assign_bench.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":kmeans_headers",
+
+  ],
+ 
+)
+
 
 cc_binary(
   name="debug",
