@@ -20,5 +20,7 @@ Thus for n=1bil I would expect that we would see an assign runtime of
 Note that this 218s result was from a fern run (experiment 4).
 
 To reproduce this assign average, run on commit:
+ 245adacfe68ae66dbbe2ba4373763bacac77ef98
 
+ 
 
