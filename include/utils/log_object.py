@@ -8,6 +8,28 @@ from mpl_toolkits.mplot3d import Axes3D
 import csv
 from numpy.polynomial.polynomial import polyfit
 
+class LogInitObject:
+
+  def __init__(self,filename):
+
+    with open (filename,"r") as data_file:
+      csv_reader = csv.reader(data_file)
+
+      itr = 0
+
+      #note that next removes the row from the csv reader
+      overall_info_names = next(csv_reader)
+
+
+      overall_info = next(csv_reader)
+      self.n = int(overall_info[0])
+      self.d = int(overall_info[1])
+      self.k = int(overall_info[2])
+      self.name = overall_info[3].strip()
+      self.total_time = float(overall_info[4])
+      self.msse = float(overall_info[5])
+    
+
 
 class LogObject:
 
