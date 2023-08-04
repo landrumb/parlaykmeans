@@ -12,6 +12,7 @@ slice of BigANN.
 Run with experiments/experiment14/assign2.sh
 
 Run on this commit:
+b3921190b524f093ac16621f2c64d30ed1318bd6
 
 
 andrew@fern:~/parlaykmeans$ sh assign.sh
