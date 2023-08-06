@@ -20,7 +20,8 @@ log_objects_list = []
 for i in range(num_diff_methods):
   log_objects_list.append([])
   for j in range(num_ks):
-    log_objects_list[i].append(log_object.LogInitObject(input("Please give a csv file name: ")))
+    #LogObject or LogInitObject depending on use
+    log_objects_list[i].append(log_object.LogObject(input("Please give a csv file name: ")))
 
 
 blocker = input("blocker? ")
@@ -32,7 +33,7 @@ csv_data = []
 row_data = ["k"]
 for rep in range(2):
   for i in range(num_diff_methods):
-    row_data.append(log_objects_list[i][0].name)
+    row_data.append(log_objects_list[i][0].runner_name)
 
 csv_data.append([item for item in row_data]) #copy
 
