@@ -1,0 +1,33 @@
+5
+4
+10
+100
+1000
+10000
+4
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_hi.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Forgy_1000000_128_100_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Forgy_1000000_128_1000_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Forgy_1000000_128_10000_08_02_2023-14:32.csv
+3
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Kmeans++_1000000_128_10_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Kmeans++_1000000_128_100_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Kmeans++_1000000_128_1000_08_02_2023-14:32.csv
+4
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Lazy_1000000_128_10_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Lazy_1000000_128_100_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Lazy_1000000_128_1000_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_Lazy_1000000_128_10000_08_02_2023-14:32.csv
+4
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_LSH INIT_1000000_128_10_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_LSH INIT_1000000_128_100_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_LSH INIT_1000000_128_1000_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_LSH INIT_1000000_128_10000_08_02_2023-14:32.csv
+4
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_MacQueen_1000000_128_10_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_MacQueen_1000000_128_100_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_MacQueen_1000000_128_1000_08_02_2023-14:29.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/safe_output/bench_MacQueen_1000000_128_10000_08_02_2023-14:32.csv
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/output/initializations_time_k.png
+/Users/andrewbrady/Documents/GitHub/parlaykmeans/experiments/experiment11/output/initializations_msse_k.png
+
