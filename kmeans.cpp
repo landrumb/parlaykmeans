@@ -26,6 +26,7 @@
 #include "yinyang_simp.h" //can switch to fast_center
 #include "quantized.h"
 #include "nisk_kmeans.h"
+#include "lsh.h"
 //#include "lsh_quantized.h"
 
 #define INITIALIZER MacQueen
@@ -90,8 +91,8 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     float* c = new float[k*d]; // centers
     size_t* asg = new size_t[n];
 
-//    float* c2 = new float[k*d];
-//    size_t* asg2 = new size_t[n];
+   float* c2 = new float[k*d];
+   size_t* asg2 = new size_t[n];
 //    float* c3 = new float[k*d];
 //    size_t* asg3 = new size_t[n];
 
@@ -99,7 +100,8 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // KmeansPlusPlus<T> init;
     // init(v,n,d,k,c,asg,D);
 
-    LazyStart<T> lazy_init;
+    //using LSH not LazyStart to be more realistic
+    LSH<T> lazy_init;
     lazy_init(v,n,d,k,c,asg,D);
 
 //      std::cout << "printing different initializations, first 50: " << std::endl;
@@ -108,14 +110,14 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
 //    }
 
 
-    // for (size_t i = 0; i < k*d; i++) {
-    //     c2[i] = c[i];
-    //     //c3[i]=c[i];
-    // }
-    // for (size_t i = 0; i < n; i++) {
-    //     asg2[i] = asg[i];
-    //     //asg3[i]=asg[i];
-    // }
+    for (size_t i = 0; i < k*d; i++) {
+        c2[i] = c[i];
+        //c3[i]=c[i];
+    }
+    for (size_t i = 0; i < n; i++) {
+        asg2[i] = asg[i];
+        //asg3[i]=asg[i];
+    }
 
     // QuantizedKmeans<T> quant;
     // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
@@ -131,11 +133,11 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // std::cout << "cutting out after quant" << std::endl;
     // abort();
 
-    NiskKmeans<T> sk;
-    kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
-    logger_sk.start_time();
-    sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
-    logger_sk.end_time();
+    // NiskKmeans<T> sk;
+    // kmeans_bench logger_sk = kmeans_bench(n,d,k,max_iter, epsilon,"Lazy","Skln");
+    // logger_sk.start_time();
+    // sk.cluster(v,n,d,k,c,asg,D,logger_sk,max_iter,epsilon);
+    // logger_sk.end_time();
 
 
     // LSHQuantizedKmeans<T> lshq;
@@ -145,15 +147,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // logger_lshq.end_time();
 
  
-    // NaiveKmeans<T> nie;
-    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    // epsilon,"Lazy","NaiveKmeans");
-    // logger_nie.start_time();
-    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    // logger_nie.end_time();
-    // if (output_log_to_csv) {
-    //     logger_nie.output_to_csv(output_file_name1);
-    // }
+    NaiveKmeans<T> nie;
+    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","NaiveKmeans");
+    logger_nie.start_time();
+    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    logger_nie.end_time();
+    if (output_log_to_csv) {
+        logger_nie.output_to_csv(output_file_name1);
+    }
 
     // NaiveKmeans<T> nie2;
     // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
@@ -167,15 +169,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    // YinyangSimp<T> yy;
-    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    // "Lazy","YY");
-    // logger_yy.start_time();
+    YinyangSimp<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "Lazy","YY");
+    logger_yy.start_time();
 
-    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    // logger_yy.end_time();
-    // if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
+    logger_yy.end_time();
+    if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
 
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();

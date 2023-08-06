@@ -1,0 +1,8 @@
+n, d, k, max_iter, epsilon, n_iter, msse, total_timeinit name, runner name
+1000000, 128, 1000, 5, 0, 5,67864.7, 11.222, Lazy, NaiveKmeans
+iter#,asg time, update time, setup_time, msse, dist calcs, center reasg, mean center move, min center move, max center move
+0, 2.1241, 0.069499, 0, 83958, 0, 0, 9487.76, 728.47, 26469.2
+1, 2.17489, 0.055537, 0, 72164, 0, 0, 1984.4, 140.665, 7948.7
+2, 2.17814, 0.061461, 0, 69456, 0, 0, 702.205, 29.6123, 3133.25
+3, 2.17971, 0.062538, 0, 68409.7, 0, 0, 349.16, 17.7125, 2555.3
+4, 2.20875, 0.090032, 0, 67864.7, 0, 0, 207.368, 9.534, 1182.18

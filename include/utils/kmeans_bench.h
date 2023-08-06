@@ -146,8 +146,18 @@ struct kmeans_bench {
     //iter#, assign time, update time, setup time, 
     //msse, distance_cals, center reassgs, mean center movement, 
     //min center movement, max center movement
-    void output_to_csv(std::string fname) {
-        std::cout << "outputting to CSV " << fname << std::endl;
+    void output_to_csv(std::string output_folder) {
+
+
+         auto c_t = std::time(nullptr);
+        auto tm = *std::localtime(&c_t);
+        std::ostringstream oss;
+        oss << std::put_time(&tm, "%m_%d_%Y"); //don't write hour and day, annoying
+        auto date_str = oss.str();
+
+        std::string fname = output_folder+"bench_"+runner+"_"+std::to_string(n)+"_"+std::to_string(d)+"_"+std::to_string(k)+"_"+date_str + ".csv";
+        std::cout << "outputting to CSV: " << fname << std::endl;
+
         std::ofstream file(fname);
         // file << "n, d, k, max_iter, epsilon, n_iter, msse, total_time" << std::endl;
         
@@ -165,7 +175,7 @@ struct kmeans_bench {
         << ", " << 
         "msse"
         << ", " << 
-        "total_time" << 
+        "total_time" <<  ", "
         "init name" 
         << ", " << 
         "runner name" << std::endl;
