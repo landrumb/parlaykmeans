@@ -274,7 +274,7 @@ struct initialization_bench {
          auto c_t = std::time(nullptr);
         auto tm = *std::localtime(&c_t);
         std::ostringstream oss;
-        oss << std::put_time(&tm, "%m_%d_%Y-%H_%M");
+        oss << std::put_time(&tm, "%m_%d_%Y"); //don't write hour and day, annoying
         auto date_str = oss.str();
 
         std::string fname = output_folder+"bench_"+name+"_"+std::to_string(n)+"_"+std::to_string(d)+"_"+std::to_string(k)+"_"+date_str + ".csv";

@@ -31,7 +31,7 @@ struct LSH {
   static const size_t BITSET_MAX = 32;
 
   std::string name() {
-    return "LSH INIT";
+    return "lsh";
   }
 
   //comparator for pairs of size_t
