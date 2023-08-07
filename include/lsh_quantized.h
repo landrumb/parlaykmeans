@@ -108,7 +108,8 @@ struct LSHQuantizedKmeans {
     size_t i = icoord/d; //the center we are looking at
     size_t coord = icoord % d; //coord we are looking at
     if (pts_grouped_by_center[i].second.size() > 0) {
-      
+      //TODO FIXME .second[ind] is doubling ind, should just be ind here??
+      //because a map takes out the actual values from the sequence
       c[pts_grouped_by_center[i].first*d+coord] = parlay::reduce(parlay::map(pts_grouped_by_center[i].second,
       [&] (size_t ind) {
         return static_cast<float>(v[pts_grouped_by_center[i].second[ind]*d+coord]);
