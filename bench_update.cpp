@@ -280,6 +280,10 @@ void update_centers_6(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg)
 
 
 //Can we improve the caching by pulling one point at a time?
+//nice!! this one does the add in just 3 seconds by doing the caching right
+//for k=100K works nice, I wonder if this sucks for small k (k=10?)
+//Wow k=10 it's much worse (97s)! 
+//how does scheduling work such that higher k reduces time significantly? 
 template <typename T>
 void update_centers_7(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg) {
   std::cout << "method 7" << std::endl;
@@ -295,32 +299,212 @@ void update_centers_7(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg)
   t2.next("Grouped by");
 
     parlay::parallel_for(0,k,[&] (size_t i) {
-      size_t picked_center = pts_grouped_by_center[i].first;
+      size_t picked_center_d = pts_grouped_by_center[i].first*d;
       for (size_t j = 0; j < pts_grouped_by_center[i].second.size(); j++) {
-        size_t point_coord = v[pts_grouped_by_center[i].second]
+        size_t point_coord = pts_grouped_by_center[i].second[j]*d;
         for (size_t coord = 0; coord < d; coord++) {
-          c[picked_center*d+coord] += static_cast<float>(v[pts_grouped_by_center[i].second])
+          c[picked_center_d + coord] += static_cast<float>(v[point_coord + coord]);
         }
       }
-      parlay::parallel_for(0,k,[&] (size_t i) {
+      
+
+  });
+
+  t2.next("Added");
+
+
+   parlay::parallel_for(0,k,[&] (size_t i) {
+
+    parlay::parallel_for(0,d,[&] (size_t coord) {
        if (pts_grouped_by_center[i].second.size() > 0) {
         
-        c[pts_grouped_by_center[i].first*d+coord] = parlay::reduce(parlay::map(pts_grouped_by_center[i].second,
-        [&] (size_t ind) {
-          return static_cast<float>(v[ind*d+coord]);
-        }))/pts_grouped_by_center[i].second.size();
+        c[pts_grouped_by_center[i].first*d+coord] /= pts_grouped_by_center[i].second.size();
 
       }
 
-    }); 
-
+    });
   
-   }); //does the 1 here help?
+   });
 
-   t2.next("Added");
+   t2.next("Divided");
 
 
 }
+
+
+  //comparator for pairs of size_t
+  //compare the first elt then the second elt
+  struct less_pair {
+    bool operator() (const std::pair<size_t,size_t>& x, const std::pair<size_t,size_t>& y) const {
+      if (x.first < y.first) {
+        return true;
+      }
+      else if (x.first == y.first) {
+        return x.second < y.second;
+      }
+      else {
+        return false;
+      }
+      
+    }
+
+     bool comp(const std::pair<size_t,size_t>& x, const std::pair<size_t,size_t>& y) const {
+      if (x.first < y.first) {
+        return true;
+      }
+      else if (x.first == y.first) {
+        return x.second < y.second;
+      }
+      else {
+        return false;
+      }
+      
+    }
+  };
+
+template <typename T>
+void my_group_by(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg,
+parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>>& grouped) {
+
+  parlay::internal::timer t3;
+  t3.start();
+
+
+  parlay::sequence<size_t> rangn = parlay::tabulate(n,[&] (size_t i) { return i; });
+
+  parlay::sequence<std::pair<size_t,size_t>> paired = parlay::tabulate(n,[&] (size_t i) {
+    return std::make_pair(asg[i],i);
+  });
+
+  t3.next("paired");
+  
+  
+  parlay::sort_inplace(paired,less_pair());
+
+  t3.next("Sorted");
+
+  parlay::sequence<size_t> changed = parlay::tabulate(n,[&] (size_t i) {
+    if (i==0) return static_cast<size_t>(0);
+    else {
+      if (paired[i].first != paired[i-1].first) {
+        return static_cast<size_t>(1);
+      }
+      else {
+        return static_cast<size_t>(0);
+      }
+
+    }
+  });
+
+  t3.next("changed");
+  parlay::sequence<size_t> points_of_change = parlay::filter(rangn,[&] (size_t i) {
+    return (i==0 || changed[i] == 1);
+  });
+    t3.next("filtered");
+
+  auto [offsets, total] = parlay::scan(points_of_change);
+
+  t3.next("scanned");
+  std::cout << "about to allo" << std::endl;
+
+  parlay::parallel_for(0,k,[&] (size_t i) {
+    if (i==k-1) {
+      grouped[i].second = parlay::sequence<size_t>(n-offsets[i]);
+    }
+    else {
+      grouped[i].second = parlay::sequence<size_t>(offsets[i+1]-offsets[i]);
+    }
+  });
+
+  t3.next("allocated space");
+
+
+  parlay::parallel_for(0,k,[&] (size_t i) {
+    if (i == k-1) {
+      for (size_t j = offsets[i]; j < n; j++) {
+        grouped[i].second.push_back(paired[j].second);
+      }
+    }
+    else {
+      for (size_t j = offsets[i]; j < offsets[i+1]; j++) {
+        grouped[i].second.push_back(paired[i].second);
+
+
+      }
+
+    }
+  
+    
+  });
+
+  t3.next("Pushed back");
+
+ 
+
+}
+
+
+template <typename T>
+void update_centers_8(T* v, size_t n, size_t d, size_t k, float* c, size_t* asg) {
+  std::cout << "method 7" << std::endl;
+  parlay::internal::timer t2;
+  t2.start();
+
+  parlay::sequence<size_t> rangn = parlay::tabulate(n,[&] (size_t i) { return i; });
+
+  auto pts_grouped_by_center = parlay::group_by_key(parlay::map(rangn,[&] (size_t i) {
+    return std::pair(asg[i],i);
+  }));
+
+  t2.next("Grouped by");
+
+
+
+  parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>> grouped = parlay::tabulate(k,[&] (size_t i) {
+    return std::make_pair(i,parlay::sequence<size_t>());
+  });
+
+  my_group_by(v,n,d,k,c,asg,grouped);
+
+  t2.next("My grouped by");
+
+
+  abort(); //just case about group by
+
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      size_t picked_center_d = pts_grouped_by_center[i].first*d;
+      for (size_t j = 0; j < pts_grouped_by_center[i].second.size(); j++) {
+        size_t point_coord = pts_grouped_by_center[i].second[j]*d;
+        for (size_t coord = 0; coord < d; coord++) {
+          c[picked_center_d + coord] += static_cast<float>(v[point_coord + coord]);
+        }
+      }
+      
+
+  });
+
+  t2.next("Added");
+
+
+   parlay::parallel_for(0,k,[&] (size_t i) {
+
+    parlay::parallel_for(0,d,[&] (size_t coord) {
+       if (pts_grouped_by_center[i].second.size() > 0) {
+        
+        c[pts_grouped_by_center[i].first*d+coord] /= pts_grouped_by_center[i].second.size();
+
+      }
+
+    });
+  
+   });
+
+   t2.next("Divided");
+
+
+}
+
+
 
 
 //bench a given initialization method
@@ -361,7 +545,7 @@ void call_update_bench(T* v, size_t n, size_t d, size_t k, Distance& D, std::str
 
   parlay::internal::timer t2;
   t2.start();
-  update_centers_6(v,n,d,k,c,asg);
+  update_centers_8(v,n,d,k,c,asg);
   t2.next("Finished method"); //total time for completion
 
   delete[] c;
