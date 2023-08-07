@@ -80,7 +80,7 @@ def update(frame):
 anim = FuncAnimation(plt.gcf(), update, frames=N_FRAMES, repeat=True)
 
 # save the animation as a good quality gif
-anim.save('kmeans.gif', writer='pillow', fps=1, dpi=600)
+anim.save('kmeans_new.gif', writer='pillow', fps=1, dpi=600)
 
 # Show the animation
 plt.show()
