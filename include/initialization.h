@@ -70,6 +70,59 @@ size_t* asg, Distance& D) {
     }
 };
 
+//version of Forgy that actually picks the points randomly
+template<typename T>
+struct ForgyRandom {
+    /* 
+    args:
+        v: pointer to flat array of points
+        n: number of points
+        k: number of clusters
+        d: dimension of points
+        centers: pointer to array of centers
+        asg: pointer to array of assignments
+     */
+    void operator()(T* v, size_t n, size_t d, size_t k, float* centers, 
+size_t* asg, Distance& D) {
+
+        parlay::random_generator gen(time(0)); //start time a customary "random" #
+        std::uniform_int_distribution<size_t> dis(0, k-1);
+        
+        parlay::parallel_for(0, n, [&](size_t i) {
+            auto r = gen[i]; //why is it segmented into two lines like this? idk TODO understand why?
+            asg[i] = dis(r);
+        });
+        
+        //making sure that numbers outputted randomly are different per run
+        // for (size_t i = 0; i < 25; i++) {
+        //     std::cout << asg[i] << " ";
+        //     std::cout << std::endl;
+        // }
+
+        //compute centers
+        threadlocal::accumulator<float>* acc = new threadlocal::accumulator<float>[k*d];
+        parlay::parallel_for(0, n, [&](size_t i) {
+            size_t c = i % k;
+            for (size_t j = 0; j < d; j++) {
+                acc[c*d + j].add(v[i*d + j]);
+            }
+        });
+
+        parlay::parallel_for(0, k, [&](size_t i) {
+            for (size_t j = 0; j < d; j++) {
+                size_t count = n / k + (i < n % k);
+                centers[i*d + j] = acc[i*d + j].total() / count;
+            }
+        });
+        
+        delete[] acc;
+    }
+
+    std::string name() {
+        return "ForgyRandom";
+    }
+};
+
 
 /* 
 Takes the first k points as centers, then assigns each point to the closest center.

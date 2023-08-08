@@ -101,6 +101,10 @@ void pick_init(T* v, size_t n, size_t d, size_t k, Distance& D, std::string init
     bench_init<T,Forgy<T>>(v,n,d,k,D,output_folder);
 
   }
+  else if (init_choice == "ForgyRandom") {
+    bench_init<T,ForgyRandom<T>>(v,n,d,k,D,output_folder);
+
+  }
   else if (init_choice == "KmeansPlusPlus") {
     bench_init<T,KmeansPlusPlus<T>>(v,n,d,k,D,output_folder);
   }
