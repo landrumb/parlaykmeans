@@ -17,3 +17,7 @@ Run on fern starting August 8.
 
 Please note: this experiment was run before changing the granularity on add_points2 to 1 (my bad should have committed before changing this): so if this experiment is rerun the times for add2 will be even faster than the current data for k=10.
 
+Run on this commit:
+ea2b791d6e7e9387494cad284a02a731b7cebf79
+
+To get *Similar* results (not the exact same due to above issue)
