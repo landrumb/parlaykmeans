@@ -1,4 +1,6 @@
 #Brings data files from many csv's and puts them into one csv
+#This one for exact k-means methods
+
 import csv
 import struct
 import log_object
