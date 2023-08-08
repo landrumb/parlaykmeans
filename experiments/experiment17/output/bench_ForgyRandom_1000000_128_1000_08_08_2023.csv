@@ -1,0 +1,2 @@
+n, d, k, init_name, time, msse
+1000000, 128, 1000, ForgyRandom, 0.564737, 140339

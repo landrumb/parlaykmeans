@@ -1,0 +1,2 @@
+n, d, k, init_name, time, msse
+1000000, 128, 3125, MacQueen, 14.2193, 90410.7

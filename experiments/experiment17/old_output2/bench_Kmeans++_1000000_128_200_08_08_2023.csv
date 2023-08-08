@@ -1,0 +1,2 @@
+n, d, k, init_name, time, msse
+1000000, 128, 200, Kmeans++, 6.21405, 123912
