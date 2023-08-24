@@ -1,0 +1,2 @@
+n, d, k, init_name, time, msse
+1000000, 128, 5000, Forgy, 1.72059, 139502

@@ -65,7 +65,22 @@ cc_binary(
  
 )
 
-#for benching initializers
+
+#for benching update step 
+cc_binary(
+  name="update_bench_run",
+  srcs=["bench_update.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":kmeans_headers",
+
+  ],
+ 
+)
+
+#for benching assign step
 cc_binary(
   name="assign_bench_run",
   srcs=["assign_bench.cpp"],
