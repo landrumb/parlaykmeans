@@ -1,6 +1,18 @@
 licenses(["notice"])
 
 cc_binary(
+  name="txt_to_fbin",
+  srcs=["txt_to_fbin.cpp"],
+  linkopts=["-pthread"],
+  deps = [
+    "@parlaylib//parlay:parallel",
+    "@parlaylib//parlay:sequence",
+    "@parlaylib//parlay:primitives",
+    "@parlaylib//parlay:io",
+  ],
+)
+
+cc_binary(
     name = "test_main",
     srcs = ["test.cpp"],
     linkopts = ["-pthread"],
