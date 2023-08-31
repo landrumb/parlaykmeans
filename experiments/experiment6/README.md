@@ -17,3 +17,11 @@ Then you will need to type in Y to confirm the experiment run.
 use
 
 echo "Y" | nohup sh experiment6/full_base_experiment.sh &
+
+
+____
+
+EDIT AUGUST 31,2023: 
+I added an excel file containing nice graphs of the comparsion between naive and yinyang for scaling k, and 
+comparing naive and yy on aware vs fern and for 1 thread vs. 192 threads. The excel file is called 
+'Naive yy data graphs.xlsx"
