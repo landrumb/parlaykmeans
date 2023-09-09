@@ -228,6 +228,35 @@ cc_test(
   
 )
 
+#get a text version of a data file
+cc_binary(
+    name = "bin_to_csv",
+    srcs = ["include/utils/convert_bin_to_csv.cpp"],
+    linkopts = ["-pthread"],
+    deps = [
+     "parse_headers"
+    ],
+)
+
+
+
+cc_library(
+  name="parse_headers",
+  hdrs = ["include/utils/parse_files.h",],
+
+linkopts=["-pthread"],
+#makes it known that include is an include library
+copts = ["-Iinclude"],
+
+  deps = [
+  "@parlaylib//parlay:parallel",
+  "@parlaylib//parlay:primitives",
+  "@parlaylib//parlay:sequence",
+  "@parlaylib//parlay:slice",
+  "@parlaylib//parlay:io",
+],
+)
+
 
 
 
