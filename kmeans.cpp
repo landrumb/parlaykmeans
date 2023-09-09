@@ -69,7 +69,7 @@ inline void bench(T* v, size_t n, size_t d, size_t k, Distance& D, size_t max_it
 //bench two kmeans methods on the same data
 template <typename T, typename Initializer, typename Runner1, typename Runner2>
 inline void bench_two(T* v, size_t n, size_t d, size_t k, Distance& D, 
-size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::string output_file_name1="data.csv", std::string output_file_name2="data2.csv") {
+size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::string output_file_name1="data.csv", std::string output_file_name2="data2.csv") {
 
 
     // std::cout << "shortening d for debugging" << std::endl;
@@ -101,8 +101,8 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
     // init(v,n,d,k,c,asg,D);
 
     //using LSH not LazyStart to be more realistic
-    LSH<T> lazy_init;
-    lazy_init(v,n,d,k,c,asg,D);
+    LSH<T> lsh_init;
+    lsh_init(v,n,d,k,c,asg,D);
 
 //      std::cout << "printing different initializations, first 50: " << std::endl;
 //    for (size_t i = 0; i < 50; i++) {
@@ -149,7 +149,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
  
     NaiveKmeans<T> nie;
     kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    epsilon,"Lazy","NaiveKmeans");
+    epsilon,"LSH","NaiveKmeans");
     logger_nie.start_time();
     nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
     logger_nie.end_time();
@@ -171,7 +171,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv =false, std::stri
 
     YinyangSimp<T> yy;
     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    "Lazy","YY");
+    "LSH","YY");
     logger_yy.start_time();
 
     yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);

@@ -1,7 +1,9 @@
+#!/bin/bash
+cd ~/parlaykmeans
 
 bazel build update_bench_run
 
-
+mkdir -p ./experiments/experiment18/output/
 
 for multi in {10,100,1000,10000,100000}
 do
