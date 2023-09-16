@@ -1,0 +1,74 @@
+n=1mil (BigANN dataset) 
+k=1000
+max iters 5
+
+About 16s to read in data 
+
+*Note random inits different each time (could fix I guess with the seed option). Default seed is (time(NULL))
+
+syin-ns
+no BLAS 19 threads: 18.5s
+2.3 billion distance calculations 
+
+syin-sn no BLAS 19 threads
+20.7s
+2.5 bil dcs (dist calcs)
+
+syin-sn 1 thread no BLAS: 
+325s
+2.4 bil dcs
+
+syin-sn 19 thread yes BLAS:
+6.1s
+
+syin-sn 1 thread yes BLAS:
+84.7s
+
+__________________________
+
+naive summary info:
+n=1mil
+k=100 (note change in k)
+max iters 5
+
+no BLAS 1 thread:
+76.8s
+
+no BLAS 19 thread:
+5.1s
+
+yes BLAS 1 thread:
+13.3s
+
+yes BLAS 19 thread:
+1.4s
+
+k=1000 (for comparison) yes BLAS 19 thread:
+17.5s
+
+k=1000 no BLAS 19 thread:
+43.4s
+
+__________________________
+
+
+Our code:
+naive, k=1000, all threads, vectorized distance:
+2.92s
+yy, ""
+2.89s
+
+
+k=10000:
+
+naive: 27.3
+yy: seg fault?!
+
+
+Setting PARLAY_NUM_THREADS=19 (with no vd)
+naive: 79.29s
+yy: 45.84s
+
+Mlpack naive k=1000 max_iter=5
+75s clustering + 14.4s load data
+

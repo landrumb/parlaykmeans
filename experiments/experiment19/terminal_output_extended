@@ -1,0 +1,716 @@
+bin/blaslesskmeans -nc 1000 -din ../../my_data/u8bin_1000000_txt -nth 19 --maxiter 5 -alg syin-ns
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 3207200 bytes   initial mse : 0.000000   initial validation mse : N/A
+1000 94 37 21 11 3 1 2 1 1 0 
+rounds: 10      round changes : 0       distance calcs in X-update : 1100000    total distance calcs : 1100000        time : 24 ms
+final mse : 73276.867188         # empty : 0
+*****************************
+
+
+*****************************
+kmeans with algorithm : p21v3    estimated memory required : 2139722816 bytes    initial mse : 101115.867188    initial validation mse : N/A
+1000000 376318 189726 130759 100812 82353 
+rounds: 5       round changes : 0       distance calcs in X-update : 1251170821 total distance calcs : 2251185821       time : 18585 ms
+final mse : 67366.234375         # empty : 0
+
+____________________________________________
+bin/blaslesskmeans -nc 1000 -din ../../my_data/u8bin_1000000_txt -nth 19 --maxiter 5 -alg syin-sn
+
+*****************************
+kmeans with algorithm : p17v3    estimated memory required : 1877682408 bytes    initial mse : 101366.179688    initial validation mse : N/A
+1000000 383576 197120 133605 102079 83159 
+rounds: 5       round changes : 0       distance calcs in X-update : 1519948740 total distance calcs : 2519953740       time : 20684 ms
+final mse : 67411.968750         # empty : 0
+*****************************
+
+bin/blaslesskmeans -nc 1000 -din ../../my_data/u8bin_1000000_txt --maxiter 
+5 -alg syin-sn
+
+*****************************
+kmeans with algorithm : p17v3    estimated memory required : 1859106408 bytes    initial mse : 100808.531250    initial validation mse : N/A
+1000000 374311 189458 129813 99138 79828 
+rounds: 5       round changes : 0       distance calcs in X-update : 1453521449 total distance calcs : 2453526449       time : 325277 ms
+final mse : 67376.476562         # empty : 0
+*****************************
+
+bin/withblaskmeans -nc 1000 -din ../my_data/u8bin_1000000_txt -nth 19 --maxiter 5 -alg syin-sn
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 3207200 bytes       initial mse : 0.000000         initial validation mse : N/A
+1000 114 52 28 13 9 8 2 0 
+rounds: 8       round changes : 0       distance calcs in X-update : 900000     total distance calcs : 900000   time : 11 ms
+final mse : 73366.070312         # empty : 0
+*****************************
+
+
+*****************************
+kmeans with algorithm : p17v3    estimated memory required : 1877682408 bytes    initial mse : 101210.367188    initial validation mse : N/A
+1000000 378626 188580 129502 99302 81231 
+rounds: 5       round changes : 0       distance calcs in X-update : 1462733100 total distance calcs : 2462738100       time : 6160 ms
+final mse : 67412.148438         # empty : 0
+
+
+bin/withblaskmeans -nc 1000 -din ../my_data/u8bin_1000000_txt  --maxiter 5 -alg
+ syin-sn
+
+*****************************
+kmeans with algorithm : p17v3    estimated memory required : 1859106408 bytes    initial mse : 101054.789062    initial validation mse : N/A
+1000000 382216 191714 132831 101338 81591 
+rounds: 5       round changes : 0       distance calcs in X-update : 1475433863 total distance calcs : 2475438863       time : 84659 ms
+final mse : 67346.687500         # empty : 0
+*****************************
+
+bin/blaslesskmeans -nc 100 -din ../../my_data/u8bin_1000000_txt -nth 1 --maxiter 5 -alg sta
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 1040309600 bytes    initial mse : 0.000000      initial validation mse : N/A
+1000000 348486 184693 128123 95885 75333 
+rounds: 5       round changes : 0       distance calcs in X-update : 600000000  total distance calcs : 600000000     time : 76832 ms
+final mse : 84021.984375         # empty : 0
+*****************************
+
+bin/blaslesskmeans -nc 100 -din ../../my_data/u8bin_1000000_txt -nth 19 --maxiter 5 -alg sta
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 1042167200 bytes    initial mse : 0.000000      initial validation mse : N/A
+1000000 341836 176022 114646 83925 68147 
+rounds: 5       round changes : 0       distance calcs in X-update : 600000000  total distance calcs : 600000000     time : 5178 ms
+final mse : 84042.835938         # empty : 0
+
+ bin/withblaskmeans -nc 100 -din ../my_data/u8bin_1000000_txt -nth 1 
+--maxiter 5 -alg sta
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 1040309600 bytes    initial mse : 0.000000      initial validation mse : N/A
+1000000 357456 183816 124032 91623 70653 
+rounds: 5       round changes : 0       distance calcs in X-update : 600000000  total distance calcs : 600000000     time : 13284 ms
+final mse : 84062.000000         # empty : 0
+*****************************
+
+bin/withblaskmeans -nc 100 -din ../my_data/u8bin_1000000_txt -nth 19 --maxiter 5 -alg sta
+
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 1042167200 bytes    initial mse : 0.000000      initial validation mse : N/A
+1000000 340713 179038 124271 95970 75008 
+rounds: 5       round changes : 0       distance calcs in X-update : 600000000  total distance calcs : 600000000     time : 1376 ms
+final mse : 84074.429688         # empty : 0
+*****************************
+bin/withblaskmeans -nc 1000 -din ../my_data/u8bin_1000000_txt -nth 1
+9 --maxiter 5 -alg sta
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 1061672000 bytes    initial mse : 0.000000      initial validation mse : N/A
+1000000 377529 191355 130532 99565 80777 
+rounds: 5       round changes : 0       distance calcs in X-update : 6000000000 total distance calcs : 6000000000    time : 17481 ms
+final mse : 67398.609375         # empty : 0
+*****************************
+
+bin/blaslesskmeans -nc 1000 -din ../../my_data/u8bin_1000000_txt
+ -nth 19 --maxiter 5 -alg sta
+
+*****************************
+kmeans with algorithm : simple kmeans    estimated memory required : 1061672000 bytes    initial mse : 0.000000      initial validation mse : N/A
+1000000 375834 189789 130791 99996 81168 
+rounds: 5       round changes : 0       distance calcs in X-update : 6000000000 total distance calcs : 6000000000    time : 43416 ms
+final mse : 67430.382812         # empty : 0
+*****************************
+
+andrew@fern:~/parlaykmeans$ ./bazel-bin/kmeans_test_run -k 1000 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D Euclidean -m 5 -two yes 
+Using Euclidean distance
+Detected 1000000 points with dimension 128
+Running bench two 
+n d 1000000 128
+printing 1st 3 points, first 10 dim of each
+int cast needed for uint8s
+0 0 0 1 8 7 3 2 5 0 
+65 35 8 0 0 0 1 63 48 27 
+0 0 0 0 0 0 4 1 15 0 
+
+made it hey 1
+starting lsh
+Parlay time: Generated the hps: 0.0325
+Parlay time: got the hashes: 0.2767
+boutaa sort
+Parlay time: Just sorted: 0.0082
+calculating centers
+Finished with center added, now onto asg
+Parlay time: Calculated the centers: 0.0085
+Parlay time: Got the asg too: 0.0017
+left lsh code 
+Trying to use the Kmeans<templatted> function call
+LSH initialization with NaiveKmeans iterations.
+n:              1000000
+d:              128
+k:              1000
+max_iter:       5
+epsilon:        0
+running vd
+assignment time:        0.5245
+update time:            0.05698
+setup time:             0
+msse:                   8.552e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 1.024e+04
+        min:  1027
+        max:  3.02e+04
+assignment time:        0.54
+update time:            0.07566
+setup time:             0
+msse:                   7.248e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 2066
+        min:  78.77
+        max:  7640
+assignment time:        0.5208
+update time:            0.0529
+setup time:             0
+msse:                   6.959e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 713.7
+        min:  19.18
+        max:  3609
+assignment time:        0.5175
+update time:            0.05392
+setup time:             0
+msse:                   6.85e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 363.6
+        min:  5.095
+        max:  3271
+assignment time:        0.5186
+update time:            0.05084
+setup time:             0
+msse:                   6.792e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 219.2
+        min:  5.668
+        max:  1757
+iterations:     5
+total time:     2.92
+avg iteration time:     0.5839
+Total assign time:      2.621
+Total update time:      0.2903
+Total setup time:       0
+LSH initialization with YY iterations.
+n:              1000000
+d:              128
+k:              1000
+max_iter:       5
+epsilon:        0
+Thus begins yinyang debugging
+t is 50
+Lazy initialization with Internal Naive iterations.
+n:              1000
+d:              128
+k:              50
+max_iter:       5
+epsilon:        0
+iterations:     0
+total time:     0.001513
+avg iteration time:     inf
+Total assign time:      0
+Total update time:      0
+Total setup time:       0
+assignment time:        0
+update time:            0
+setup time:             0.00803
+msse:                   45
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+assignment time:        0
+update time:            0
+setup time:             0.9404
+msse:                   48
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+assignment time:        0
+update time:            0
+setup time:             0.5371
+msse:                   49
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+Passed elt counter test 
+using the filter version 
+assignment time:        0.000793
+update time:            0.215
+setup time:             0
+msse:                   8.552e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 99.37
+        min:  32.05
+        max:  173.8
+iter: 2
+assignment time:        0.3524
+update time:            0.1522
+setup time:             0.004365
+msse:                   7.248e+04
+distance calculations:  724804180
+center reassignments:   43
+center movements:
+        mean: 44.14
+        min:  8.875
+        max:  87.41
+iter: 3
+assignment time:        0.2064
+update time:            0.04126
+setup time:             0.0017
+msse:                   6.959e+04
+distance calculations:  425799242
+center reassignments:   186
+center movements:
+        mean: 25.66
+        min:  4.379
+        max:  60.08
+iter: 4
+assignment time:        0.1909
+update time:            0.02717
+setup time:             0.002138
+msse:                   6.85e+04
+distance calculations:  403111137
+center reassignments:   251
+center movements:
+        mean: 18.14
+        min:  2.257
+        max:  57.19
+iter: 5
+assignment time:        0.1701
+update time:            0.02059
+setup time:             0.001728
+msse:                   6.792e+04
+distance calculations:  354556492
+center reassignments:   48
+center movements:
+        mean: 14
+        min:  2.381
+        max:  41.92
+iterations:     8
+total time:     2.893
+avg iteration time:     0.3617
+Total assign time:      0.9206
+Total update time:      0.4562
+Total setup time:       1.495
+finished
+
+andrew@fern:~/parlaykmeans$ ./bazel-bin/kmeans_test_run -k 10000 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D Euclidean -m 5 -two yes 
+Using Euclidean distance
+Detected 1000000 points with dimension 128
+Running bench two 
+n d 1000000 128
+printing 1st 3 points, first 10 dim of each
+int cast needed for uint8s
+0 0 0 1 8 7 3 2 5 0 
+65 35 8 0 0 0 1 63 48 27 
+0 0 0 0 0 0 4 1 15 0 
+
+made it hey 1
+starting lsh
+Parlay time: Generated the hps: 0.0226
+Parlay time: got the hashes: 0.2727
+boutaa sort
+Parlay time: Just sorted: 0.0097
+calculating centers
+Finished with center added, now onto asg
+Parlay time: Calculated the centers: 0.0099
+Parlay time: Got the asg too: 0.0019
+left lsh code 
+Trying to use the Kmeans<templatted> function call
+LSH initialization with NaiveKmeans iterations.
+n:              1000000
+d:              128
+k:              10000
+max_iter:       5
+epsilon:        0
+running vd
+assignment time:        5.32
+update time:            0.09064
+setup time:             0
+msse:                   7.082e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 1.101e+04
+        min:  0
+        max:  1.111e+05
+assignment time:        5.395
+update time:            0.1102
+setup time:             0
+msse:                   5.932e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 2512
+        min:  0
+        max:  9.927e+04
+assignment time:        5.364
+update time:            0.1135
+setup time:             0
+msse:                   5.654e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 976.8
+        min:  0
+        max:  8.855e+04
+assignment time:        5.353
+update time:            0.1066
+setup time:             0
+msse:                   5.544e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 502.6
+        min:  0
+        max:  7.528e+04
+assignment time:        5.326
+update time:            0.09845
+setup time:             0
+msse:                   5.486e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 307
+        min:  0
+        max:  1.951e+04
+iterations:     5
+total time:     27.3
+avg iteration time:     5.46
+Total assign time:      26.76
+Total update time:      0.5194
+Total setup time:       0
+LSH initialization with YY iterations.
+n:              1000000
+d:              128
+k:              10000
+max_iter:       5
+epsilon:        0
+Thus begins yinyang debugging
+t is 100
+Lazy initialization with Internal Naive iterations.
+n:              10000
+d:              128
+k:              100
+max_iter:       5
+epsilon:        0
+iterations:     0
+total time:     0.01016
+avg iteration time:     inf
+Total assign time:      0
+Total update time:      0
+Total setup time:       0
+assignment time:        0
+update time:            0
+setup time:             0.03946
+msse:                   45
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+assignment time:        0
+update time:            0
+setup time:             10.61
+msse:                   48
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+assignment time:        0
+update time:            0
+setup time:             0.8277
+msse:                   49
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+Passed elt counter test 
+using the filter version 
+assignment time:        0.000494
+update time:            0.7662
+setup time:             0
+msse:                   7.082e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 100.8
+        min:  0
+        max:  333.3
+iter: 2
+Segmentation fault (core dumped)
+-----------------------------------
+
+
+andrew@fern:~/parlaykmeans$ export PARLAY_NUM_THREADS=19
+andrew@fern:~/parlaykmeans$ echo $PARLAY_NUM_THREADS
+19
+andrew@fern:~/parlaykmeans$ ./bazel-bin/kmeans_test_run -k 1000 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_1000000 -f bin -t uint8 -D short -m 5 -two yes 
+Using short Euclidean
+Detected 1000000 points with dimension 128
+Running bench two 
+n d 1000000 128
+printing 1st 3 points, first 10 dim of each
+int cast needed for uint8s
+0 0 0 1 8 7 3 2 5 0 
+65 35 8 0 0 0 1 63 48 27 
+0 0 0 0 0 0 4 1 15 0 
+
+made it hey 1
+starting lsh
+Parlay time: Generated the hps: 0.0027
+Parlay time: got the hashes: 1.4598
+boutaa sort
+Parlay time: Just sorted: 0.0138
+calculating centers
+Finished with center added, now onto asg
+Parlay time: Calculated the centers: 0.0288
+Parlay time: Got the asg too: 0.0013
+left lsh code 
+Trying to use the Kmeans<templatted> function call
+LSH initialization with NaiveKmeans iterations.
+n:              1000000
+d:              128
+k:              1000
+max_iter:       5
+epsilon:        0
+running vd
+assignment time:        16.08
+update time:            0.1084
+setup time:             0
+msse:                   8.627e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 1.093e+04
+        min:  1562
+        max:  3.434e+04
+assignment time:        15.67
+update time:            0.1005
+setup time:             0
+msse:                   7.267e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 2267
+        min:  143.8
+        max:  1.216e+04
+assignment time:        15.66
+update time:            0.1032
+setup time:             0
+msse:                   6.961e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 773.8
+        min:  37.8
+        max:  6284
+assignment time:        15.71
+update time:            0.08713
+setup time:             0
+msse:                   6.847e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 379.4
+        min:  15.82
+        max:  2470
+assignment time:        15.69
+update time:            0.0885
+setup time:             0
+msse:                   6.789e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 228.6
+        min:  5.507
+        max:  2281
+iterations:     5
+total time:     79.29
+avg iteration time:     15.86
+Total assign time:      78.8
+Total update time:      0.4878
+Total setup time:       0
+LSH initialization with YY iterations.
+n:              1000000
+d:              128
+k:              1000
+max_iter:       5
+epsilon:        0
+Thus begins yinyang debugging
+t is 50
+Lazy initialization with Internal Naive iterations.
+n:              1000
+d:              128
+k:              50
+max_iter:       5
+epsilon:        0
+iterations:     0
+total time:     0.005971
+avg iteration time:     inf
+Total assign time:      0
+Total update time:      0
+Total setup time:       0
+assignment time:        0
+update time:            0
+setup time:             0.01373
+msse:                   45
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+assignment time:        0
+update time:            0
+setup time:             23.62
+msse:                   48
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+assignment time:        0
+update time:            0
+setup time:             0.4863
+msse:                   49
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 0
+        min:  0
+        max:  0
+Passed elt counter test 
+using the filter version 
+assignment time:        0.00015
+update time:            0.5358
+setup time:             0
+msse:                   8.627e+04
+distance calculations:  0
+center reassignments:   0
+center movements:
+        mean: 102.6
+        min:  39.52
+        max:  185.3
+iter: 2
+assignment time:        7.928
+update time:            0.5594
+setup time:             0.008555
+msse:                   7.267e+04
+distance calculations:  789488121
+center reassignments:   2
+center movements:
+        mean: 46.01
+        min:  11.99
+        max:  110.3
+iter: 3
+assignment time:        4.526
+update time:            0.1249
+setup time:             0.002451
+msse:                   6.961e+04
+distance calculations:  482595548
+center reassignments:   155
+center movements:
+        mean: 26.51
+        min:  6.148
+        max:  79.27
+iter: 4
+assignment time:        4.324
+update time:            0.07974
+setup time:             0.002238
+msse:                   6.847e+04
+distance calculations:  466245322
+center reassignments:   103
+center movements:
+        mean: 18.44
+        min:  3.977
+        max:  49.7
+iter: 5
+assignment time:        3.507
+update time:            0.06015
+setup time:             0.002433
+msse:                   6.789e+04
+distance calculations:  381822696
+center reassignments:   161
+center movements:
+        mean: 14.2
+        min:  2.347
+        max:  47.76
+iterations:     8
+total time:     45.84
+avg iteration time:     5.73
+Total assign time:      20.29
+Total update time:      1.36
+Total setup time:       24.14
+finished
+
+Mlpack: 
+
+andrew@fern:~/mlpack$ mlpack_kmeans --input_file /ssd1/anndata/bigann/base.1B.u8bin.crop_1000000_raw_text.txt --clusters 1000 -v -m 5
+[INFO ] Loading '/ssd1/anndata/bigann/base.1B.u8bin.crop_1000000_raw_text.txt' as raw ASCII formatted data.  Size is 128 x 1000000.
+[INFO ] Cluster 847 is empty.
+[INFO ] KMeans::Cluster(): iteration 1, residual 5572.35.
+[INFO ] KMeans::Cluster(): iteration 2, residual 1118.22.
+[INFO ] KMeans::Cluster(): iteration 3, residual 694.811.
+[INFO ] KMeans::Cluster(): iteration 4, residual 515.963.
+[INFO ] KMeans::Cluster(): iteration 5, residual 413.304.
+[INFO ] KMeans::Cluster(): terminated after limit of 5 iterations.
+[INFO ] 5000005000 distance calculations.
+[INFO ] 
+[INFO ] Execution parameters:
+[INFO ]   algorithm: naive
+[INFO ]   allow_empty_clusters: 0
+[INFO ]   centroid_file: ''
+[INFO ]   clusters: 1000
+[INFO ]   help: 0
+[INFO ]   in_place: 0
+[INFO ]   info: 
+[INFO ]   initial_centroids_file: ''
+[INFO ]   input_file: '/ssd1/anndata/bigann/base.1B.u8bin.crop_1000000_raw_text.txt' (1000000x128 matrix)
+[INFO ]   kill_empty_clusters: 0
+[INFO ]   kmeans_plus_plus: 0
+[INFO ]   labels_only: 0
+[INFO ]   max_iterations: 5
+[INFO ]   output_file: ''
+[INFO ]   percentage: 0.02
+[INFO ]   refined_start: 0
+[INFO ]   samplings: 100
+[INFO ]   seed: 0
+[INFO ]   verbose: 1
+[INFO ]   version: 0
+[INFO ] Program timers:
+[INFO ]   clustering: 74.915112s (1 mins, 14.9 secs)
+[INFO ]   loading_data: 14.385509s
+[INFO ]   total_time: 90.145458s (1 mins, 30.1 secs)
+andrew@fern:~/mlpack$ 
+
+andrew@fern:~/mlpack$ mlpack_kmeans --version
+K-Means Clustering: part of mlpack git-c667caea6.

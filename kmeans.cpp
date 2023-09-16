@@ -102,8 +102,8 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
 
     //using LSH not LazyStart to be more realistic
 
-    // LSH<T> lazy_init;
-    // lazy_init(v,n,d,k,c,asg,D);
+    LSH<T> lsh_init;
+    lsh_init(v,n,d,k,c,asg,D);
 
 //      std::cout << "printing different initializations, first 50: " << std::endl;
 //    for (size_t i = 0; i < 50; i++) {
@@ -121,9 +121,13 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     }
 
     std::cout << "Trying to use the Kmeans<templatted> function call" << std::endl;
-     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-     "LSH","YY");
-    Kmeans<T,LSH<T>,YinyangSimp<T>>(v,n,d,k,c,asg,D,logger_yy,10,0);
+    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    // "LSH","YY");
+    //Kmeans<T,LSH<T>,YinyangSimp<T>>(v,n,d,k,c,asg,D,logger_yy,max_iter,0);
+    
+    
+    //Kmeans<T,LSH<T>,NaiveKmeans<T>>(v,n,d,k,c2,asg2,D,logger_yy,max_iter,0);
+
 
     // QuantizedKmeans<T> quant;
     // kmeans_bench logger_quant = kmeans_bench(n,d,k,max_iter,epsilon,"Lazy","Quant");
@@ -153,15 +157,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // logger_lshq.end_time();
 
  
-    // NaiveKmeans<T> nie;
-    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    // epsilon,"LSH","NaiveKmeans");
-    // logger_nie.start_time();
-    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    // logger_nie.end_time();
-    // if (output_log_to_csv) {
-    //     logger_nie.output_to_csv(output_file_name1);
-    // }
+    NaiveKmeans<T> nie;
+    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    epsilon,"LSH","NaiveKmeans");
+    logger_nie.start_time();
+    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    logger_nie.end_time();
+    if (output_log_to_csv) {
+        logger_nie.output_to_csv(output_file_name1);
+    }
 
     // NaiveKmeans<T> nie2;
     // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
@@ -175,15 +179,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    // YinyangSimp<T> yy;
-    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    // "LSH","YY");
-    // logger_yy.start_time();
+    YinyangSimp<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "LSH","YY");
+    logger_yy.start_time();
 
-    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    // logger_yy.end_time();
-    // if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
+    logger_yy.end_time();
+    if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
 
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();
@@ -204,12 +208,13 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     //     std::cout << std::endl;
     // }
 
-    std::cout << "Printing out 5 final assignments: " << std::endl;
-    for (size_t i = 0; i < std::min(n,(size_t) 50); i++) {
-        std::cout << asg[i] << " " << std::endl;// << asg2[i] << " " << std::endl;
+    // std::cout << "Printing out 5 final assignments: " << std::endl;
+    // for (size_t i = 0; i < std::min(n,(size_t) 50); i++) {
+    //     std::cout << asg[i] << " " << std::endl;// << asg2[i] << " " << std::endl;
         
-    }
-    std::cout << std::endl << std::endl;
+    // }
+    // std::cout << std::endl << std::endl;
+    std::cout << "finished" << std::endl;
 
     delete[] c;
     delete[] asg;
