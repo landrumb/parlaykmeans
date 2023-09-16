@@ -7,7 +7,8 @@ Note that for yy sometimes I include the grouping simple k-means run, other time
 
 To continue this experiment, we run yy and naive with the vectorized distance class (which I estimate to be x4 faster), with all the threads, as well as without the vectorized distance class with 19 threads. 
 
-
+Run (our code) on this commit:
+3b34eee9d76093b080b8179b686660bfb71d1723
 
 
 
