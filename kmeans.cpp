@@ -24,6 +24,7 @@
 #include "include/lazy.h"
 #include "include/naive.h"
 #include "yinyang_simp.h" //can switch to fast_center
+#include "yy_improved/yy.h" //ideally improved yy
 #include "quantized.h"
 #include "nisk_kmeans.h"
 #include "lsh.h"
@@ -156,16 +157,16 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // lshq.cluster(v,n,d,k,c,asg,D,logger_lshq,max_iter,epsilon);
     // logger_lshq.end_time();
 
- 
-    NaiveKmeans<T> nie;
-    kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
-    epsilon,"LSH","NaiveKmeans");
-    logger_nie.start_time();
-    nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
-    logger_nie.end_time();
-    if (output_log_to_csv) {
-        logger_nie.output_to_csv(output_file_name1);
-    }
+    //Don't need to run as already know how long it takes
+    // NaiveKmeans<T> nie;
+    // kmeans_bench logger_nie = kmeans_bench(n,d,k,max_iter,
+    // epsilon,"LSH","NaiveKmeans");
+    // logger_nie.start_time();
+    // nie.cluster(v,n,d,k,c,asg,D,logger_nie,max_iter,epsilon);
+    // logger_nie.end_time();
+    // if (output_log_to_csv) {
+    //     logger_nie.output_to_csv(output_file_name1);
+    // }
 
     // NaiveKmeans<T> nie2;
     // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
@@ -179,7 +180,7 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    YinyangSimp<T> yy;
+    YinyangImproved<T> yy;
     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
     "LSH","YY");
     logger_yy.start_time();

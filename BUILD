@@ -172,7 +172,11 @@ cc_library(
 "include/quantized.h",
 "include/nisk_kmeans.h",
 "include/lsh.h",
-"include/lsh_quantized.h",],
+"include/lsh_quantized.h",
+"include/yy_improved/yy.h",
+"include/yy_improved/yy_compute_centers.h",
+"include/yy_improved/yy_structs.h",
+],
 
 linkopts=["-pthread"],
 #makes it known that include is an include library
