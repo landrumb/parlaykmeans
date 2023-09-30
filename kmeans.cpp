@@ -172,9 +172,9 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
     // epsilon,"Lazy","NaiveKmeans");
     // logger_nie2.start_time();
-    // nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie,max_iter,epsilon);
+    // nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie2,max_iter,epsilon);
     // logger_nie2.end_time();
-    // logger_nie.output_to_csv(output_file_name1);
+    // //logger_nie2.output_to_csv(output_file_name1);
 
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
@@ -182,13 +182,23 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
 
     YinyangImproved<T> yy;
     kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    "LSH","YY");
+    "LSH","YY Imp");
     logger_yy.start_time();
 
     yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
     logger_yy.end_time();
-    if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
+    // if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
+
+    // YinyangSimp<T> yy_simp;
+    // kmeans_bench logger_yy_simp = kmeans_bench(n,d,k,max_iter,epsilon,
+    // "LSH","YY Simp");
+    // logger_yy_simp.start_time();
+
+    // yy_simp.cluster(v,n,d,k,c,asg,D,logger_yy_simp, max_iter,epsilon);
+
+    // logger_yy_simp.end_time();
+    // if (output_log_to_csv) { logger_yy_simp.output_to_csv(output_file_name2); }
 
     // std::cout << "Cutting out after yy" << std::endl;
     // abort();

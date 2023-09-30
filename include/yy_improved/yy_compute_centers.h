@@ -57,7 +57,8 @@ struct YyComputeCentersImp {
     });
 
    // t2.next("Filtered");
-
+    //TODO this seems a quite inefficient way to 
+    //parallelize the yy adding structure, think about again
     parlay::parallel_for(0,k,[&] (size_t j) {
       if (centers[j].has_changed) {
         parlay::sequence<typename ys::point> add_these = parlay::filter(changed_points, [&] (typename ys::point& p) {
@@ -88,11 +89,7 @@ struct YyComputeCentersImp {
           center_calc[j*d+coord] /= static_cast<double>(centers[j].new_num_members);
         }
       }
-      // else {
-      //   for (size_t coord = 0; coord < d; coord++) {
-      //     center_calc[j*d+coord] = static_cast<double>(centers[j].coordinates[coord]);
-      //   }
-      // }
+      
     });
 
     parlay::parallel_for(0,k*d,[&] (size_t i) {
@@ -113,16 +110,23 @@ struct YyComputeCentersImp {
   //compute centers calculates the new centers the standard way
   //puts the new values into the float* center_calc_float
   //TODO make a different run (no casting) if T is a float
-  void compute_centers_filter(
+  void compute_centers_filter(T* v,
   const parlay::sequence<typename ys::point>& pts, size_t n, size_t d, size_t k, 
   const parlay::sequence<typename ys::center>& centers, double* center_calc,
   float* center_calc_float,bool suppress_logging=false) {
+    //copy center coords into center_calc_float
+    parlay::parallel_for(0,k,[&] (size_t i) {
+      for (size_t j = 0; j < d; j++) {
+        center_calc_float[i*d+j] = centers[i].coordinates[j];
+
+      }
+    });
 
     auto rangn = parlay::delayed_tabulate(n,[&] (size_t i) { return i; });
-    
+    //TODO pass in the pts_grouped_by_center <- avoid doing a group_by twice**
     parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>> pts_grouped_by_center = parlay::group_by_key(parlay::map(rangn,[&] (size_t i) {
     return std::pair(pts[i].best,i);
-  }));
+    }));
 
     get_groups1(v,n,d,k,center_calc_float,pts,pts_grouped_by_center);
 
@@ -130,7 +134,7 @@ struct YyComputeCentersImp {
 
   }
   //first part of update centers is to get the partitioning of the points (we do with a group by)
-  void get_groups1(T* v, size_t n, size_t d, size_t k, float* c, const parlay::sequence<typename ys::point>& pts, const parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>>& pts_grouped_by_center) {
+  void get_groups1(T* v, size_t n, size_t d, size_t k, float* c, const parlay::sequence<typename ys::point>& pts, parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>>& pts_grouped_by_center) {
 
 
     auto rangn = parlay::delayed_tabulate(n,[&] (size_t i) { return i; });
@@ -140,7 +144,7 @@ struct YyComputeCentersImp {
   }
 
   //second part of update centers is to do the actual adding
-  void add_points2(T* v, size_t n, size_t d, size_t k, float* c, parlay::sequence<typename ys::point>& pts, parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>>& pts_grouped_by_center) {
+  void add_points2(T* v, size_t n, size_t d, size_t k, float* c, const parlay::sequence<typename ys::point>& pts, parlay::sequence<std::pair<size_t,parlay::sequence<size_t>>>& pts_grouped_by_center) {
 
     parlay::parallel_for(0,k,[&] (size_t i) {
         size_t picked_center_d = pts_grouped_by_center[i].first*d;

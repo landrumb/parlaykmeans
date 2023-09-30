@@ -35,19 +35,25 @@ struct YyStructsImp {
     float global_lb; //global lower bound
     ui old_best; //the previous best
 
-    point() : best(-1), coordinates(nullptr, nullptr), 
+    point() : best(-1), coordinates(nullptr, nullptr), id(-1),
     ub(std::numeric_limits<float>::max()) {
     }
 
-    point(ui chosen, parlay::slice<T*,T*> coordinates) : best(chosen), 
-    coordinates(coordinates.begin(),coordinates.end()), 
+    point(ui chosen, parlay::slice<T*,T*> coordinates) : best(chosen),
+    coordinates(coordinates.begin(),coordinates.end()),  id(-1),
+    ub(std::numeric_limits<float>::max()) {
+
+    }
+
+    point(ui chosen, size_t id, parlay::slice<T*,T*> coordinates) : best(chosen), 
+    coordinates(coordinates.begin(),coordinates.end()), id(id), 
     ub(std::numeric_limits<float>::max()) {
 
     }
   
 
     point(ui chosen, parlay::slice<T*,T*> coordinates, float ub) : 
-    best(chosen), coordinates(coordinates.begin(),coordinates.end()), 
+    best(chosen), coordinates(coordinates.begin(),coordinates.end()), id(-1),
     ub(ub) {
 
     }

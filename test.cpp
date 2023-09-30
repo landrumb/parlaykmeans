@@ -117,28 +117,36 @@ int main() {
   // }
   // std::cout << std::endl;
 
-  size_t k = 81;
-  size_t kstar = 3;
-  size_t split = 4;
+  // size_t k = 81;
+  // size_t kstar = 3;
+  // size_t split = 4;
   
 
-  std::cout << "Debugging center selects" << std::endl;
+  // std::cout << "Debugging center selects" << std::endl;
 
-  std::cout << "pow(Kstar, 0) " << std::pow(kstar,0) << std::endl;
-  std::cout << "1 / pow(kstar,0)" << (1/std::pow(kstar,0)) << std::endl;
+  // std::cout << "pow(Kstar, 0) " << std::pow(kstar,0) << std::endl;
+  // std::cout << "1 / pow(kstar,0)" << (1/std::pow(kstar,0)) << std::endl;
 
-   for (size_t i = 0; i < k; i++) {
-      parlay::sequence<size_t> center_selects(split);
-      std::cout << "printing center select for i: " << i << std::endl;
+  //  for (size_t i = 0; i < k; i++) {
+  //     parlay::sequence<size_t> center_selects(split);
+  //     std::cout << "printing center select for i: " << i << std::endl;
 
-      for (size_t j = 0; j < split; j++) {
-        center_selects[j] = static_cast<long>(i / std::pow(kstar,j)) % kstar;
-        std::cout << center_selects[j] << " ";
+  //     for (size_t j = 0; j < split; j++) {
+  //       center_selects[j] = static_cast<long>(i / std::pow(kstar,j)) % kstar;
+  //       std::cout << center_selects[j] << " ";
 
-      }
-      std::cout << std::endl;
+  //     }
+  //     std::cout << std::endl;
     
+  //   }
+  parlay::parallel_for(0,20,[&] (size_t i) {
+    if (i == 10) {
+      return;
+
     }
+    std::cout << i << std::endl;
+
+  });
 
 
 
