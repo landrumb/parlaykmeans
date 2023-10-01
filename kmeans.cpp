@@ -28,6 +28,7 @@
 #include "quantized.h"
 #include "nisk_kmeans.h"
 #include "lsh.h"
+#include "pq_kmeans.h"
 //#include "lsh_quantized.h"
 
 #define INITIALIZER MacQueen
@@ -188,6 +189,12 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
     logger_yy.end_time();
+
+    PQKmeans<T> pq;
+    kmeans_bench logger_pq = kmeans_bench(n,d,k,max_iter,epsilon,"LSH","PQ Kmeans actually Naive rn");
+    logger_pq.start_time();
+    pq.cluster(v,n,d,k,c2,asg2,D,logger_pq,max_iter,epsilon);
+    logger_pq.end_time();
     // if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
 
     // YinyangSimp<T> yy_simp;

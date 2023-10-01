@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <fstream>
-#include <ostream>
-#include <iostream>
+// #include <stdio.h>
+// #include <fstream>
+// #include <ostream>
+// #include <iostream>
 
 // #include <gtest/gtest.h>
 
@@ -16,9 +16,9 @@
 // #include "yinyang_simp.h"
 // #include "include/utils/kmeans_bench.h"
 
-#include "parlay/sequence.h"
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
+// #include "parlay/sequence.h"
+// #include "parlay/parallel.h"
+// #include "parlay/primitives.h"
 
 
 // struct kmeans_test : testing::test{
@@ -77,7 +77,7 @@
 //   }
 // }
 
-#include <cmath> 
+// #include <cmath> 
 
 
 int main() {
@@ -139,16 +139,24 @@ int main() {
   //     std::cout << std::endl;
     
   //   }
-  parlay::parallel_for(0,20,[&] (size_t i) {
-    if (i == 10) {
-      return;
+  // parlay::parallel_for(0,20,[&] (size_t i) {
+  //   if (i == 10) {
+  //     return;
 
-    }
-    std::cout << i << std::endl;
+  //   }
+  //   std::cout << i << std::endl;
 
+  // });
+
+  std::cout << "using delayed seq " << std::endl;
+  auto s1 = parlay::delayed_tabulate(10,[&] (size_t i) {
+    return i;
   });
-
-
+  parlay::delayed_sequence<int, int, int > s2 = parlay::iota(20);
+  // for (int i = 0; i < s2.size(); i++) {
+  //   std::cout << s2[i] << " ";
+  // }
+  std::cout << std::endl;
 
   return 1;
 }

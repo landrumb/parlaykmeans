@@ -1,6 +1,6 @@
 #!bin/bash
 #uncomment this!
-#bazel build kmeans_test_run
+bazel build kmeans_test_run
 
 # ./bazel-bin/kmeans_test_run -k 50 -i Data/diff_europe.bin -f bin -t float -D short -m 10 -two yes 
 
@@ -18,4 +18,7 @@
 #./bazel-bin/kmeans_test_run -k 200 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_10000000 -f bin -t uint8 -D short -m 5 -two yes 
 
 
- ./bazel-bin/kmeans_test_run -k 200 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_10000000 -f bin -t uint8 -D short -m 5 -two yes 
+#  ./bazel-bin/kmeans_test_run -k 200 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_10000000 -f bin -t uint8 -D short -m 5 -two yes 
+
+
+./bazel-bin/kmeans_test_run -k 200 -i /ssd1/anndata/bigann/base.1B.u8bin.crop_nb_10000000 -f bin -t uint8 -D short -m 5 -two yes 

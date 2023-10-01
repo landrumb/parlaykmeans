@@ -176,6 +176,7 @@ cc_library(
 "include/yy_improved/yy.h",
 "include/yy_improved/yy_compute_centers.h",
 "include/yy_improved/yy_structs.h",
+"include/pq_kmeans.h",
 ],
 
 linkopts=["-pthread"],

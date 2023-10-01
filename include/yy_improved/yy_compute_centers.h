@@ -115,9 +115,10 @@ struct YyComputeCentersImp {
   const parlay::sequence<typename ys::center>& centers, double* center_calc,
   float* center_calc_float,bool suppress_logging=false) {
     //copy center coords into center_calc_float
+    //TODO fixme this is sus?
     parlay::parallel_for(0,k,[&] (size_t i) {
       for (size_t j = 0; j < d; j++) {
-        center_calc_float[i*d+j] = centers[i].coordinates[j];
+        center_calc_float[i*d+j] = 0; //not c** TODO FIXME
 
       }
     });
@@ -131,6 +132,20 @@ struct YyComputeCentersImp {
     get_groups1(v,n,d,k,center_calc_float,pts,pts_grouped_by_center);
 
     add_points2(v,n,d,k,center_calc_float,pts,pts_grouped_by_center);
+    //if a center loses its members, do not zero out the center,
+    //just keep it where it is
+    parlay::parallel_for(0,k,[&] (size_t i) {
+
+      parlay::parallel_for(0,d,[&] (size_t coord) {
+        if (pts_grouped_by_center[i].second.size() == 0) {
+          
+          center_calc_float[pts_grouped_by_center[i].first*d+coord] = centers[pts_grouped_by_center[i].first].coordinates[coord];
+
+        }
+    
+      });
+    
+    });
 
   }
   //first part of update centers is to get the partitioning of the points (we do with a group by)
@@ -166,6 +181,7 @@ struct YyComputeCentersImp {
           c[pts_grouped_by_center[i].first*d+coord] /= pts_grouped_by_center[i].second.size();
 
         }
+      
 
       });
     
