@@ -32,6 +32,7 @@ float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, doubl
     iterations++;
 
     // Assign each point to the closest center
+    //TODO is the shadowed i a problem? don't think so but bad practice anyway change
     parlay::parallel_for(0, n, [&](size_t i) {
       float buf[2048];
       T* it = v+i*d;

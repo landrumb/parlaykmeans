@@ -181,14 +181,14 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // abort();
     // std::cout << "starting naive" << std::endl;
 
-    YinyangImproved<T> yy;
-    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
-    "LSH","YY Imp");
-    logger_yy.start_time();
+    // YinyangImproved<T> yy;
+    // kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    // "LSH","YY Imp");
+    // logger_yy.start_time();
 
-    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+    // yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
 
-    logger_yy.end_time();
+    // logger_yy.end_time();
 
     PQKmeans<T> pq;
     kmeans_bench logger_pq = kmeans_bench(n,d,k,max_iter,epsilon,"LSH","PQ Kmeans actually Naive rn");
