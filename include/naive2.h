@@ -32,17 +32,18 @@ float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, doubl
     iterations++;
 
     // Assign each point to the closest center
-    //TODO is the shadowed i a problem? don't think so but bad practice anyway change
-    parlay::parallel_for(0, n, [&](size_t i) {
+ 
+    //TODO note that we can't use a closest point function here as what's the type for argument rangk?
+    parlay::parallel_for(0, n, [&](size_t p) {
       float buf[2048];
-      T* it = v+i*d;
+      T* it = v+p*d;
       for (size_t i = 0; i < d; i++) buf[i]=*(it++);
       
-      auto distances = parlay::delayed::map(rangk, [&](size_t i) {
-          return D.distance(buf, c+i*d,d);
+      auto distances = parlay::delayed::map(rangk, [&](size_t r) {
+          return D.distance(buf, c+r*d,d);
       });
 
-      asg[i] = min_element(distances) - distances.begin();
+      asg[p] = min_element(distances) - distances.begin();
     });
 
     float assignment_time = t.next_time();
