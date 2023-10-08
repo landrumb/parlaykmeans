@@ -145,7 +145,7 @@ cc_binary(
 cc_test(
   name = "kmeans_google_test",
   size = "small",
-  srcs = ["extra_tests.cpp"],
+  srcs = ["tests/extra_tests.cpp"],
  
   deps = ["@googletest//:gtest_main",
     "kmeans_headers"],
@@ -153,6 +153,16 @@ cc_test(
   #makes it known that include is an include library
   copts = ["-Iinclude"],
   
+)
+
+cc_test(
+  name="naive_gtest",
+  size="small",
+  srcs="test_n2.cpp",
+  ["@googletest//:gtest_main",
+    "kmeans_headers"],
+  linkopts=["-pthread"],
+  copts = ["-Iinclude"],
 )
 
 cc_library(

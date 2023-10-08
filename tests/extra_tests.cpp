@@ -48,7 +48,7 @@ class NaiveKmeansTest : public ::testing::Test {
 
   
   static void SetUpTestSuite()  {
-    auto [v2,n_int,d_int] = parse_fbin("/ssd1/data/text2image1B/base.1B.fbin.crop_nb_1000000");
+    auto [v2,n_int,d_int] = parse_fbin("/ssd1/anndata/text2image1B/base.1B.fbin.crop_nb_1000000");
   n = (size_t) n_int;
    d = (size_t) d_int;
    v=v2;
