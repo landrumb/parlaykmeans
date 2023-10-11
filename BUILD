@@ -9,6 +9,7 @@ cc_binary(
     "@parlaylib//parlay:sequence",
     "@parlaylib//parlay:primitives",
     "@parlaylib//parlay:io",
+
   ],
 )
 
@@ -20,6 +21,7 @@ cc_binary(
       "@parlaylib//parlay:parallel",
       "@parlaylib//parlay:sequence",
       "@parlaylib//parlay:primitives",
+      "kmeans_headers" #remove when I finish testing NSG_Dist
     ],
 )
 
@@ -158,8 +160,18 @@ cc_test(
 cc_test(
   name="naive_gtest",
   size="small",
-  srcs="test_n2.cpp",
-  ["@googletest//:gtest_main",
+  srcs=["test_n2.cpp"],
+  deps=["@googletest//:gtest_main",
+    "kmeans_headers"],
+  linkopts=["-pthread"],
+  copts = ["-Iinclude"],
+)
+
+cc_test(
+  name="distance_gtest",
+  size="small",
+  srcs=["tests/distanceTests.cpp"],
+  deps=["@googletest//:gtest_main",
     "kmeans_headers"],
   linkopts=["-pthread"],
   copts = ["-Iinclude"],
@@ -187,6 +199,7 @@ cc_library(
 "include/yy_improved/yy_compute_centers.h",
 "include/yy_improved/yy_structs.h",
 "include/pq_kmeans.h",
+"include/naive2.h"
 ],
 
 linkopts=["-pthread"],

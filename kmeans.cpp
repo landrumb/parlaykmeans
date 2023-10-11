@@ -29,6 +29,7 @@
 #include "nisk_kmeans.h"
 #include "lsh.h"
 #include "pq_kmeans.h"
+#include "naive2.h"
 //#include "lsh_quantized.h"
 
 #define INITIALIZER MacQueen
@@ -104,8 +105,11 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
 
     //using LSH not LazyStart to be more realistic
 
-    LSH<T> lsh_init;
-    lsh_init(v,n,d,k,c,asg,D);
+    // LSH<T> lsh_init;
+    // lsh_init(v,n,d,k,c,asg,D);
+    //Lazy better??
+    LazyStart<T> init;
+    init(v,n,d,k,c,asg,D);
 
 //      std::cout << "printing different initializations, first 50: " << std::endl;
 //    for (size_t i = 0; i < 50; i++) {
@@ -175,7 +179,15 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
     // logger_nie2.start_time();
     // nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie2,max_iter,epsilon);
     // logger_nie2.end_time();
-    // //logger_nie2.output_to_csv(output_file_name1);
+    //logger_nie2.output_to_csv(output_file_name1);
+
+      NaiveKmeans2<T> nie2;
+    kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","Naive2");
+    logger_nie2.start_time();
+    nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie2,max_iter,epsilon);
+    logger_nie2.end_time();
+  
 
     // std::cout << "cutting out after my naive" << std::endl;
     // abort();
@@ -190,11 +202,11 @@ size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::strin
 
     // logger_yy.end_time();
 
-    PQKmeans<T> pq;
-    kmeans_bench logger_pq = kmeans_bench(n,d,k,max_iter,epsilon,"LSH","PQ Kmeans actually Naive rn");
-    logger_pq.start_time();
-    pq.cluster(v,n,d,k,c2,asg2,D,logger_pq,max_iter,epsilon);
-    logger_pq.end_time();
+    // PQKmeans<T> pq;
+    // kmeans_bench logger_pq = kmeans_bench(n,d,k,max_iter,epsilon,"LSH","PQ Kmeans actually Naive rn");
+    // logger_pq.start_time();
+    // pq.cluster(v,n,d,k,c2,asg2,D,logger_pq,max_iter,epsilon);
+    // logger_pq.end_time();
     // if (output_log_to_csv) { logger_yy.output_to_csv(output_file_name2); }
 
     // YinyangSimp<T> yy_simp;

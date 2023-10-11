@@ -1,7 +1,7 @@
-// #include <stdio.h>
-// #include <fstream>
-// #include <ostream>
-// #include <iostream>
+#include <stdio.h>
+#include <fstream>
+#include <ostream>
+#include <iostream>
 
 //modifying file for testing git branching
 
@@ -11,16 +11,16 @@
 
 // #include "include/utils/parse_files.h"
 // #include "include/utils/parse_command_line.h"
-// #include "include/utils/NSGDist.h"
+#include "include/utils/NSGDist.h"
 // #include "lazy.h"
 // #include "initialization.h"
 // #include "naive.h"
 // #include "yinyang_simp.h"
 // #include "include/utils/kmeans_bench.h"
 
-// #include "parlay/sequence.h"
-// #include "parlay/parallel.h"
-// #include "parlay/primitives.h"
+#include "parlay/sequence.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
 
 
 // struct kmeans_test : testing::test{
@@ -81,6 +81,24 @@
 
 // #include <cmath> 
 
+// template <typename T> 
+// void hi(T a) {
+//   std::cout << "hi! " << a << std::endl;
+// }
+
+//wow templating really nice! avoids explicit declaration of delayed sequence type
+template <typename T>
+void hi(T a) {
+  for (size_t i = 0; i < a.size(); i++) {
+    std::cout << a[i] << " ";
+  }
+  std::cout << std::endl;
+}
+
+// template<typename T>
+// void hi2(int b) {
+//   std::cout << "bye! " << b << std::endl;
+// }
 
 int main() {
   std::cout << "hello" << std::endl;
@@ -154,11 +172,29 @@ int main() {
   auto s1 = parlay::delayed_tabulate(10,[&] (size_t i) {
     return i;
   });
-  parlay::delayed_sequence<int, int, int > s2 = parlay::iota(20);
+ // parlay::delayed_sequence<int, int, int > s2 = parlay::iota(20);
   // for (int i = 0; i < s2.size(); i++) {
   //   std::cout << s2[i] << " ";
   // }
-  std::cout << std::endl;
+  std::cout << s1[1] << std::endl;
+  hi(s1);
+
+  parlay::sequence<float> s2(501,3.1);
+  parlay::sequence<float> s3(501,4.1);
+  Distance* D = new EuclideanDistanceSmall();
+  std::cout << "dist 32: " << D->distance(s2.begin(),s3.begin(),32) << std::endl;
+  std::cout << "dist 50: " << D->distance(s2.begin(),s3.begin(),50) << std::endl;
+  std::cout << "dist 201: " << D->distance(s2.begin(),s3.begin(),201) << std::endl;
+  std::cout << "dist 202: " << D->distance(s2.begin(),s3.begin(),202) << std::endl;
+  std::cout << "dist 203: " << D->distance(s2.begin(),s3.begin(),203) << std::endl;
+  std::cout << "dist 499: " << D->distance(s2.begin(),s3.begin(),499) << std::endl;
+  std::cout << "dist 498: " << D->distance(s2.begin(),s3.begin(),498) << std::endl;
+  std::cout << "dist 491: " << D->distance(s2.begin(),s3.begin(),491) << std::endl;
+  std::cout << "dist 500: " << D->distance(s2.begin(),s3.begin(),500) << std::endl;
+  std::cout << "dist 501: " << D->distance(s2.begin(),s3.begin(),501) << std::endl;
+
+  
+
 
   return 1;
 }

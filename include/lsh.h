@@ -1,6 +1,7 @@
 //use LSH bucketing for a good initialization
 //unclear if this has been done before
 //TODO: check
+//note: the lsh hashing code was essentially taken from somewhere else (some Julia code from some online source I believe)
 #ifndef LSHCODE
 #define LSHCODE
 

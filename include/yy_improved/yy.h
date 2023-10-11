@@ -35,10 +35,11 @@ struct YinyangImproved {
     float* group_centers = new float[t * d];
     size_t* group_asg = new size_t[k];
 
-    LSH<float> init;
+   // LSH<float> init;
+   LazyStart<float> init; //TODO change back to LSH?
     init(c,k,d,t,group_centers,group_asg,D);
 
-    kmeans_bench logger = kmeans_bench(k,d,t,5,0,"LSH", "Internal Naive");
+    kmeans_bench logger = kmeans_bench(k,d,t,5,0,"Lazy currently", "Internal Naive");
     logger.start_time();
     
     
@@ -248,13 +249,17 @@ struct YinyangImproved {
     auto new_centers_dist0 = histogram_by_key(parlay::map(rang,[&] (int i) {
       return pts[i].best;
     }));
-
     parlay::parallel_for(0,k,[&] (size_t i) {
+      centers[i].has_changed = true;
+      centers[i].new_num_members = 0;
+      centers[i].old_num_members = 0;
+    });
+    //can't use k here! some centers get no points*
+    parlay::parallel_for(0,new_centers_dist0.size(),[&] (size_t i) {
       
       centers[new_centers_dist0[i].first].new_num_members=new_centers_dist0[i].second;
       centers[new_centers_dist0[i].first].old_num_members=new_centers_dist0[i].second;
       //on first iter, all centers have changed
-      centers[new_centers_dist0[i].first].has_changed = true;
 
     });
     //debugging (confirm all points belong to a center)

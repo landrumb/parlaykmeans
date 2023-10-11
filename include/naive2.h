@@ -108,6 +108,8 @@ float* c, size_t* asg, Distance& D, kmeans_bench& logger, size_t max_iter, doubl
     if (max_diff <= epsilon) break;
     
   }
+
+  delete[] center_calc_float;
 }
 
 };
