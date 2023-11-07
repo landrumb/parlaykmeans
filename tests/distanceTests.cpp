@@ -23,7 +23,7 @@ TEST(EuclideanDistanceSmall,OneDistance) {
   parlay::sequence<float> ones(N,1);
   parlay::sequence<float> twos(N,2);
   //distance between ones and twos should be the number of elements we are checking, which is i
-  for (int i = 8; i <= N; i++) {
+  for (int i = 0; i <= N; i++) {
     EXPECT_EQ(D->distance(ones.begin(),twos.begin(),i),i);
   }
 

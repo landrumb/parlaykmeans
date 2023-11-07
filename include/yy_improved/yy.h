@@ -25,6 +25,7 @@ template<typename T>
 struct YinyangImproved {
 
   typedef YyStructsImp<T> ys; //for ease of use
+  using point=typename ys::point; //easier notation TODO
 
   //initialize the groups by running a naive kmeans a few times
   void init_groups(float* c, size_t k, size_t d, size_t t, 
@@ -190,6 +191,7 @@ struct YinyangImproved {
     
     //We want t to be big without overloading memory
     //because our memory cost contains O(nt) 
+    //TODO optimize
     size_t t;
     if (k <= 100) {t=k;}    
     else if (k <= 500) {t = k/10;}  
@@ -226,9 +228,9 @@ struct YinyangImproved {
 
       pts[i].best = min_element(distances) - distances.begin();
       pts[i].old_best = pts[i].best;
-
+      //TODO square root here instead of in distance calculation
       pts[i].ub = distances[pts[i].best];
-
+      //TODO (wait until refactoring) move lbs outside of point struct, to matrix
       pts[i].lb = parlay::sequence<float>(t);
       pts[i].lb[centers[pts[i].best].group_id] = std::numeric_limits<float>::max();
 
@@ -245,7 +247,7 @@ struct YinyangImproved {
 
     //compute num_members for each center
     auto rang = parlay::delayed_tabulate(n,[] (size_t i) {return i;});
-
+    //TODO use integer sort
     auto new_centers_dist0 = histogram_by_key(parlay::map(rang,[&] (int i) {
       return pts[i].best;
     }));
@@ -301,7 +303,7 @@ struct YinyangImproved {
       //so we must do a full-adding version of compute centers
       if (first_time) {
 
-         comp_cen.compute_centers_filter(v,pts,n,d,k,centers,center_calc,center_calc_float);
+         comp_cen.compute_centers_filter(v,pts,n,d,k,centers,center_calc,center_calc_float); //rename to recompute
          
         first_time=true; //TODO set to false to use the comparative compute centers method
       }
@@ -428,6 +430,7 @@ struct YinyangImproved {
                 pts[i].ub = new_d;
 
                 //log center reassign
+                //TODO read before write (reading cheaper)
                 center_reassignments[i] = 1;
                 //mark centers have changed. yes this is a race, but because we are setting false to true this is fine
                 centers[pts[i].best].has_changed = true;

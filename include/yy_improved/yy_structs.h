@@ -63,7 +63,7 @@ struct YyStructsImp {
   struct center {
     ui id; // a unique identifier for the center
     ui group_id; //the id of the group that the center belongs to
-    parlay::sequence<float> coordinates; // the pointer to coordinates of the center
+    parlay::sequence<float> coordinates; // the coordinates of the center
     float delta;
     ui old_num_members; //how many points belonged to that center
     ui new_num_members; //the number of members this iter
