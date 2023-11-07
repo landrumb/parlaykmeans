@@ -330,7 +330,7 @@ struct EuclideanDistance : public Distance{
 
 //EuclideanDistanceFast prohibits mixed type distance calls (much easier to debug), but used the fast distance implementation
 struct EuclideanDistanceFast : public Distance {
-    std::string id() {return "euclidean_small";}
+    std::string id() {return "euclidean_fast";}
 
     float distance(uint8_t *p, uint8_t *q, unsigned d){
           // std::cout << "uint8: d: " << static_cast<int>(d) << std::endl;

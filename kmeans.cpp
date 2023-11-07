@@ -38,7 +38,7 @@
 #define RUNNER_NAME "Naive"
 
 
-const float epsilon = 0;//0.00001; //want to stop
+//const float epsilon = 0;//0.00001; //want to stop
 
 
 template<typename T, typename Initializer, typename Runner>         
@@ -67,6 +67,55 @@ inline void bench(T* v, size_t n, size_t d, size_t k, Distance& D, size_t max_it
     logger.end_time();
 
     return;
+}
+
+
+//bench two kmeans methods on the same data
+template <typename T>
+inline void bench_two_stable(T* v, size_t n, size_t d, size_t k, Distance& D, 
+size_t max_iter=1000, double epsilon=0, bool output_log_to_csv=false, std::string output_file_name1="data.csv", std::string output_file_name2="data2.csv") {
+
+    std::cout << "Running bench stable " << std::endl;
+
+    float* c = new float[k*d]; // centers
+    size_t* asg = new size_t[n];
+
+   float* c2 = new float[k*d];
+   size_t* asg2 = new size_t[n];
+  
+    //initialization
+    LazyStart<T> init;
+    init(v,n,d,k,c,asg,D);
+
+    for (size_t i = 0; i < k*d; i++) {
+        c2[i] = c[i];
+    }
+    for (size_t i = 0; i < n; i++) {
+        asg2[i] = asg[i];
+    }
+
+    NaiveKmeans2<T> nie2;
+    kmeans_bench logger_nie2 = kmeans_bench(n,d,k,max_iter,
+    epsilon,"Lazy","Naive2");
+    logger_nie2.start_time();
+    nie2.cluster(v,n,d,k,c2,asg2,D,logger_nie2,max_iter,epsilon);
+    logger_nie2.end_time();
+    
+    YinyangImproved<T> yy;
+    kmeans_bench logger_yy = kmeans_bench(n,d,k,max_iter,epsilon,
+    "Lazy","YY Imp");
+    logger_yy.start_time();
+
+    yy.cluster(v,n,d,k,c2,asg2,D,logger_yy, max_iter,epsilon);
+
+    logger_yy.end_time();
+
+    std::cout << "finished bench stable" << std::endl;
+
+    delete[] c;
+    delete[] asg;
+    delete[] asg2;
+
 }
 
 //bench two kmeans methods on the same data
@@ -269,6 +318,7 @@ int main(int argc, char* argv[]){
     }
     std::string output_log_file_name = std::string(P.getOptionValue("-csv_log_file_name","data.csv"));
     std::string output_log_file_name2 = std::string(P.getOptionValue("-csv_log_file_name2","data2.csv"));
+    float epsilon = static_cast<float>(P.getOptionDoubleValue("-epsilon",0.0));
 
 
     if(input == ""){ // if no input file given, quit
@@ -308,6 +358,10 @@ int main(int argc, char* argv[]){
         std::cout << "Using short Euclidean" << std::endl;
         D = new EuclideanDistanceSmall();
     } 
+    else if (dist=="fast") {
+        std::cout << "Using fast Euclidean" << std::endl;
+        D = new EuclideanDistanceFast();
+    }
     else {
         std::cout << "Error: distance type not specified correctly, specify Euclidean or mips" << std::endl;
         abort();
@@ -320,6 +374,10 @@ int main(int argc, char* argv[]){
                 bench_two<float,LazyStart<float>,NaiveKmeans<float>,YinyangSimp<float>>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
 
             }
+            else if (use_bench_two=="stable") {
+                bench_two_stable<float>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
+
+            }
             else {
                 bench<float, INITIALIZER<float>, RUNNER<float>>(v, n, d, k, *D, max_iterations, epsilon);
 
@@ -330,6 +388,10 @@ int main(int argc, char* argv[]){
             if (use_bench_two=="yes") {
                 bench_two<uint8_t,LazyStart<uint8_t>,NaiveKmeans<uint8_t>,YinyangSimp<uint8_t>>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
             }
+            else if (use_bench_two=="stable") {
+                bench_two_stable<uint8_t>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
+
+            }
             else {
                 bench<uint8_t, INITIALIZER<uint8_t>, RUNNER<uint8_t>>(v, n, d, k, *D, max_iterations, epsilon);
 
@@ -339,6 +401,10 @@ int main(int argc, char* argv[]){
             auto [v, n, d] = parse_int8bin(input.c_str());
             if (use_bench_two == "yes") {
                 bench_two<int8_t,LazyStart<int8_t>,NaiveKmeans<int8_t>,YinyangSimp<int8_t>>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
+
+            }
+            else if (use_bench_two=="stable") {
+                bench_two_stable<int8_t>(v,n,d,k,*D,max_iterations,epsilon,output_log_to_csv,output_log_file_name,output_log_file_name2);
 
             }
             else {
