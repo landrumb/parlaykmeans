@@ -95,6 +95,19 @@ cc_binary(
   ],
  
 )
+#for benching assign step
+cc_binary(
+  name="group_by_bench_run",
+  srcs=["benchmarks/bench_group_by.cpp"],
+  linkopts=["-pthread"],
+  #makes it known that include is an include library
+  copts = ["-Iinclude"],
+  deps = [
+    ":kmeans_headers",
+
+  ],
+ 
+)
 
 
 cc_binary(
@@ -285,6 +298,10 @@ copts = ["-Iinclude"],
 ],
 )
 
+cc_binary(
+  name="int_sort_practice_run",
+  srcs=["int_sort_practice.cpp",],
+  linkopts=["-pthread"],
+  deps=["kmeans_headers"],
 
-
-
+)
