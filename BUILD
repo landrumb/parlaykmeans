@@ -85,7 +85,7 @@ cc_binary(
 #for benching assign step
 cc_binary(
   name="assign_bench_run",
-  srcs=["assign_bench.cpp"],
+  srcs=["benchmarks/assign_bench.cpp"],
   linkopts=["-pthread"],
   #makes it known that include is an include library
   copts = ["-Iinclude"],

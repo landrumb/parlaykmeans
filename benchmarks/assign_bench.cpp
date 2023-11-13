@@ -77,26 +77,26 @@ void bench_assign(T* v, size_t n, size_t d, size_t k, Distance& D, std::string o
   parlay::internal::timer t2;
   t2.start();
 
-  // //copy centers into their type
-  // T* centers_t = new T[k*d];
-  // parlay::parallel_for(0,k*d,[&] (size_t i) {
-  //   centers_t[i] = c[i];
-  // });
+  //copy centers into their type
+  T* centers_t = new T[k*d];
+  parlay::parallel_for(0,k*d,[&] (size_t i) {
+    centers_t[i] = c[i];
+  });
 
-  // //TODO rangk seems inefficient how to do better? Is this type
-  // //of construct built into parlay?
-  // parlay::sequence<size_t> rangk = parlay::tabulate(k,[&] (size_t i) {
-  //   return i;
-  // });
+  //TODO rangk seems inefficient how to do better? Is this type
+  //of construct built into parlay?
+  parlay::sequence<size_t> rangk = parlay::tabulate(k,[&] (size_t i) {
+    return i;
+  });
   
-  // parlay::parallel_for(0,n,[&] (size_t i) {
-  //   auto distances = parlay::delayed::map(rangk,[&] (size_t j) {
-  //     return D.distance(v+i*d,centers_t+j*d,d);
-  //   });
-  //   asg[i] = parlay::min_element(distances) - distances.begin();
-  // });
+  parlay::parallel_for(0,n,[&] (size_t i) {
+    auto distances = parlay::delayed::map(rangk,[&] (size_t j) {
+      return D.distance(v+i*d,centers_t+j*d,d);
+    });
+    asg[i] = parlay::min_element(distances) - distances.begin();
+  });
 
-  // double t_assign_time = t2.next_time();
+  double t_assign_time = t2.next_time();
 
   parlay::sequence<size_t> rangk2 = parlay::tabulate(k,[&] (size_t i) {
     return i;
@@ -122,7 +122,7 @@ void bench_assign(T* v, size_t n, size_t d, size_t k, Distance& D, std::string o
 
   double float_assign_time = t2.next_time();
 
-  std::cout << "assign time:\t" << float_assign_time << std::endl;
+  std::cout << "assign time: float, T type \t" << float_assign_time << " " << t_assign_time << std::endl;
 
  // std::cout << "assign times, T and float resp.: " << t_assign_time << ", " << float_assign_time << std::endl;
   
